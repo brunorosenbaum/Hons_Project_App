@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\ShaderManagers">
+      <UniqueIdentifier>{4f418244-520a-41d3-af7e-9079520a2962}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\App1">
+      <UniqueIdentifier>{838b5c3e-b293-4f18-a9e4-8d2ad09017eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ShaderManagers">
+      <UniqueIdentifier>{3a0d3d56-9d30-4405-ab2d-7a6436a89ece}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ShaderManagers\App1">
+      <UniqueIdentifier>{1fc8ebb0-facf-46bc-9005-4693167434d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ShaderManagers\App1">
+      <UniqueIdentifier>{fc1c9c0e-cbc8-41ed-8107-c9c0200c5d89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ShaderManagers\App2">
+      <UniqueIdentifier>{5b54061b-fcf3-4f81-af7c-f306f8084217}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ShaderManagers\App2">
+      <UniqueIdentifier>{5229ccdb-27d3-431d-8e0b-2ad47a431e1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\App2">
+      <UniqueIdentifier>{d868dcbb-6719-4075-8971-70e1d7bf89d5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="App1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="App2_Cubes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LightsSM.cpp">
+      <Filter>Source Files\ShaderManagers\App1</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureSM.cpp">
+      <Filter>Source Files\ShaderManagers\App1</Filter>
+    </ClCompile>
+    <ClCompile Include="LinearSM.cpp">
+      <Filter>Source Files\ShaderManagers\App2</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="App1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="App2_Cubes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LightsSM.h">
+      <Filter>Header Files\ShaderManagers\App1</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureSM.h">
+      <Filter>Header Files\ShaderManagers\App1</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearSM.h">
+      <Filter>Header Files\ShaderManagers\App2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="LightPS.hlsl">
+      <Filter>Resource Files\App1</Filter>
+    </FxCompile>
+    <FxCompile Include="LightVS.hlsl">
+      <Filter>Resource Files\App1</Filter>
+    </FxCompile>
+    <FxCompile Include="TexturePS.hlsl">
+      <Filter>Resource Files\App1</Filter>
+    </FxCompile>
+    <FxCompile Include="TextureVS.hlsl">
+      <Filter>Resource Files\App1</Filter>
+    </FxCompile>
+    <FxCompile Include="LinearVS.hlsl">
+      <Filter>Resource Files\App2</Filter>
+    </FxCompile>
+    <FxCompile Include="LinearPS.hlsl">
+      <Filter>Resource Files\App2</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LightingCalcs.hlsli">
+      <Filter>Resource Files\App1</Filter>
+    </None>
+  </ItemGroup>
+</Project>
