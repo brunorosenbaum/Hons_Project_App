@@ -57,6 +57,12 @@
     <ClCompile Include="LinearSM.cpp">
       <Filter>Source Files\ShaderManagers\App2</Filter>
     </ClCompile>
+    <ClCompile Include="CELL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CG_SOLVER.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
@@ -73,6 +79,12 @@
     </ClInclude>
     <ClInclude Include="LinearSM.h">
       <Filter>Header Files\ShaderManagers\App2</Filter>
+    </ClInclude>
+    <ClInclude Include="CELL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CG_SOLVER.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
