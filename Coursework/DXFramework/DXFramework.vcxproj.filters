@@ -138,6 +138,9 @@
     <ClInclude Include="..\include\imGUI\stb_truetype.h">
       <Filter>GUI</Filter>
     </ClInclude>
+    <ClInclude Include="LineMesh.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseMesh.cpp">
@@ -226,6 +229,9 @@
     </ClCompile>
     <ClCompile Include="..\include\imGUI\imgui_impl_win32.cpp">
       <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="LineMesh.cpp">
+      <Filter>Source Files\Geometry</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

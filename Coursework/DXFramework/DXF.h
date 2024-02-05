@@ -23,6 +23,7 @@
 #include "OrthoMesh.h"
 #include "PlaneMesh.h"
 #include "PointMesh.h"
+#include "LineMesh.h"
 #include "QuadMesh.h"
 #include "SphereMesh.h"
 #include "TessellationMesh.h"

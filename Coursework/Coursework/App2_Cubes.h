@@ -4,6 +4,8 @@
 #include "DXF.h"
 #include "LinearSM.h"
 
+
+
 class App2_Cubes : public BaseApplication
 {
 public:
@@ -23,6 +25,10 @@ private:
 	//Vars
 	PlaneMesh* plane_mesh_;
 	CubeMesh* cube_mesh_;
-	LinearSM* linearSM; 
+	LineMesh* line_mesh_; 
+
+	LinearSM* linearSM;
+	
+
 };
 

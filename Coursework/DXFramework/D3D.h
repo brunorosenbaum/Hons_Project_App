@@ -22,6 +22,18 @@
 #include <vector>
 #include <dxgi.h>
 #include <string>
+#include <memory>
+//#include "DTK/include/pch.h"
+//#include "DTK/include/BufferHelpers.h"
+//#include "DTK/include/CommonStates.h"
+//#include "DTK/include/Effects.h"
+//#include "DTK/include/PrimitiveBatch.h"
+//#include "DTK/include/VertexTypes.h"
+//#include "DTK/include/SimpleMath.h"
+//#include "DTK/include/SpriteBatch.h"
+
+
+
 //#include <winerror.h>
 
 using namespace DirectX;

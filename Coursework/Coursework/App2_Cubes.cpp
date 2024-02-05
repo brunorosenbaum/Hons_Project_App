@@ -4,7 +4,8 @@ App2_Cubes::App2_Cubes()
 {
 	plane_mesh_ = nullptr;
 	cube_mesh_ = nullptr;
-
+	line_mesh_ = nullptr;
+	
 
 }
 
@@ -14,6 +15,7 @@ void App2_Cubes::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scree
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
 	plane_mesh_ = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	cube_mesh_ = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
+	line_mesh_ = new LineMesh(renderer->getDevice(), renderer->getDeviceContext());
 	linearSM = new LinearSM(renderer->getDevice(), hwnd); 
 }
 
@@ -22,6 +24,7 @@ App2_Cubes::~App2_Cubes()
 	BaseApplication::~BaseApplication();
 	if (plane_mesh_) { delete plane_mesh_; plane_mesh_ = 0; }
 	if (cube_mesh_) { delete cube_mesh_; cube_mesh_ = 0; }
+	if (line_mesh_) { delete line_mesh_; line_mesh_ = 0; }
 
 }
 
@@ -54,9 +57,14 @@ bool App2_Cubes::render()
 
 	//plane_mesh_->sendData(renderer->getDeviceContext());
 
-	cube_mesh_->sendData(renderer->getDeviceContext());
+	/*cube_mesh_->sendData(renderer->getDeviceContext());
 	linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-	linearSM->render(renderer->getDeviceContext(), cube_mesh_->getIndexCount());
+	linearSM->render(renderer->getDeviceContext(), cube_mesh_->getIndexCount());*/
+
+	line_mesh_->sendData(renderer->getDeviceContext());
+	linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
+	linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
+
 	// Render GUI
 	gui();
 
