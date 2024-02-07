@@ -102,7 +102,7 @@ public:
          Stencils 0,2,4,6 should always exist. Depending on
          if the neighbor is on a lower refinement level,
          stencils 1,3,5,7 may or may not exist. If they are not
-         present, the pointer value should ne NULL.    */
+         present, the pointer value should be NULL.    */
 
     float center[2];    ///< center of the cell (coordinates)
     int depth;          ///< current tree depth

@@ -37,6 +37,12 @@
     <Filter Include="Resource Files\App2">
       <UniqueIdentifier>{d868dcbb-6719-4075-8971-70e1d7bf89d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\LaplacianGrowth">
+      <UniqueIdentifier>{d0c39a55-a295-4c03-824f-8b75b9eddae1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LaplacianGrowth">
+      <UniqueIdentifier>{218bbb78-68ca-4731-a3ee-c23f5a092ca1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App1.cpp">
@@ -58,9 +64,15 @@
       <Filter>Source Files\ShaderManagers\App2</Filter>
     </ClCompile>
     <ClCompile Include="CELL.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\LaplacianGrowth</Filter>
     </ClCompile>
     <ClCompile Include="CG_SOLVER.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
+    <ClCompile Include="QUAD_POISSON.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
+    <ClCompile Include="CellMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -81,9 +93,15 @@
       <Filter>Header Files\ShaderManagers\App2</Filter>
     </ClInclude>
     <ClInclude Include="CELL.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\LaplacianGrowth</Filter>
     </ClInclude>
     <ClInclude Include="CG_SOLVER.h">
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
+    <ClInclude Include="QUAD_POISSON.h">
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
+    <ClInclude Include="CellMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
