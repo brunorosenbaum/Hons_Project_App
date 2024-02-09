@@ -10,13 +10,13 @@ QUAD_POISSON::QUAD_POISSON(int xRes, int yRes,  ID3D11Device* device, ID3D11Devi
     _root(new CELL(1.0f, 1.0f, 0.0f, 0.0f))
     //_noise()
 {
-    _root->refine();
+    _root->refine(); //Subdivide root 
 
     // figure out the max depth needed
     float xMax = log((float)xRes) / log(2.0f);
     float yMax = log((float)yRes) / log(2.0f);
 
-    float max = (xMax > yMax) ? xMax : yMax;
+    float max = (xMax > yMax) ? xMax : yMax; 
     if (max - floor(max) > 1e-7)
         max = max + 1;
     max = floor(max);
@@ -47,6 +47,7 @@ QUAD_POISSON::~QUAD_POISSON()
 
 //////////////////////////////////////////////////////////////////////
 // draw boundaries to OGL
+//draws, in the shape of quads, the bounds of each cell of the stencil/each node of the quadtree
 //////////////////////////////////////////////////////////////////////
 void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, 
     CELL* cell, LinearSM* shader,
@@ -58,7 +59,7 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
     //On top of that this method is to draw the cell bounds. Which uses different primitive topology
     //but it's already taken care of in CellMesh.cpp
     //Once we do this we should be pretty close to rendering the actual thing
-    cellBoundsMesh->sendData(deviceContext);
+    cellBoundsMesh->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
     shader->setShaderParameters(deviceContext, world, view, projection);
     shader->render(deviceContext, cellBoundsMesh->getIndexCount());
 
@@ -77,13 +78,14 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
 
 //////////////////////////////////////////////////////////////////////
 // draw the given cell
+//draws, in the shape of quads, each cell of the stencil/each node of the quadtree
 //////////////////////////////////////////////////////////////////////
 void QUAD_POISSON::drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceContext,
     CELL* cell, LinearSM* shader,
     XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
     cellMesh = new CellMesh(device, deviceContext, cell);
-	cellMesh->sendData(deviceContext);
+	cellMesh->sendData(deviceContext/*, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP*/);
 	shader->setShaderParameters(deviceContext, world, view, projection);
 	shader->render(deviceContext, cellMesh->getIndexCount());
 }
@@ -91,6 +93,9 @@ void QUAD_POISSON::drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceCon
 //////////////////////////////////////////////////////////////////////
 // subdivide quadtree to max level for (xPos, yPos)
 // returns a pointer to the cell that was created
+//Subdivides the quadtree to a maxlevel for a 2d position based on the desired resolution
+//It subdivides the cell, its NSWE neighbors and its diagonal NSWE neighbors (8 points surrounding 1)
+
 //////////////////////////////////////////////////////////////////////
 CELL* QUAD_POISSON::insert(float xPos, float yPos)
 {
@@ -326,6 +331,7 @@ void QUAD_POISSON::getEmptyLeaves(std::list<CELL*>& leaves, CELL* currentCell)
 
 //////////////////////////////////////////////////////////////////////
 // balance the current tree
+//Balances the quadtree, building the neighbors.
 //////////////////////////////////////////////////////////////////////
 void QUAD_POISSON::balance()
 {
@@ -499,6 +505,7 @@ void QUAD_POISSON::deleteGhosts(CELL* currentCell)
 
 //////////////////////////////////////////////////////////////////////
 // solve the Poisson problem
+//uses the solve() method in CG_SOLVER to return the number of iterations required to solve Poisson equation
 //////////////////////////////////////////////////////////////////////
 int QUAD_POISSON::solve() {
     // maintain the quadtree
@@ -512,7 +519,7 @@ int QUAD_POISSON::solve() {
     static bool firstSolve = true;
     static int iterations = _solver->iterations();
 
-    // do a full precision solve the first time
+    // do a full precision solve the first time - see about this later on to delete if we want to speed up?
     if (firstSolve)
     {
         iterations = _solver->iterations();
@@ -522,7 +529,7 @@ int QUAD_POISSON::solve() {
     else
         _solver->iterations() = iterations;
 
-    // return the number of iterations
+    // return the number of iterations required to solve the poisson eq
     return _solver->solve(_emptyLeaves);
 };
 

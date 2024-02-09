@@ -26,7 +26,7 @@ void CellMesh::initBuffers(ID3D11Device* device, CELL* cell)
     D3D11_SUBRESOURCE_DATA vertexData, indexData;
 
     vertexCount = 4;
-    indexCount = 4;
+    indexCount = 4; 
 
     vertices = new VertexType[vertexCount];
     indices = new unsigned long[indexCount];
@@ -35,6 +35,7 @@ void CellMesh::initBuffers(ID3D11Device* device, CELL* cell)
     vertices[1].position = XMFLOAT3(cell->bounds[1], 1.0f - cell->bounds[2], 0.0f);
     vertices[2].position = XMFLOAT3(cell->bounds[3], 1.0f - cell->bounds[2], 0.0f);
     vertices[3].position = XMFLOAT3(cell->bounds[3], 1.0f - cell->bounds[0], 0.0f);
+    //vertices[4].position = XMFLOAT3(cell->bounds[0], 1.0f - cell->bounds[1], 0.0f);
 
     // Load the index array with data.
     for (int i = 0; i < vertexCount; i++)
@@ -76,7 +77,19 @@ void CellMesh::initBuffers(ID3D11Device* device, CELL* cell)
     delete[] indices;
     indices = 0;
 }
+void CellMesh::sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top)
+{
+    unsigned int stride;
+    unsigned int offset;
 
+    // Set vertex buffer stride and offset.
+    stride = sizeof(VertexType);
+    offset = 0;
+
+    deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+    deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    deviceContext->IASetPrimitiveTopology(top);
+}
 
 
 ///////////////////////////////////////// CELLS BOUND MESH //////////////////////////////////////////////////////

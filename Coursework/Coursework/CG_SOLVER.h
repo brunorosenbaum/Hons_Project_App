@@ -7,6 +7,9 @@
 //Because the Poisson and Laplace equations are very similar, 
 //the only implementation overhead required for the modified model is a minor change to the
 //residual calculation in the conjugate gradient solver.
+
+//This is THE SECOND class in the order. 
+//Order: CELL -> CG_SOLVER -> QUAD_POISSON -> QUAD_DBM_2D
 #pragma once
 #ifndef CG_SOLVER_H
 #define CG_SOLVER_H

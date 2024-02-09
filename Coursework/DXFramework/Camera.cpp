@@ -8,7 +8,7 @@ Camera::Camera()
 	position = XMFLOAT3(0.f, 0.f, 0.f);
 	rotation = XMFLOAT3(0.f, 0.f, 0.f);
 
-	lookSpeed = 4.0f;
+	lookSpeed = 10.0f;
 
 	// Generate ortho matrix
 	XMVECTOR up, position, lookAt;

@@ -3,7 +3,8 @@
 // Includes
 #include "DXF.h"
 #include "LinearSM.h"
-#include "QUAD_POISSON.h"
+#include "QUAD_DBM_2D.h"
+#include "ppm\ppm.hpp"
 
 
 class App2_Cubes : public BaseApplication
@@ -16,6 +17,7 @@ public:
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
 
 	bool frame();
+	bool loadImages(string inputFile); 
 
 protected:
 	bool render();
@@ -29,7 +31,7 @@ private:
 
 	LinearSM* linearSM;
 	
-	QUAD_POISSON* quadtree;
-
+	QUAD_DBM_2D* aggregate;
+	int iterations = 10; 
 };
 

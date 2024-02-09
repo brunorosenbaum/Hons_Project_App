@@ -160,7 +160,7 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
         // i = i + 1
         i++;
     }
-
+    // return the number of iterations required to solve the poisson eq
     return i;
 }
 

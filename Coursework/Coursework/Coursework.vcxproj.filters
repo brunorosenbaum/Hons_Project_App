@@ -72,8 +72,23 @@
     <ClCompile Include="QUAD_POISSON.cpp">
       <Filter>Source Files\LaplacianGrowth</Filter>
     </ClCompile>
+    <ClCompile Include="QUAD_DBM_2D.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
+    <ClCompile Include="DAG.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
     <ClCompile Include="CellMesh.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
+    <ClCompile Include="LightningMesh.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
+    <ClCompile Include="RNG.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
+    </ClCompile>
+    <ClCompile Include="ppm\ppm.cpp">
+      <Filter>Source Files\LaplacianGrowth</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -101,8 +116,23 @@
     <ClInclude Include="QUAD_POISSON.h">
       <Filter>Header Files\LaplacianGrowth</Filter>
     </ClInclude>
+    <ClInclude Include="QUAD_DBM_2D.h">
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
+    <ClInclude Include="DAG.h">
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
     <ClInclude Include="CellMesh.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
+    <ClInclude Include="LightningMesh.h">
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
+    <ClInclude Include="RNG.h">
+      <Filter>Header Files\LaplacianGrowth</Filter>
+    </ClInclude>
+    <ClInclude Include="ppm\ppm.hpp">
+      <Filter>Header Files\LaplacianGrowth</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

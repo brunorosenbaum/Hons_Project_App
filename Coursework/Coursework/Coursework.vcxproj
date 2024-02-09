@@ -85,7 +85,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS; </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(solutiondir)\include;</AdditionalIncludeDirectories>
     </ClCompile>
@@ -106,7 +106,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS; </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(solutiondir)\include;</AdditionalIncludeDirectories>
     </ClCompile>
@@ -129,7 +129,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS; </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(solutiondir)\include;</AdditionalIncludeDirectories>
     </ClCompile>
@@ -149,7 +149,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS; </PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(solutiondir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -171,10 +171,15 @@
     <ClCompile Include="CELL.cpp" />
     <ClCompile Include="CellMesh.cpp" />
     <ClCompile Include="CG_SOLVER.cpp" />
+    <ClCompile Include="DAG.cpp" />
+    <ClCompile Include="LightningMesh.cpp" />
     <ClCompile Include="LightsSM.cpp" />
     <ClCompile Include="LinearSM.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ppm\ppm.cpp" />
+    <ClCompile Include="QUAD_DBM_2D.cpp" />
     <ClCompile Include="QUAD_POISSON.cpp" />
+    <ClCompile Include="RNG.cpp" />
     <ClCompile Include="TextureSM.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -183,9 +188,14 @@
     <ClInclude Include="CELL.h" />
     <ClInclude Include="CellMesh.h" />
     <ClInclude Include="CG_SOLVER.h" />
+    <ClInclude Include="DAG.h" />
+    <ClInclude Include="LightningMesh.h" />
     <ClInclude Include="LightsSM.h" />
     <ClInclude Include="LinearSM.h" />
+    <ClInclude Include="ppm\ppm.hpp" />
+    <ClInclude Include="QUAD_DBM_2D.h" />
     <ClInclude Include="QUAD_POISSON.h" />
+    <ClInclude Include="RNG.h" />
     <ClInclude Include="TextureSM.h" />
   </ItemGroup>
   <ItemGroup>

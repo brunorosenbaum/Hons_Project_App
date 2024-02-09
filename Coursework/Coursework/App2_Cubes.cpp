@@ -17,7 +17,7 @@ void App2_Cubes::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scree
 	cube_mesh_ = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	line_mesh_ = new LineMesh(renderer->getDevice(), renderer->getDeviceContext());
 	linearSM = new LinearSM(renderer->getDevice(), hwnd); 
-	quadtree = new QUAD_POISSON(16, 16, renderer->getDevice(), renderer->getDeviceContext(), 4);
+	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), 256, 256,  iterations);
 
 }
 
@@ -57,11 +57,18 @@ bool App2_Cubes::render()
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
-
+	// read in the *.ppm input file
+	string inputFile = "examples/hint.ppm"; 
+	if (!loadImages(inputFile))
+	{
+		cout << " ERROR: " << inputFile.c_str() << " is not a valid PPM file." << endl;
+		return 1;
+	}
 	//line_mesh_->sendData(renderer->getDeviceContext());
 	//linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
 	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
-	quadtree->draw(renderer->getDevice(), renderer->getDeviceContext(), nullptr, linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
 
 	// Render GUI
 	gui();
@@ -79,8 +86,50 @@ void App2_Cubes::gui()
 	renderer->getDeviceContext()->HSSetShader(NULL, NULL, 0);
 	renderer->getDeviceContext()->DSSetShader(NULL, NULL, 0);
 	ImGui::Text("FPS: %.2f", timer->getFPS());
-
+	ImGui::Checkbox("Wireframe", &wireframeToggle); 
 	// Render UI
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+bool App2_Cubes::loadImages(string inputFile)
+{
+	// load the files
+	int inputWidth = -1;
+	int inputHeight = -1;
+	unsigned char* input = NULL;
+	LoadPPM(inputFile.c_str(), input, inputWidth, inputHeight);
+
+	unsigned char* start = new unsigned char[inputWidth * inputHeight];
+	unsigned char* repulsor = new unsigned char[inputWidth * inputHeight];
+	unsigned char* attractor = new unsigned char[inputWidth * inputHeight];
+	unsigned char* terminators = new unsigned char[inputWidth * inputHeight];
+
+	// composite RGB channels into one
+	for (int x = 0; x < inputWidth * inputHeight; x++)
+	{
+		start[x] = (input[3 * x] == 255) ? 255 : 0;
+		repulsor[x] = (input[3 * x + 1] == 255) ? 255 : 0;
+		attractor[x] = (input[3 * x + 2] == 255) ? 255 : 0;
+		terminators[x] = 0;
+
+		if (input[3 * x] + input[3 * x + 1] + input[3 * x + 2] == 255 * 3)
+		{
+			terminators[x] = 255;
+			start[x] = repulsor[x] = attractor[x] = 0;
+		}
+	}
+
+	if (aggregate) delete aggregate;
+	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), inputWidth, inputHeight, iterations);
+	bool success = aggregate->readImage(start, attractor, repulsor, terminators, inputWidth, inputHeight);
+
+	// delete the memory
+	delete[] input;
+	delete[] start;
+	delete[] repulsor;
+	delete[] attractor;
+	delete[] terminators;
+
+	return success;
 }

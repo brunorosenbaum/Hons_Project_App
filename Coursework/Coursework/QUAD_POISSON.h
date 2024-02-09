@@ -1,13 +1,26 @@
 #pragma once
+
+//This class uses the solve() method in CG_SOLVER to
+// return the number of iterations required to solve Poisson equation
+//&
+//It also draws, in the shape of quads, each cell of the stencil/each node of the quadtree
+//&
+//Subdivides the quadtree to a maxlevel for a 2d position based on the desired resolution
+//&
+//It subdivides the cell, its NSWE neighbors and its diagonal NSWE neighbors (8 points surrounding 1)
+//&
+//Balances the quadtree, building the neighbors.
+//&
+//Has getters for all leaves, the smallest leaves, and a single cell. 
+
+//This is THE THIRD class in the order. 
+//Order: CELL -> CG_SOLVER -> QUAD_POISSON -> QUAD_DBM_2D
 #ifndef QUAD_POISSON_H
 #define QUAD_POISSON_H
-
 
 #include "CELL.h"
 #include "CG_SOLVER.h"
 #include "CellMesh.h"
-//#include "LinearSM.h"
-
 #include <iostream>
 
 class LinearSM; //Fwd declare

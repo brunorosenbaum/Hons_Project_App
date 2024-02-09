@@ -7,8 +7,10 @@
 //in the DBM simulation.
 //Each cell instance holds information regarding each cell.
 //Since this algorithm uses quadtrees to solve Laplace's equation,
-//Coincidentally each cell is also a data structure for the quadtree. 
+//Coincidentally each cell is also a data structure for the quadtree.
 
+//This is THE FIRST class in the order. 
+//Order: CELL -> CG_SOLVER -> QUAD_POISSON -> QUAD_DBM_2D
 #pragma once
 #include <vcruntime.h>
 //////////////////////////////////////////////////////////////////////
