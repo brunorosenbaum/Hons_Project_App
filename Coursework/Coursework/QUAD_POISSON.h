@@ -6,15 +6,16 @@
 #include "CELL.h"
 #include "CG_SOLVER.h"
 #include "CellMesh.h"
-#include "LinearSM.h"
+//#include "LinearSM.h"
 
 #include <iostream>
 
+class LinearSM; //Fwd declare
 
 //////////////////////////////////////////////////////////////////////
 /// \brief Quadtree Poisson solver and renderer
 //////////////////////////////////////////////////////////////////////
-class QUAD_POISSON : public BaseMesh
+class QUAD_POISSON
 {
 public:
     /// \brief quadtree constructor 
@@ -24,9 +25,8 @@ public:
     /// \param iterations   maximum conjugate gradient iterations
     QUAD_POISSON(int xRes,
         int yRes,
-        int iterations = 10, 
         ID3D11Device* device, 
-        ID3D11DeviceContext* deviceContext);
+        ID3D11DeviceContext* deviceContext, int iterations = 10);
 
     //! destructor
     virtual ~QUAD_POISSON();
@@ -34,17 +34,14 @@ public:
     /// \brief D3D11 drawing function
     /// 
     /// \param cell         internally used param, should always be NULL externally
-    void draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, CELL* cell = NULL);
+    void draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, CELL* cell, 
+        LinearSM* shader, XMMATRIX world, XMMATRIX view, XMMATRIX projection);
     /// \brief Draw a single cell  
     ///
     /// \param cell         quadtree cell to draw
-    /// \param r            red intensity to draw
-    /// \param g            green intensity to draw
-    /// \param b            blue intensity to draw
-    void drawCell(CELL* cell,
-        float r = 1.0f,
-        float g = 0.0f,
-        float b = 0.0f);
+    void drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceContext,
+        CELL* cell, LinearSM* shader,
+        XMMATRIX world, XMMATRIX view, XMMATRIX projection);
 
     //! Solve the Poisson problem
     int solve();
@@ -121,7 +118,6 @@ private:
     //void setNoise(CELL* cell);
 
     //D3D11 SHADER CONVERSION
-    LinearSM* linearSM;
     CellMesh* cellMesh;
     CellBoundsMesh* cellBoundsMesh; 
 };

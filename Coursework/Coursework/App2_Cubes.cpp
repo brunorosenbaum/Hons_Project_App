@@ -17,6 +17,8 @@ void App2_Cubes::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scree
 	cube_mesh_ = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	line_mesh_ = new LineMesh(renderer->getDevice(), renderer->getDeviceContext());
 	linearSM = new LinearSM(renderer->getDevice(), hwnd); 
+	quadtree = new QUAD_POISSON(16, 16, renderer->getDevice(), renderer->getDeviceContext(), 4);
+
 }
 
 App2_Cubes::~App2_Cubes()
@@ -55,15 +57,11 @@ bool App2_Cubes::render()
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
-	//plane_mesh_->sendData(renderer->getDeviceContext());
 
-	/*cube_mesh_->sendData(renderer->getDeviceContext());
-	linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-	linearSM->render(renderer->getDeviceContext(), cube_mesh_->getIndexCount());*/
-
-	line_mesh_->sendData(renderer->getDeviceContext());
-	linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-	linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
+	//line_mesh_->sendData(renderer->getDeviceContext());
+	//linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
+	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
+	quadtree->draw(renderer->getDevice(), renderer->getDeviceContext(), nullptr, linearSM, worldMatrix, viewMatrix, projectionMatrix);
 
 	// Render GUI
 	gui();

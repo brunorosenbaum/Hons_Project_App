@@ -3,7 +3,7 @@
 // Includes
 #include "DXF.h"
 #include "LinearSM.h"
-
+#include "QUAD_POISSON.h"
 
 
 class App2_Cubes : public BaseApplication
@@ -29,6 +29,7 @@ private:
 
 	LinearSM* linearSM;
 	
+	QUAD_POISSON* quadtree;
 
 };
 

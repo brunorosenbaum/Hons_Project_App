@@ -1,11 +1,12 @@
 #include "QUAD_POISSON.h"
+#include "LinearSM.h"
 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-QUAD_POISSON::QUAD_POISSON(int xRes, int yRes, int iterations, ID3D11Device* device, ID3D11DeviceContext* deviceContext) :
+QUAD_POISSON::QUAD_POISSON(int xRes, int yRes,  ID3D11Device* device, ID3D11DeviceContext* deviceContext, int iterations) :
     _root(new CELL(1.0f, 1.0f, 0.0f, 0.0f))
     //_noise()
 {
@@ -31,7 +32,8 @@ QUAD_POISSON::QUAD_POISSON(int xRes, int yRes, int iterations, ID3D11Device* dev
     //_noiseFunc->writeToBool(_noise, _maxRes);
 
     _solver = new CG_SOLVER(_maxDepth, iterations);
-
+    cellMesh = nullptr;
+    cellBoundsMesh = nullptr;
 }
 
 QUAD_POISSON::~QUAD_POISSON()
@@ -46,47 +48,44 @@ QUAD_POISSON::~QUAD_POISSON()
 //////////////////////////////////////////////////////////////////////
 // draw boundaries to OGL
 //////////////////////////////////////////////////////////////////////
-void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, CELL* cell)
+void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, 
+    CELL* cell, LinearSM* shader,
+    XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
-    cellMesh = new CellMesh(device, deviceContext, cell);
-    //Listen. Idk where tf you'd have to do this. But you need to declare a cell mesh
-    //Just so you can call
-    //cellMesh->sendData(renderer->getDeviceContext());
-    //linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
-    //linearSM->render(renderer->getDeviceContext(), cellMesh->getIndexCount());
-    //^^^THIS, RENDER(), IS THE EQUIVALENT OF DRAW() IN OPENGL
+    cellBoundsMesh = new CellBoundsMesh(device, deviceContext, cell);
+   
     //But im stuck, idk where to make this work outside of App2, in a different class
     //On top of that this method is to draw the cell bounds. Which uses different primitive topology
     //but it's already taken care of in CellMesh.cpp
     //Once we do this we should be pretty close to rendering the actual thing
-
+    cellBoundsMesh->sendData(deviceContext);
+    shader->setShaderParameters(deviceContext, world, view, projection);
+    shader->render(deviceContext, cellBoundsMesh->getIndexCount());
 
     // see if it's the root
     if (cell == NULL) {
-        //draw(device, _root);
+        draw(device, deviceContext, _root, shader, world, view, projection);
         return;
     }
 
     // draw the children
     for (int x = 0; x < 4; x++)
         if (cell->children[x] != NULL)
-            draw(device, cell->children[x]);
+            draw(device, deviceContext, cell->children[x], shader, world, view, projection);
 }
 
 
 //////////////////////////////////////////////////////////////////////
 // draw the given cell
 //////////////////////////////////////////////////////////////////////
-void QUAD_POISSON::drawCell(CELL* cell, float r, float g, float b)
+void QUAD_POISSON::drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceContext,
+    CELL* cell, LinearSM* shader,
+    XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
-    // draw the current cell
-    glColor4f(r, g, b, 1.0f);
-    glBegin(GL_QUADS);
-    glVertex2f(cell->bounds[1], 1.0f - cell->bounds[0]);
-    glVertex2f(cell->bounds[1], 1.0f - cell->bounds[2]);
-    glVertex2f(cell->bounds[3], 1.0f - cell->bounds[2]);
-    glVertex2f(cell->bounds[3], 1.0f - cell->bounds[0]);
-    glEnd();
+    cellMesh = new CellMesh(device, deviceContext, cell);
+	cellMesh->sendData(deviceContext);
+	shader->setShaderParameters(deviceContext, world, view, projection);
+	shader->render(deviceContext, cellMesh->getIndexCount());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -99,8 +98,8 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
     CELL* currentCell = _root;
     bool existed = true;
 
-    while (currentDepth < _maxDepth) {
-        // find quadrant of current point
+    while (currentDepth < _maxDepth) { //While we still havent hit bottom of the quadtree depth
+        // find quadrant of current point - ask for help
         float diff[2];
         diff[0] = xPos - currentCell->center[0];
         diff[1] = yPos - currentCell->center[1];
@@ -131,7 +130,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(currentCell->parent->children[i]);
-            setNoise(currentCell->parent->children[i]);
+            //setNoise(currentCell->parent->children[i]);
         }
 
     ///////////////////////////////////////////////////////////////////
@@ -155,7 +154,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(north->parent->children[i]);
-            setNoise(north->parent->children[i]);
+            //setNoise(north->parent->children[i]);
         }
     }
     CELL* south = currentCell->southNeighbor();
@@ -167,7 +166,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(south->parent->children[i]);
-            setNoise(south->parent->children[i]);
+            //setNoise(south->parent->children[i]);
         }
     }
     CELL* west = currentCell->westNeighbor();
@@ -179,7 +178,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(west->parent->children[i]);
-            setNoise(west->parent->children[i]);
+            //setNoise(west->parent->children[i]);
         }
     }
     CELL* east = currentCell->eastNeighbor();
@@ -191,7 +190,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(east->parent->children[i]);
-            setNoise(east->parent->children[i]);
+            //setNoise(east->parent->children[i]);
         }
     }
 
@@ -211,7 +210,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(northwest->parent->children[i]);
-                setNoise(northwest->parent->children[i]);
+                //setNoise(northwest->parent->children[i]);
             }
         }
         CELL* northeast = north->eastNeighbor();
@@ -223,7 +222,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(northeast->parent->children[i]);
-                setNoise(northeast->parent->children[i]);
+                //setNoise(northeast->parent->children[i]);
             }
         }
     }
@@ -237,7 +236,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(southwest->parent->children[i]);
-                setNoise(southwest->parent->children[i]);
+                //setNoise(southwest->parent->children[i]);
             }
         }
         CELL* southeast = south->eastNeighbor();
@@ -249,7 +248,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(southeast->parent->children[i]);
-                setNoise(southeast->parent->children[i]);
+                //setNoise(southeast->parent->children[i]);
             }
         }
     }
@@ -260,27 +259,27 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
 //////////////////////////////////////////////////////////////////////
 // check if a cell hits a noise node
 //////////////////////////////////////////////////////////////////////
-void QUAD_POISSON::setNoise(CELL* cell)
-{
-    if (!(cell->state == EMPTY))
-        return;
-
-    int x = cell->center[0] * _maxRes;
-    int y = cell->center[1] * _maxRes;
-
-    if (_noise[x + y * _maxRes])
-    {
-        cell->boundary = true;
-        cell->state = ATTRACTOR;
-        cell->potential = 0.5f;
-        cell->candidate = true;
-    }
-}
+//void QUAD_POISSON::setNoise(CELL* cell)
+//{
+//    if (!(cell->state == EMPTY))
+//        return;
+//
+//    int x = cell->center[0] * _maxRes;
+//    int y = cell->center[1] * _maxRes;
+//
+//    if (_noise[x + y * _maxRes])
+//    {
+//        cell->boundary = true;
+//        cell->state = ATTRACTOR;
+//        cell->potential = 0.5f;
+//        cell->candidate = true;
+//    }
+//}
 
 //////////////////////////////////////////////////////////////////////
 // insert all leaves into a list
 //////////////////////////////////////////////////////////////////////
-void QUAD_POISSON::getAllLeaves(list<CELL*>& leaves, CELL* currentCell)
+void QUAD_POISSON::getAllLeaves(std::list<CELL*>& leaves, CELL* currentCell)
 {
     // if we're at the root
     if (currentCell == NULL)
@@ -304,7 +303,7 @@ void QUAD_POISSON::getAllLeaves(list<CELL*>& leaves, CELL* currentCell)
 //////////////////////////////////////////////////////////////////////
 // insert all leaves not on the boundary into a list
 //////////////////////////////////////////////////////////////////////
-void QUAD_POISSON::getEmptyLeaves(list<CELL*>& leaves, CELL* currentCell)
+void QUAD_POISSON::getEmptyLeaves(std::list<CELL*>& leaves, CELL* currentCell)
 {
     // if we're at the root
     if (currentCell == NULL) {
@@ -331,11 +330,11 @@ void QUAD_POISSON::getEmptyLeaves(list<CELL*>& leaves, CELL* currentCell)
 void QUAD_POISSON::balance()
 {
     // collect all the leaf nodes
-    list<CELL*> leaves;
+    std::list<CELL*> leaves;
     getAllLeaves(leaves);
 
     // while the list is not empty
-    list<CELL*>::iterator cellIterator = leaves.begin();
+    std::list<CELL*>::iterator cellIterator = leaves.begin();
     for (cellIterator = leaves.begin(); cellIterator != leaves.end(); cellIterator++) {
         CELL* currentCell = *cellIterator;
 
@@ -394,10 +393,10 @@ void QUAD_POISSON::buildNeighbors()
     balance();
 
     // collect all the leaf nodes
-    list<CELL*> leaves;
+    std::list<CELL*> leaves;
     getAllLeaves(leaves);
 
-    list<CELL*>::iterator cellIterator = leaves.begin();
+    std::list<CELL*>::iterator cellIterator = leaves.begin();
     for (cellIterator = leaves.begin(); cellIterator != leaves.end(); cellIterator++)
     {
         CELL* currentCell = *cellIterator;

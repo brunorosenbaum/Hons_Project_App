@@ -13,6 +13,11 @@ CellMesh::~CellMesh()
 	BaseMesh::~BaseMesh();
 }
 
+void CellMesh::initBuffers(ID3D11Device* device)
+{
+    //
+}
+
 void CellMesh::initBuffers(ID3D11Device* device, CELL* cell)
 {
     VertexType* vertices;
@@ -86,6 +91,11 @@ CellBoundsMesh::~CellBoundsMesh()
 {
     BaseMesh::~BaseMesh();
 
+}
+
+void CellBoundsMesh::initBuffers(ID3D11Device* device)
+{
+    //
 }
 
 void CellBoundsMesh::initBuffers(ID3D11Device* device, CELL* cell)
