@@ -32,8 +32,11 @@ QUAD_POISSON::QUAD_POISSON(int xRes, int yRes,  ID3D11Device* device, ID3D11Devi
     //_noiseFunc->writeToBool(_noise, _maxRes);
 
     _solver = new CG_SOLVER(_maxDepth, iterations);
-    cellMesh = nullptr;
     cellBoundsMesh = nullptr;
+    cellMesh = new CellMesh(device, deviceContext);
+    cellBoundsMesh = new CellBoundsMesh(device, deviceContext);
+
+
 }
 
 QUAD_POISSON::~QUAD_POISSON()
@@ -53,14 +56,12 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
     CELL* cell, LinearSM* shader,
     XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
-    cellBoundsMesh = new CellBoundsMesh(device, deviceContext, cell);
    
-    //But im stuck, idk where to make this work outside of App2, in a different class
     //On top of that this method is to draw the cell bounds. Which uses different primitive topology
-    //but it's already taken care of in CellMesh.cpp
-    //Once we do this we should be pretty close to rendering the actual thing
+    XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[1] - cell->bounds[3], cell->bounds[0] - cell->bounds[2], 0.0f);
+    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
     cellBoundsMesh->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
-    shader->setShaderParameters(deviceContext, world, view, projection);
+    shader->setShaderParameters(deviceContext, cellMatrix, view, projection);
     shader->render(deviceContext, cellBoundsMesh->getIndexCount());
 
     // see if it's the root
@@ -76,6 +77,9 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
 }
 
 
+
+
+
 //////////////////////////////////////////////////////////////////////
 // draw the given cell
 //draws, in the shape of quads, each cell of the stencil/each node of the quadtree
@@ -84,9 +88,15 @@ void QUAD_POISSON::drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceCon
     CELL* cell, LinearSM* shader,
     XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
-    cellMesh = new CellMesh(device, deviceContext, cell);
+    //Instead of creating a new one, create one in the constructor and just update the data, 
+    //Take the updated positions of the cel and create a new matrix
+    //Then send matrix in setshaderparams like world, view etc
+    XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[1] - cell->bounds[3], cell->bounds[0] - cell->bounds[2], 0.0f); 
+    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
+
+    //cellMatrix *= XMMatrixScaling(1 - cell->bounds[0], 1 - cell->bounds[0], 0.0f);
 	cellMesh->sendData(deviceContext/*, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP*/);
-	shader->setShaderParameters(deviceContext, world, view, projection);
+	shader->setShaderParameters(deviceContext, cellMatrix, view, projection);
 	shader->render(deviceContext, cellMesh->getIndexCount());
 }
 

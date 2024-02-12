@@ -1,9 +1,9 @@
 #include "CellMesh.h"
 ///////////////////////////////////////// CELLS MESH //////////////////////////////////////////////////////
 
-CellMesh::CellMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext, CELL* cell)
+CellMesh::CellMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext/*, CELL* cell*/)
 {
-	initBuffers(device, cell);
+	initBuffers(device);
 
 }
 
@@ -13,12 +13,8 @@ CellMesh::~CellMesh()
 	BaseMesh::~BaseMesh();
 }
 
-void CellMesh::initBuffers(ID3D11Device* device)
-{
-    //
-}
 
-void CellMesh::initBuffers(ID3D11Device* device, CELL* cell)
+void CellMesh::initBuffers(ID3D11Device* device/*, CELL* cell*/)
 {
     VertexType* vertices;
     unsigned long* indices;
@@ -31,10 +27,10 @@ void CellMesh::initBuffers(ID3D11Device* device, CELL* cell)
     vertices = new VertexType[vertexCount];
     indices = new unsigned long[indexCount];
 
-    vertices[0].position = XMFLOAT3(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
-    vertices[1].position = XMFLOAT3(cell->bounds[1], 1.0f - cell->bounds[2], 0.0f);
-    vertices[2].position = XMFLOAT3(cell->bounds[3], 1.0f - cell->bounds[2], 0.0f);
-    vertices[3].position = XMFLOAT3(cell->bounds[3], 1.0f - cell->bounds[0], 0.0f);
+    vertices[0].position = XMFLOAT3(0, 0, 0.0f);
+    vertices[1].position = XMFLOAT3(0, 1, 0.0f);
+    vertices[2].position = XMFLOAT3(1, 1, 0.0f);
+    vertices[3].position = XMFLOAT3(1, 0, 0.0f);
     //vertices[4].position = XMFLOAT3(cell->bounds[0], 1.0f - cell->bounds[1], 0.0f);
 
     // Load the index array with data.
@@ -94,9 +90,9 @@ void CellMesh::sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLO
 
 ///////////////////////////////////////// CELLS BOUND MESH //////////////////////////////////////////////////////
 
-CellBoundsMesh::CellBoundsMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext, CELL* cell)
+CellBoundsMesh::CellBoundsMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext/*, CELL* cell*/)
 {
-    initBuffers(device, cell);
+    initBuffers(device);
 
 }
 
@@ -106,12 +102,8 @@ CellBoundsMesh::~CellBoundsMesh()
 
 }
 
-void CellBoundsMesh::initBuffers(ID3D11Device* device)
-{
-    //
-}
 
-void CellBoundsMesh::initBuffers(ID3D11Device* device, CELL* cell)
+void CellBoundsMesh::initBuffers(ID3D11Device* device /*CELL* cell*/)
 {
     VertexType* vertices;
     unsigned long* indices;
@@ -124,11 +116,11 @@ void CellBoundsMesh::initBuffers(ID3D11Device* device, CELL* cell)
     vertices = new VertexType[vertexCount];
     indices = new unsigned long[indexCount];
 
-    vertices[0].position = XMFLOAT3(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
-    vertices[1].position = XMFLOAT3(cell->bounds[1], 1.0f - cell->bounds[2], 0.0f);
-    vertices[2].position = XMFLOAT3(cell->bounds[3], 1.0f - cell->bounds[2], 0.0f);
-    vertices[3].position = XMFLOAT3(cell->bounds[3], 1.0f - cell->bounds[0], 0.0f);
-    vertices[4].position = XMFLOAT3(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
+    vertices[0].position = XMFLOAT3(0, 0, 0.0f);
+    vertices[1].position = XMFLOAT3(0, 1, 0.0f);
+    vertices[2].position = XMFLOAT3(1,1, 0.0f);
+    vertices[3].position = XMFLOAT3(1, 0, 0.0f);
+    vertices[4].position = XMFLOAT3(0, 0, 0.0f);
 
     // Load the index array with data.
     for (int i = 0; i < vertexCount; i++)
