@@ -68,7 +68,7 @@ bool App2_Cubes::render()
 	//linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
 	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
 	aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
-	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	//aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
 
 	// Render GUI
 	gui();

@@ -1,4 +1,7 @@
-
+cbuffer BoolBuffer : register(b0)
+{
+    bool isRed; 
+};
 struct InputType
 {
     float4 position : SV_POSITION;
@@ -10,5 +13,14 @@ struct InputType
 
 float4 main() : SV_TARGET
 {
-	return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    if(isRed)
+    {
+        return float4(1.0f, 0.0f, 0.0f, 1.0f);
+
+    }
+    else
+    {
+    return float4(1.0f, 1.0f, 1.0f, 0.1f);
+
+    }
 }

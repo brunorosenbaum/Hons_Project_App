@@ -293,7 +293,7 @@ void QUAD_DBM_2D::drawQuadtreeCells(ID3D11Device* device,
         else
             _quadPoisson->drawCell(device, deviceContext, *cellIterator, shader, world, view, projection);
     }
-    //_quadPoisson->draw(NULL); //TODO: THIS MIGHT THROW ERRORS
+    _quadPoisson->draw(device, deviceContext, NULL, shader, world, view, projection); //TODO: THIS MIGHT THROW ERRORS
 
    /* glPopMatrix();*/
 }

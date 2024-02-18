@@ -56,19 +56,21 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
     CELL* cell, LinearSM* shader,
     XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
-   
-    //On top of that this method is to draw the cell bounds. Which uses different primitive topology
-    XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[1] - cell->bounds[3], cell->bounds[0] - cell->bounds[2], 0.0f);
-    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
-    cellBoundsMesh->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
-    shader->setShaderParameters(deviceContext, cellMatrix, view, projection);
-    shader->render(deviceContext, cellBoundsMesh->getIndexCount());
-
     // see if it's the root
     if (cell == NULL) {
         draw(device, deviceContext, _root, shader, world, view, projection);
         return;
     }
+
+    //On top of that this method is to draw the cell bounds. Which uses different primitive topology
+    XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[3] - cell->bounds[1], cell->bounds[0] - cell->bounds[2], 0.0f);
+    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.1f);
+
+    cellBoundsMesh->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
+    shader->setShaderParameters(deviceContext, cellMatrix, view, projection, true);
+    shader->render(deviceContext, cellBoundsMesh->getIndexCount());
+
+    
 
     // draw the children
     for (int x = 0; x < 4; x++)
@@ -91,12 +93,12 @@ void QUAD_POISSON::drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceCon
     //Instead of creating a new one, create one in the constructor and just update the data, 
     //Take the updated positions of the cel and create a new matrix
     //Then send matrix in setshaderparams like world, view etc
-    XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[1] - cell->bounds[3], cell->bounds[0] - cell->bounds[2], 0.0f); 
-    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
+    XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[3] - cell->bounds[1], cell->bounds[0] - cell->bounds[2], 0.0f);
+    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.f);
 
     //cellMatrix *= XMMatrixScaling(1 - cell->bounds[0], 1 - cell->bounds[0], 0.0f);
 	cellMesh->sendData(deviceContext/*, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP*/);
-	shader->setShaderParameters(deviceContext, cellMatrix, view, projection);
+	shader->setShaderParameters(deviceContext, cellMatrix, view, projection, false);
 	shader->render(deviceContext, cellMesh->getIndexCount());
 }
 

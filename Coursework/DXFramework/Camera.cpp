@@ -8,7 +8,7 @@ Camera::Camera()
 	position = XMFLOAT3(0.f, 0.f, 0.f);
 	rotation = XMFLOAT3(0.f, 0.f, 0.f);
 
-	lookSpeed = 10.0f;
+	lookSpeed = 20.0f;
 
 	// Generate ortho matrix
 	XMVECTOR up, position, lookAt;
@@ -99,7 +99,7 @@ void Camera::moveForward()
 	float radians;
 
 	// Update the forward movement based on the frame time
-	speed = frameTime * 50.f;
+	speed = frameTime * 1.f;
 	
 	// Convert degrees to radians.
 	radians = rotation.y * 0.0174532f;
@@ -115,7 +115,7 @@ void Camera::moveBackward()
 	float radians;
 
 	// Update the backward movement based on the frame time
-	speed = frameTime * 50.f;// *0.5f;
+	speed = frameTime * 1.f;// *0.5f;
 
 	// Convert degrees to radians.
 	radians = rotation.y * 0.0174532f;
@@ -129,7 +129,7 @@ void Camera::moveBackward()
 void Camera::moveUpward()
 {
 	// Update the upward movement based on the frame time
-	speed = frameTime * 50.f;// *0.5f;
+	speed = frameTime * 1.f;// *0.5f;
 	
 	// Update the height position.
 	position.y += speed;
@@ -139,7 +139,7 @@ void Camera::moveUpward()
 void Camera::moveDownward()
 {
 	// Update the downward movement based on the frame time
-	speed = frameTime * 50.f;// *0.5f;
+	speed = frameTime * 1.f;// *0.5f;
 
 	// Update the height position.
 	position.y -= speed;
@@ -149,7 +149,7 @@ void Camera::moveDownward()
 void Camera::turnLeft()
 {
 	// Update the left turn movement based on the frame time 
-	speed = frameTime * 25.0f;
+	speed = frameTime * 5.0f;
 	
 	// Update the rotation.
 	rotation.y -= speed;
@@ -165,7 +165,7 @@ void Camera::turnLeft()
 void Camera::turnRight()
 {
 	// Update the right turn movement based on the frame time
-	speed = frameTime * 25.0f;
+	speed = frameTime * 5.0f;
 	
 	// Update the rotation.
 	rotation.y += speed;
@@ -182,7 +182,7 @@ void Camera::turnRight()
 void Camera::turnUp()
 {
 	// Update the upward rotation movement based on the frame time
-	speed = frameTime * 25.0f;
+	speed = frameTime * 5.0f;
 	
 	// Update the rotation.
 	rotation.x -= speed;
@@ -198,7 +198,7 @@ void Camera::turnUp()
 void Camera::turnDown()
 {
 	// Update the downward rotation movement based on the frame time
-	speed = frameTime * 25.0f;
+	speed = frameTime * 5.0f;
 
 	// Update the rotation.
 	rotation.x += speed;
@@ -224,7 +224,7 @@ void Camera::strafeRight()
 	float radians;
 
 	// Update the forward movement based on the frame time
-	speed = frameTime * 50.f;
+	speed = frameTime * 1.f;
 
 	// Convert degrees to radians.
 	radians = rotation.y * 0.0174532f;
@@ -240,7 +240,7 @@ void Camera::strafeLeft()
 	float radians;
 
 	// Update the forward movement based on the frame time
-	speed = frameTime * 50.f;
+	speed = frameTime * 1.f;
 
 	// Convert degrees to radians.
 	radians = rotation.y * 0.0174532f;
