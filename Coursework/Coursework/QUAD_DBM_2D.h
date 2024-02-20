@@ -43,6 +43,7 @@ public:
         /*glLineWidth(1.0f);
         glPushMatrix();
         glTranslatef(-0.5f, -0.5f, 0.0f);*/
+        world *= XMMatrixTranslation(-0.5f, -0.5f, 0.0f);
         _dag->draw(device, deviceContext, shader, world, view, projection);
         /*glPopMatrix();*/
     };

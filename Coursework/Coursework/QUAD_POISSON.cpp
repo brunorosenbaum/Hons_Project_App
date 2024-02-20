@@ -64,10 +64,10 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
 
     //On top of that this method is to draw the cell bounds. Which uses different primitive topology
     XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[3] - cell->bounds[1], cell->bounds[0] - cell->bounds[2], 0.0f);
-    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.1f);
+    cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.0f);
 
     cellBoundsMesh->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
-    shader->setShaderParameters(deviceContext, cellMatrix, view, projection, true);
+    shader->setShaderParameters(deviceContext, cellMatrix, view, projection, false);
     shader->render(deviceContext, cellBoundsMesh->getIndexCount());
 
     

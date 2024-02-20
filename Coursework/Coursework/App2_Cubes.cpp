@@ -68,8 +68,9 @@ bool App2_Cubes::render()
 	//linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
 	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
 	aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
-	//aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
-
+	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	addNodes();
+	renderGlow(1); 
 	// Render GUI
 	gui();
 
@@ -132,4 +133,85 @@ bool App2_Cubes::loadImages(string inputFile)
 	delete[] terminators;
 
 	return success;
+}
+
+void App2_Cubes::addNodes()
+{
+	
+		for (int x = 0; x < 100; x++)
+		{
+			bool success = aggregate->addParticle();
+
+			if (!success)
+			{
+				cout << " No nodes left to add! Is your terminator reachable?" << endl;
+				//exit(1);
+				return;
+			}
+
+			if (aggregate->hitGround())
+			{
+				///*glutPostRedisplay();
+				//cout << endl << endl;*/
+
+				//// write out the DAG file
+				//string lightningFile = inputFile.substr(0, inputFile.size() - 3) + string("lightning");
+				//cout << " Intermediate file " << lightningFile << " written." << endl;
+				//aggregate->writeDAG(lightningFile.c_str());
+
+				//// render the final EXR file
+				//renderGlow(outputFile, scale);
+				delete aggregate;
+				exit(0);
+			}
+		}
+	
+}
+
+////////////////////////////////////////////////////////////////////////////
+// render the glow
+////////////////////////////////////////////////////////////////////////////
+void App2_Cubes::renderGlow(/*string filename, */int scale)
+{
+	int w = aggregate->xDagRes() * scale;
+	int h = aggregate->yDagRes() * scale;
+
+	// draw the DAG
+	float*& source = aggregate->renderOffscreen(scale);
+
+	// if there is no input dimensions specified, else there were input
+	// image dimensions, so crop it
+	if (inputWidth == -1)
+	{
+		inputWidth = aggregate->inputWidth();
+		inputHeight = aggregate->inputHeight();
+	}
+
+	//// copy out the cropped version
+	//int wCropped = inputWidth * scale;
+	//int hCropped = inputHeight * scale;
+	//float* cropped = new float[wCropped * hCropped];
+	//cout << endl << " Generating EXR image width: " << wCropped << " height: " << hCropped << endl;
+	//for (int y = 0; y < hCropped; y++)
+	//	for (int x = 0; x < wCropped; x++)
+	//	{
+	//		int uncroppedIndex = x + y * w;
+	//		int croppedIndex = x + y * wCropped;
+	//		cropped[croppedIndex] = source[uncroppedIndex];
+	//	}
+
+	//// create the filter
+	//apsf.generateKernelFast();
+
+	//// convolve with FFT
+	//bool success = FFT::convolve(cropped, apsf.kernel(), wCropped, hCropped, apsf.res(), apsf.res());
+
+	//if (success) {
+	//	EXR::writeEXR(filename.c_str(), cropped, wCropped, hCropped);
+	//	cout << " " << filename << " written." << endl;
+	//}
+	//else
+	//	cout << " Final image generation failed." << endl;
+
+	//delete[] cropped;
 }

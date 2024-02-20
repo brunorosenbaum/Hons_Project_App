@@ -19,7 +19,7 @@ public:
 	~LineMesh();
 
 	//void sendData(ID3D11DeviceContext*);
-	void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D10_PRIMITIVE_TOPOLOGY_LINELIST) override;
+	void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP) override;
 
 protected:
 	void initBuffers(ID3D11Device* device);

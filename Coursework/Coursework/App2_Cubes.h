@@ -17,7 +17,10 @@ public:
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
 
 	bool frame();
-	bool loadImages(string inputFile); 
+	bool loadImages(string inputFile);
+	void addNodes(); 
+	void renderGlow(/*string filename,*/ int scale); 
+
 
 protected:
 	bool render();
@@ -32,6 +35,10 @@ private:
 	LinearSM* linearSM;
 	
 	QUAD_DBM_2D* aggregate;
-	int iterations = 10; 
+	int iterations = 10;
+
+	// input image info
+	int inputWidth = -1;
+	int inputHeight = -1;
 };
 

@@ -175,8 +175,8 @@ void DAG::drawNode(NODE* root,
         float xEnd = end[0] * dWidth + dWidth * 0.5f;
         float yEnd = 1.0f - end[1] * dHeight + dHeight * 0.5f; 
         lightning_mesh_ = new LightningMesh(device, deviceContext, xStart, yStart, xEnd, yEnd);
-        lightning_mesh_->sendData(deviceContext);
-        shader->setShaderParameters(deviceContext, world, view, projection, false);
+        lightning_mesh_->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
+        shader->setShaderParameters(deviceContext, world, view, projection, true);
         shader->render(deviceContext, lightning_mesh_->getIndexCount()); 
         /*glBegin(GL_LINES);
         glVertex3f(begin[0] * dWidth + dWidth * 0.5f, 1.0f - begin[1] * dHeight + dHeight * 0.5f, 0.1f);
