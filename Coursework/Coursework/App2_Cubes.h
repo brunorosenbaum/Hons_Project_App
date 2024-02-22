@@ -38,7 +38,7 @@ private:
 	LightningSM* lightningSM; 
 
 	QUAD_DBM_2D* aggregate;
-	int iterations = 10;
+	int iterations = 5;
 
 	// input image info
 	int inputWidth = -1;

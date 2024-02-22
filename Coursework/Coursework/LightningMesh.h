@@ -9,7 +9,7 @@ public:
 	~LightningMesh();
 
 	//void sendData(ID3D11DeviceContext*);
-	void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
+	void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 protected:
 	void initBuffers(ID3D11Device* device);

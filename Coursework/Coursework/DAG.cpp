@@ -178,10 +178,17 @@ void DAG::drawNode(NODE* root,
         float xEnd = end[0] * dWidth + dWidth * 0.5f;
         float yEnd = 1.0f - end[1] * dHeight + dHeight * 0.5f; 
 
-        XMMATRIX startTransl = XMMatrixTranslation(xStart, yStart, 0); 
-        XMMATRIX endTransl = XMMatrixTranslation(xEnd, yEnd, 0); 
-        lightning_mesh_->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
-        shader->setShaderParameters(deviceContext, world, view, projection, startTransl, endTransl);
+        XMMATRIX mScale = XMMatrixScaling(dWidth, dHeight, 1.0f);
+
+        XMMATRIX startTransl = XMMatrixTranslation(xStart, yStart, -0.25f); 
+       // XMMATRIX startScale = XMMatrixScaling(xStart, yStart, 0.1f); 
+        XMMATRIX endTransl = XMMatrixTranslation(xEnd, yEnd, -0.25f);
+       
+        XMMATRIX sTemp = mScale /** XMMatrixRotationZ(dHeight)*/ * startTransl;
+        /*XMMatrixMultiply*/
+        XMMATRIX eTemp = mScale /** XMMatrixRotationZ(dHeight)*/ * endTransl;
+        lightning_mesh_->sendData(deviceContext, D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+        shader->setShaderParameters(deviceContext, world, view, projection, sTemp, eTemp);
         shader->render(deviceContext, lightning_mesh_->getIndexCount()); 
         /*glBegin(GL_LINES);
         glVertex3f(begin[0] * dWidth + dWidth * 0.5f, 1.0f - begin[1] * dHeight + dHeight * 0.5f, 0.1f);

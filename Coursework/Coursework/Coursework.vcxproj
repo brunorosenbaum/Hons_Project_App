@@ -115,6 +115,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;DXFramework.lib;dxgi.lib;D3DCompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)/lib/debug</AdditionalLibraryDirectories>
+      <StackReserveSize>104857600</StackReserveSize>
     </Link>
     <FxCompile>
       <ObjectFileOutput>$(Directory)%(Filename).cso</ObjectFileOutput>

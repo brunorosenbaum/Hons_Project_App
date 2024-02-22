@@ -42,7 +42,7 @@ void LightningMesh::initBuffers(ID3D11Device* device)
 
 	// Load the vertex array with data.
 	vertices[0].position = XMFLOAT3(0, 0, 0.0f);  // Segment start
-	vertices[1].position = XMFLOAT3(0, 1, 0.0f);  // Segment end
+	vertices[1].position = XMFLOAT3(1, 0, 0.0f);  // Segment end
 
 	// Load the index array with data.
 	indices[0] = 0;  // Start

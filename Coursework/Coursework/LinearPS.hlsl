@@ -13,14 +13,15 @@ struct InputType
 
 float4 main() : SV_TARGET
 {
-    if(isRed)
-    {
-        return float4(1.0f, 0.0f, 0.0f, 1.0f);
+    //if(isRed)
+    //{
+    //    return float4(1.0f, 0.0f, 0.0f, 0.1f);
 
-    }
-    else
-    {
+    //}
+    //else
+    //{
+    //return float4(1.0f, 1.0f, 1.0f, 0.1f);
+
+    //}
     return float4(1.0f, 1.0f, 1.0f, 0.1f);
-
-    }
 }
