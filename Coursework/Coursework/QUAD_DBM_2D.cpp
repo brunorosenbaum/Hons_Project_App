@@ -18,7 +18,7 @@ QUAD_DBM_2D::QUAD_DBM_2D(ID3D11Device* device,
     _twister(123456)
 {
     allocate(device, deviceContext);
-    _dag = new DAG(_xRes, _yRes);
+    _dag = new DAG(_xRes, _yRes, device, deviceContext);
 
     // calculate dimensions
     _dx = 1.0f / (float)_xRes;

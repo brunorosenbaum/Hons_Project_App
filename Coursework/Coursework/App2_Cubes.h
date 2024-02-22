@@ -3,6 +3,7 @@
 // Includes
 #include "DXF.h"
 #include "LinearSM.h"
+#include "LightningSM.h"
 #include "QUAD_DBM_2D.h"
 #include "ppm\ppm.hpp"
 
@@ -19,7 +20,8 @@ public:
 	bool frame();
 	bool loadImages(string inputFile);
 	void addNodes(); 
-	void renderGlow(/*string filename,*/ int scale); 
+	void renderGlow(string filename, int scale);
+	void readLightningFile(); 
 
 
 protected:
@@ -33,12 +35,18 @@ private:
 	LineMesh* line_mesh_; 
 
 	LinearSM* linearSM;
-	
+	LightningSM* lightningSM; 
+
 	QUAD_DBM_2D* aggregate;
 	int iterations = 10;
 
 	// input image info
 	int inputWidth = -1;
 	int inputHeight = -1;
+
+	// input params
+	string inputFile;
+	string outputFile;
+
 };
 

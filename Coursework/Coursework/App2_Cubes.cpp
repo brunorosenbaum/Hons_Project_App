@@ -5,7 +5,7 @@ App2_Cubes::App2_Cubes()
 	plane_mesh_ = nullptr;
 	cube_mesh_ = nullptr;
 	line_mesh_ = nullptr;
-	
+
 
 }
 
@@ -16,8 +16,9 @@ void App2_Cubes::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scree
 	plane_mesh_ = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	cube_mesh_ = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	line_mesh_ = new LineMesh(renderer->getDevice(), renderer->getDeviceContext());
-	linearSM = new LinearSM(renderer->getDevice(), hwnd); 
-	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), 256, 256,  iterations);
+	linearSM = new LinearSM(renderer->getDevice(), hwnd);
+	lightningSM = new LightningSM(renderer->getDevice(), hwnd); 
+	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), 256, 256, iterations);
 
 }
 
@@ -67,10 +68,15 @@ bool App2_Cubes::render()
 	//line_mesh_->sendData(renderer->getDeviceContext());
 	//linearSM->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix);
 	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
+
+	//This is what Display() does in src code
 	aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
-	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), lightningSM, worldMatrix, viewMatrix, projectionMatrix);
+	//This is 'idle'
 	addNodes();
-	renderGlow(1); 
+	//See if input is a .lightning file
+	readLightningFile(); 
+
 	// Render GUI
 	gui();
 
@@ -121,8 +127,8 @@ bool App2_Cubes::loadImages(string inputFile)
 		}
 	}
 
-	if (aggregate) delete aggregate;
-	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), inputWidth, inputHeight, iterations);
+	//if (aggregate) delete aggregate;
+	//aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), inputWidth, inputHeight, iterations);
 	bool success = aggregate->readImage(start, attractor, repulsor, terminators, inputWidth, inputHeight);
 
 	// delete the memory
@@ -135,7 +141,7 @@ bool App2_Cubes::loadImages(string inputFile)
 	return success;
 }
 
-void App2_Cubes::addNodes()
+void App2_Cubes::addNodes() //CALLED IDLE() IN SRC CODE
 {
 	
 		for (int x = 0; x < 100; x++)
@@ -151,18 +157,18 @@ void App2_Cubes::addNodes()
 
 			if (aggregate->hitGround())
 			{
-				///*glutPostRedisplay();
-				//cout << endl << endl;*/
+				/*glutPostRedisplay();
+				cout << endl << endl;*/
 
-				//// write out the DAG file
-				//string lightningFile = inputFile.substr(0, inputFile.size() - 3) + string("lightning");
-				//cout << " Intermediate file " << lightningFile << " written." << endl;
-				//aggregate->writeDAG(lightningFile.c_str());
+				// write out the DAG file
+				string lightningFile = inputFile.substr(0, inputFile.size() - 3) + string("lightning");
+				cout << " Intermediate file " << lightningFile << " written." << endl;
+				aggregate->writeDAG(lightningFile.c_str());
 
-				//// render the final EXR file
-				//renderGlow(outputFile, scale);
-				delete aggregate;
-				exit(0);
+				// render the final EXR file
+				renderGlow(outputFile, 5);
+				//delete aggregate;
+				//exit(0);
 			}
 		}
 	
@@ -171,7 +177,7 @@ void App2_Cubes::addNodes()
 ////////////////////////////////////////////////////////////////////////////
 // render the glow
 ////////////////////////////////////////////////////////////////////////////
-void App2_Cubes::renderGlow(/*string filename, */int scale)
+void App2_Cubes::renderGlow(string filename, int scale)
 {
 	int w = aggregate->xDagRes() * scale;
 	int h = aggregate->yDagRes() * scale;
@@ -187,18 +193,18 @@ void App2_Cubes::renderGlow(/*string filename, */int scale)
 		inputHeight = aggregate->inputHeight();
 	}
 
-	//// copy out the cropped version
-	//int wCropped = inputWidth * scale;
-	//int hCropped = inputHeight * scale;
-	//float* cropped = new float[wCropped * hCropped];
-	//cout << endl << " Generating EXR image width: " << wCropped << " height: " << hCropped << endl;
-	//for (int y = 0; y < hCropped; y++)
-	//	for (int x = 0; x < wCropped; x++)
-	//	{
-	//		int uncroppedIndex = x + y * w;
-	//		int croppedIndex = x + y * wCropped;
-	//		cropped[croppedIndex] = source[uncroppedIndex];
-	//	}
+	// copy out the cropped version
+	int wCropped = inputWidth * scale;
+	int hCropped = inputHeight * scale;
+	float* cropped = new float[wCropped * hCropped];
+	cout << endl << " Generating EXR image width: " << wCropped << " height: " << hCropped << endl;
+	for (int y = 0; y < hCropped; y++)
+		for (int x = 0; x < wCropped; x++)
+		{
+			int uncroppedIndex = x + y * w;
+			int croppedIndex = x + y * wCropped;
+			cropped[croppedIndex] = source[uncroppedIndex];
+		}
 
 	//// create the filter
 	//apsf.generateKernelFast();
@@ -213,5 +219,24 @@ void App2_Cubes::renderGlow(/*string filename, */int scale)
 	//else
 	//	cout << " Final image generation failed." << endl;
 
-	//delete[] cropped;
+	delete[] cropped;
+}
+
+void App2_Cubes::readLightningFile()
+{
+
+	// see if the input is a *.lightning file
+	if (inputFile.size() > 10)
+	{
+		string postfix = inputFile.substr(inputFile.size() - 9, inputFile.size());
+
+		cout << " Using intermediate file " << inputFile << endl;
+		if (postfix == string("lightning"))
+		{
+			aggregate->readDAG(inputFile.c_str());
+			renderGlow(outputFile, 5);
+			delete aggregate;
+			return; //??????????????? kms
+		}
+	}
 }

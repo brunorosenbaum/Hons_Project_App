@@ -3,11 +3,13 @@
 
 #include <iostream>
 
+#include "LightningSM.h"
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-DAG::DAG(int xRes, int yRes) :
+DAG::DAG(int xRes, int yRes, ID3D11Device* device, ID3D11DeviceContext* deviceContext) :
     _xRes(xRes),
     _yRes(yRes),
     _width(xRes),
@@ -22,7 +24,8 @@ DAG::DAG(int xRes, int yRes) :
 {
     (_dx < _dy) ? _dy = _dx : _dy = _dx;
     _offscreenBuffer = NULL;
-    lightning_mesh_ = nullptr; 
+    //lightning_mesh_ = nullptr;
+    lightning_mesh_ = new LightningMesh(device, deviceContext);
 }
 
 DAG::~DAG()
@@ -136,7 +139,7 @@ void DAG::buildBranch(NODE* node, int depth)
 //////////////////////////////////////////////////////////////////////
 void DAG::drawNode(NODE* root, 
     ID3D11Device* device, ID3D11DeviceContext* deviceContext, 
-    LinearSM* shader,
+    LightningSM* shader,
     XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
     if (root == NULL) return;
@@ -174,9 +177,11 @@ void DAG::drawNode(NODE* root,
         float yStart = 1.0f - begin[1] * dHeight + dHeight * 0.5f;
         float xEnd = end[0] * dWidth + dWidth * 0.5f;
         float yEnd = 1.0f - end[1] * dHeight + dHeight * 0.5f; 
-        lightning_mesh_ = new LightningMesh(device, deviceContext, xStart, yStart, xEnd, yEnd);
+
+        XMMATRIX startTransl = XMMatrixTranslation(xStart, yStart, 0); 
+        XMMATRIX endTransl = XMMatrixTranslation(xEnd, yEnd, 0); 
         lightning_mesh_->sendData(deviceContext, D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
-        shader->setShaderParameters(deviceContext, world, view, projection, true);
+        shader->setShaderParameters(deviceContext, world, view, projection, startTransl, endTransl);
         shader->render(deviceContext, lightning_mesh_->getIndexCount()); 
         /*glBegin(GL_LINES);
         glVertex3f(begin[0] * dWidth + dWidth * 0.5f, 1.0f - begin[1] * dHeight + dHeight * 0.5f, 0.1f);
@@ -374,147 +379,147 @@ void DAG::findDeepest(NODE* root, NODE*& deepest)
     }
 }
 
-////////////////////////////////////////////////////////////////////////
-//// dump out line segments 
-////////////////////////////////////////////////////////////////////////
-//void DAG::write(const char* filename)
-//{
-//    // open file
-//    FILE* file;
-//    file = fopen(filename, "wb");
-//
-//    // write out total number of DAG nodes
-//    fwrite((void*)&_totalNodes, sizeof(int), 1, file);
-//    fwrite((void*)&_xRes, sizeof(int), 1, file);
-//    fwrite((void*)&_yRes, sizeof(int), 1, file);
-//    fwrite((void*)&_dx, sizeof(float), 1, file);
-//    fwrite((void*)&_dy, sizeof(float), 1, file);
-//    fwrite((void*)&_bottomHit, sizeof(int), 1, file);
-//    fwrite((void*)&_inputWidth, sizeof(int), 1, file);
-//    fwrite((void*)&_inputHeight, sizeof(int), 1, file);
-//
-//    // write out nodes
-//    writeNode(_root, file);
-//
-//    fclose(file);
-//}
+//////////////////////////////////////////////////////////////////////
+// dump out line segments 
+//////////////////////////////////////////////////////////////////////
+void DAG::write(const char* filename)
+{
+    // open file
+    FILE* file;
+    file = fopen(filename, "wb");
 
-////////////////////////////////////////////////////////////////////////
-//// read in line segments
-////////////////////////////////////////////////////////////////////////
-//void DAG::read(const char* filename)
-//{
-//
-//    // erase old DAG
-//    deleteNode(_root);
-//
-//    // open file
-//    FILE* file;
-//    file = fopen(filename, "rb");
-//    if (file == NULL)
-//    {
-//	    std::cout << "ERROR: " << filename << " is invalid." << std::endl;
-//        exit(1);
-//    }
-//
-//    // read in total number of DAG nodes
-//    fread((void*)&_totalNodes, sizeof(int), 1, file);
-//    fread((void*)&_xRes, sizeof(int), 1, file);
-//    fread((void*)&_yRes, sizeof(int), 1, file);
-//    fread((void*)&_dx, sizeof(float), 1, file);
-//    fread((void*)&_dy, sizeof(float), 1, file);
-//    fread((void*)&_bottomHit, sizeof(int), 1, file);
-//    fread((void*)&_inputWidth, sizeof(int), 1, file);
-//    fread((void*)&_inputHeight, sizeof(int), 1, file);
-//
-//    // clear _hash for use
-//    _hash.clear();
-//
-//    // read in all the DAG nodes
-//    for (int x = 0; x <= _totalNodes; x++)
-//        readNode(file);
-//
-//    fclose(file);
-//
-//    if (_bottomHit != -1)
-//        buildLeader(_bottomHit);
-//}
-//
-////////////////////////////////////////////////////////////////////////
-//// write out a DAG node
-////////////////////////////////////////////////////////////////////////
-//void DAG::writeNode(NODE* root, FILE* file)
-//{
-//    int x;
-//
-//    // write out neighbors
-//    int numNeighbors = root->neighbors.size();
-//    for (x = 0; x < numNeighbors; x++)
-//        writeNode(root->neighbors[x], file);
-//
-//    // write out this node
-//    fwrite((void*)&(root->index), sizeof(int), 1, file);
-//    int parent = (root->parent == NULL) ? -1 : root->parent->index;
-//    fwrite((void*)&parent, sizeof(int), 1, file);
-//    fwrite((void*)&(root->leader), sizeof(bool), 1, file);
-//    fwrite((void*)&(root->secondary), sizeof(bool), 1, file);
-//    fwrite((void*)&(root->depth), sizeof(int), 1, file);
-//    fwrite((void*)&numNeighbors, sizeof(int), 1, file);
-//    for (x = 0; x < numNeighbors; x++)
-//        fwrite((void*)&(root->neighbors[x]->index), sizeof(int), 1, file);
-//}
-//
-////////////////////////////////////////////////////////////////////////
-//// read in a DAG node
-////////////////////////////////////////////////////////////////////////
-//void DAG::readNode(FILE* file)
-//{
-//    // read in DAG data
-//    int index;
-//    int parent;
-//    bool leader;
-//    bool secondary;
-//    int depth;
-//    int numNeighbors;
-//    float potential;
-//    fread((void*)&index, sizeof(int), 1, file);
-//    fread((void*)&parent, sizeof(int), 1, file);
-//    fread((void*)&leader, sizeof(bool), 1, file);
-//    fread((void*)&secondary, sizeof(bool), 1, file);
-//    fread((void*)&depth, sizeof(int), 1, file);
-//    fread((void*)&numNeighbors, sizeof(int), 1, file);
-//
-//    // create the node
-//    NODE* node = new NODE(index);
-//    node->leader = leader;
-//    node->secondary = secondary;
-//    node->depth = depth;
-//
-//    // look up neighbors 
-//    std::map<int, NODE*>::iterator iter;
-//    for (int x = 0; x < numNeighbors; x++)
-//    {
-//        // read in the child index
-//        int neighborIndex;
-//        fread((void*)&neighborIndex, sizeof(int), 1, file);
-//
-//        // look up in hash table
-//        iter = _hash.find(neighborIndex);
-//
-//        // push onto the neighbor vector
-//        node->neighbors.push_back((*iter).second);
-//
-//        // set child's parent
-//        (*iter).second->parent = node;
-//    }
-//
-//    // add to hash table
-//    _hash.insert(std::map<int, NODE*>::value_type(index, node));
-//
-//    // search for root node
-//    if (parent == -1)
-//    {
-//        node->parent = NULL;
-//        _root = node;
-//    }
-//}
+    // write out total number of DAG nodes
+    fwrite((void*)&_totalNodes, sizeof(int), 1, file);
+    fwrite((void*)&_xRes, sizeof(int), 1, file);
+    fwrite((void*)&_yRes, sizeof(int), 1, file);
+    fwrite((void*)&_dx, sizeof(float), 1, file);
+    fwrite((void*)&_dy, sizeof(float), 1, file);
+    fwrite((void*)&_bottomHit, sizeof(int), 1, file);
+    fwrite((void*)&_inputWidth, sizeof(int), 1, file);
+    fwrite((void*)&_inputHeight, sizeof(int), 1, file);
+
+    // write out nodes
+    writeNode(_root, file);
+
+    fclose(file);
+}
+
+//////////////////////////////////////////////////////////////////////
+// read in line segments
+//////////////////////////////////////////////////////////////////////
+void DAG::read(const char* filename)
+{
+
+    // erase old DAG
+    deleteNode(_root);
+
+    // open file
+    FILE* file;
+    file = fopen(filename, "rb");
+    if (file == NULL)
+    {
+	    std::cout << "ERROR: " << filename << " is invalid." << std::endl;
+        exit(1);
+    }
+
+    // read in total number of DAG nodes
+    fread((void*)&_totalNodes, sizeof(int), 1, file);
+    fread((void*)&_xRes, sizeof(int), 1, file);
+    fread((void*)&_yRes, sizeof(int), 1, file);
+    fread((void*)&_dx, sizeof(float), 1, file);
+    fread((void*)&_dy, sizeof(float), 1, file);
+    fread((void*)&_bottomHit, sizeof(int), 1, file);
+    fread((void*)&_inputWidth, sizeof(int), 1, file);
+    fread((void*)&_inputHeight, sizeof(int), 1, file);
+
+    // clear _hash for use
+    _hash.clear();
+
+    // read in all the DAG nodes
+    for (int x = 0; x <= _totalNodes; x++)
+        readNode(file);
+
+    fclose(file);
+
+    if (_bottomHit != -1)
+        buildLeader(_bottomHit);
+}
+
+//////////////////////////////////////////////////////////////////////
+// write out a DAG node
+//////////////////////////////////////////////////////////////////////
+void DAG::writeNode(NODE* root, FILE* file)
+{
+    int x;
+
+    // write out neighbors
+    int numNeighbors = root->neighbors.size();
+    for (x = 0; x < numNeighbors; x++)
+        writeNode(root->neighbors[x], file);
+
+    // write out this node
+    fwrite((void*)&(root->index), sizeof(int), 1, file);
+    int parent = (root->parent == NULL) ? -1 : root->parent->index;
+    fwrite((void*)&parent, sizeof(int), 1, file);
+    fwrite((void*)&(root->leader), sizeof(bool), 1, file);
+    fwrite((void*)&(root->secondary), sizeof(bool), 1, file);
+    fwrite((void*)&(root->depth), sizeof(int), 1, file);
+    fwrite((void*)&numNeighbors, sizeof(int), 1, file);
+    for (x = 0; x < numNeighbors; x++)
+        fwrite((void*)&(root->neighbors[x]->index), sizeof(int), 1, file);
+}
+
+//////////////////////////////////////////////////////////////////////
+// read in a DAG node
+//////////////////////////////////////////////////////////////////////
+void DAG::readNode(FILE* file)
+{
+    // read in DAG data
+    int index;
+    int parent;
+    bool leader;
+    bool secondary;
+    int depth;
+    int numNeighbors;
+    float potential;
+    fread((void*)&index, sizeof(int), 1, file);
+    fread((void*)&parent, sizeof(int), 1, file);
+    fread((void*)&leader, sizeof(bool), 1, file);
+    fread((void*)&secondary, sizeof(bool), 1, file);
+    fread((void*)&depth, sizeof(int), 1, file);
+    fread((void*)&numNeighbors, sizeof(int), 1, file);
+
+    // create the node
+    NODE* node = new NODE(index);
+    node->leader = leader;
+    node->secondary = secondary;
+    node->depth = depth;
+
+    // look up neighbors 
+    std::map<int, NODE*>::iterator iter;
+    for (int x = 0; x < numNeighbors; x++)
+    {
+        // read in the child index
+        int neighborIndex;
+        fread((void*)&neighborIndex, sizeof(int), 1, file);
+
+        // look up in hash table
+        iter = _hash.find(neighborIndex);
+
+        // push onto the neighbor vector
+        node->neighbors.push_back((*iter).second);
+
+        // set child's parent
+        (*iter).second->parent = node;
+    }
+
+    // add to hash table
+    _hash.insert(std::map<int, NODE*>::value_type(index, node));
+
+    // search for root node
+    if (parent == -1)
+    {
+        node->parent = NULL;
+        _root = node;
+    }
+}

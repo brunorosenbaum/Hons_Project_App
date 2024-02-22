@@ -12,13 +12,13 @@
 ///Acyclic indicates that there are no cycles or closed loops within the graph.
 ///So, perfect to render a lightning structure. 
 ////////////////////////////////////////////////////////////////////
-class LinearSM; //Fwd declare
+class LightningSM; //Fwd declare
 ///
 class DAG
 {
 public:
     //! constructor
-    DAG(int xRes, int yRes);
+    DAG(int xRes, int yRes, ID3D11Device* device, ID3D11DeviceContext* deviceContext);
     //! destructor
     virtual ~DAG();
 
@@ -29,7 +29,7 @@ public:
     bool addSegment(int index, int neighbor);
 
     //! render
-    void draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, LinearSM* shader,
+    void draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext, LightningSM* shader,
         XMMATRIX world, XMMATRIX view, XMMATRIX projection)
     {
 	    drawNode(_root, device, deviceContext, shader, world, view, projection);
@@ -38,10 +38,10 @@ public:
     //! draw to an offscreen buffer
     float*& drawOffscreen(int scale = 1);
 
-    ////! read in a new DAG
-    //void read(const char* filename);
-    ////! write out the current DAG
-    //void write(const char* filename);
+    //! read in a new DAG
+    void read(const char* filename);
+    //! write out the current DAG
+    void write(const char* filename);
 
     //! quadtree x resolution accessor
     int xRes() { return _xRes; };
@@ -98,15 +98,15 @@ private:
     //! build side branch
     void buildBranch(NODE* node, int depth);
     //! draw a node to OpenGL
-    void drawNode(NODE* root, ID3D11Device* device, ID3D11DeviceContext* deviceContext, LinearSM* shader,
+    void drawNode(NODE* root, ID3D11Device* device, ID3D11DeviceContext* deviceContext, LightningSM* shader,
         XMMATRIX world, XMMATRIX view, XMMATRIX projection);
     //! find the deepest node in a given subtree
     void findDeepest(NODE* root, NODE*& deepest);
 
-    ////! read in a DAG node 
-    //void readNode(FILE* file);
-    ////! write out a DAG node 
-    //void writeNode(NODE* root, FILE* file);
+    //! read in a DAG node 
+    void readNode(FILE* file);
+    //! write out a DAG node 
+    void writeNode(NODE* root, FILE* file);
 
     //! total number of nodes in scene
     int _totalNodes;

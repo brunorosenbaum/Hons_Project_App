@@ -90,6 +90,9 @@
     <ClCompile Include="ppm\ppm.cpp">
       <Filter>Source Files\LaplacianGrowth</Filter>
     </ClCompile>
+    <ClCompile Include="LightningSM.cpp">
+      <Filter>Source Files\ShaderManagers\App2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
@@ -134,6 +137,9 @@
     <ClInclude Include="ppm\ppm.hpp">
       <Filter>Header Files\LaplacianGrowth</Filter>
     </ClInclude>
+    <ClInclude Include="LightningSM.h">
+      <Filter>Header Files\ShaderManagers\App2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightPS.hlsl">
@@ -152,6 +158,12 @@
       <Filter>Resource Files\App2</Filter>
     </FxCompile>
     <FxCompile Include="LinearPS.hlsl">
+      <Filter>Resource Files\App2</Filter>
+    </FxCompile>
+    <FxCompile Include="LightningVS.hlsl">
+      <Filter>Resource Files\App2</Filter>
+    </FxCompile>
+    <FxCompile Include="LightningPS.hlsl">
       <Filter>Resource Files\App2</Filter>
     </FxCompile>
   </ItemGroup>

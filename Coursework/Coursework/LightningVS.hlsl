@@ -6,6 +6,12 @@ cbuffer MatrixBuffer : register(b0)
 	matrix projectionMatrix;
 };
 
+cbuffer TranslationBuffer : register(b1)
+{
+	matrix start;
+	matrix end; 
+};
+
 struct InputType
 {
 	float4 position : POSITION;
@@ -25,9 +31,21 @@ struct OutputType
 OutputType main(InputType input)
 {
 	OutputType output;
-
 	
-	output.position = mul(input.position, worldMatrix);
+    float4 temp = input.position;
+    if (temp.y == 1) //If the vertex's position is (0, 1) which means this is the end, 
+    { //Multiply by translation matrix on x and y for segment end
+        matrix m = mul(end, worldMatrix);
+        output.position = mul(input.position, m);
+		
+    }
+	else //It's the start
+    { //Multiply by translation matrix on x and y for segment start
+        matrix m = mul(start, worldMatrix);
+		output.position = mul(input.position, m);
+		
+    }
+	
 	output.position = mul(output.position, viewMatrix);
 	output.position = mul(output.position, projectionMatrix);
 
@@ -38,3 +56,4 @@ OutputType main(InputType input)
 
 	return output;
 }
+

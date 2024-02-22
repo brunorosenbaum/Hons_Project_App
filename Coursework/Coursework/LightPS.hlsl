@@ -19,6 +19,7 @@ struct InputType
 
 float4 main(InputType input) : SV_TARGET
 {
+    
     float4 directionalColor = calculateDirectionalLighting(direction, input.normal, diffuse[0], ambient);
     float4 pointColor = calculatePositionLighting(input.worldPosition, position[1], input.normal, diffuse[1], ambient); 
     float4 finalColor = directionalColor + pointColor; 

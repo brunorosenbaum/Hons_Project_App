@@ -38,7 +38,7 @@ public:
         LinearSM* shader, XMMATRIX world, XMMATRIX view, XMMATRIX projection);
 
     //! draw the DAG to OpenGL - This is the lightning! 
-    void drawSegments(ID3D11Device* device, ID3D11DeviceContext* deviceContext, LinearSM* shader,
+    void drawSegments(ID3D11Device* device, ID3D11DeviceContext* deviceContext, LightningSM* shader,
         XMMATRIX world, XMMATRIX view, XMMATRIX projection) {
         /*glLineWidth(1.0f);
         glPushMatrix();
@@ -74,11 +74,11 @@ public:
         unsigned char* terminators,
         int xRes, int yRes);
 
-    ////! read in a new DAG
-    //void readDAG(const char* filename) { _dag->read(filename); };
+    //! read in a new DAG
+    void readDAG(const char* filename) { _dag->read(filename); };
 
-    ////! write out the current DAG
-    //void writeDAG(const char* filename) { _dag->write(filename); };
+    //! write out the current DAG
+    void writeDAG(const char* filename) { _dag->write(filename); };
 
     /// \brief render to a software-only buffer
     ///
