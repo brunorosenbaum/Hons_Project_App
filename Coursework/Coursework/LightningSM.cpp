@@ -55,7 +55,7 @@ void LightningSM::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	MatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
-
+	//Step 2 of Erins rsrc goes here 
 	// Transpose the matrices to prepare them for the shader.
 	tworld = XMMatrixTranspose(world);
 	tview = XMMatrixTranspose(view);

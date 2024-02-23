@@ -48,7 +48,8 @@ void LightningMesh::initBuffers(ID3D11Device* device)
 	indices[0] = 0;  // Start
 	indices[1] = 1;  // End
 
-
+	//https://learn.microsoft.com/en-us/windows/win32/direct3d11/how-to--use-dynamic-resources
+	// Step 1 goes here
 	// Set up the description of the static vertex buffer.
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufferDesc.ByteWidth = sizeof(VertexType) * vertexCount;
