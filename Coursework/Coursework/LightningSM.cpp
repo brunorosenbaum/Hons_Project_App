@@ -34,24 +34,36 @@ void LightningSM::initShader(const wchar_t* vs, const wchar_t* ps)
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
 
-	D3D11_BUFFER_DESC boolBufferDesc;
+	//D3D11_BUFFER_DESC boolBufferDesc;
+	//loadVertexShader(vs);
+	//loadPixelShader(ps);
+
+	//// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
+	//boolBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	//boolBufferDesc.ByteWidth = sizeof(TranslationBufferType);
+	//boolBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//boolBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	//boolBufferDesc.MiscFlags = 0;
+	//boolBufferDesc.StructureByteStride = 0;
+	//renderer->CreateBuffer(&boolBufferDesc, NULL, &translationBuffer);
+
+	D3D11_BUFFER_DESC dynvertxBuffer;
 	loadVertexShader(vs);
 	loadPixelShader(ps);
-
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
-	boolBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	boolBufferDesc.ByteWidth = sizeof(TranslationBufferType);
-	boolBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	boolBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	boolBufferDesc.MiscFlags = 0;
-	boolBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&boolBufferDesc, NULL, &translationBuffer);
+	dynvertxBuffer.Usage = D3D11_USAGE_DYNAMIC;
+	dynvertxBuffer.ByteWidth = sizeof(DynamicVertexBufferType);
+	dynvertxBuffer.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	dynvertxBuffer.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	dynvertxBuffer.MiscFlags = 0;
+	dynvertxBuffer.StructureByteStride = 0;
+	renderer->CreateBuffer(&dynvertxBuffer, NULL, &dynVertxBuffer);
 }
 void LightningSM::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view,
-	const XMMATRIX& projection, XMMATRIX start_, XMMATRIX end_)
+	const XMMATRIX& projection, XMFLOAT2 start_, XMFLOAT2 end_)
 {
 	HRESULT result;
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	D3D11_MAPPED_SUBRESOURCE mappedResource; 
 	MatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
@@ -60,8 +72,9 @@ void LightningSM::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	tworld = XMMatrixTranspose(world);
 	tview = XMMatrixTranspose(view);
 	tproj = XMMatrixTranspose(projection);
+	//Disable GPU access to the data (using write discard)
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr = (MatrixBufferType*)mappedResource.pData; 
 	dataPtr->world = tworld;// worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
@@ -69,17 +82,36 @@ void LightningSM::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	TranslationBufferType* translPtr;
-	deviceContext->Map(translationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	translPtr = (TranslationBufferType*)mappedResource.pData;
-	//Transpose
-	XMMATRIX tStart, tEnd;
-	tStart = XMMatrixTranspose(start_); 
-	tEnd = XMMatrixTranspose(end_); 
-	translPtr->start = tStart; 
-	translPtr->end = tEnd; 
-	deviceContext->Unmap(translationBuffer, 0);
-	deviceContext->VSSetConstantBuffers(1, 1, &translationBuffer);
+	//TranslationBufferType* translPtr;
+	//deviceContext->Map(translationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	//translPtr = (TranslationBufferType*)mappedResource.pData;
+	////Transpose
+	//XMMATRIX tStart, tEnd;
+	//tStart = XMMatrixTranspose(start_); 
+	//tEnd = XMMatrixTranspose(end_); 
+	//translPtr->start = tStart; 
+	//translPtr->end = tEnd; 
+	//deviceContext->Unmap(translationBuffer, 0);
+	//deviceContext->VSSetConstantBuffers(1, 1, &translationBuffer);
+
+	D3D11_MAPPED_SUBRESOURCE VXmappedResource; //Initialize variable to 0,
+	ZeroMemory(&VXmappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));//as you'll use it to change the resource
+	//Pass into this array the data the new lines must be offset to 
+	XMFLOAT2 vertxTransform[] = {
+		XMFLOAT2(start_.x, start_.y),
+		XMFLOAT2(end_.x, end_.y)
+	};
+	DynamicVertexBufferType* vertexPtr;
+
+	//  Disable GPU access to the vertex buffer data.
+	deviceContext->Map(dynVertxBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	//  Update the vertex buffer here.
+	vertexPtr = (DynamicVertexBufferType*)mappedResource.pData;
+	vertexPtr->start = vertxTransform[0]; //Then initialize the struct's members to that
+	vertexPtr->end = vertxTransform[1];
+	//  Reenable GPU access to the vertex buffer data.
+	deviceContext->Unmap(dynVertxBuffer, 0);
+	deviceContext->VSSetConstantBuffers(1, 1, &dynVertxBuffer);
 
 }
 

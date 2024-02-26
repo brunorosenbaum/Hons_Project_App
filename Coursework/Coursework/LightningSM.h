@@ -8,17 +8,24 @@ public:
 	~LightningSM();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection, 
-		XMMATRIX start, XMMATRIX end);
+		XMFLOAT2 start, XMFLOAT2 end);
 protected:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
 private:
 	ID3D11Buffer* matrixBuffer;
-	ID3D11Buffer* translationBuffer;
+	//ID3D11Buffer* translationBuffer;
+	ID3D11Buffer* dynVertxBuffer;
 protected:
-	struct TranslationBufferType
+	//struct TranslationBufferType
+	//{
+	//	XMMATRIX start;
+	//	XMMATRIX end;
+	//};
+	struct DynamicVertexBufferType
 	{
-		XMMATRIX start;
-		XMMATRIX end;
+		XMFLOAT2 start;
+		XMFLOAT2 end;
 	};
+	
 };
 

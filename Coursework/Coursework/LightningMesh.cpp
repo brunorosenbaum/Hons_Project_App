@@ -42,7 +42,7 @@ void LightningMesh::initBuffers(ID3D11Device* device)
 
 	// Load the vertex array with data.
 	vertices[0].position = XMFLOAT3(0, 0, 0.0f);  // Segment start
-	vertices[1].position = XMFLOAT3(1, 0, 0.0f);  // Segment end
+	vertices[1].position = XMFLOAT3(0, 1, 0.0f);  // Segment end
 
 	// Load the index array with data.
 	indices[0] = 0;  // Start
@@ -51,10 +51,11 @@ void LightningMesh::initBuffers(ID3D11Device* device)
 	//https://learn.microsoft.com/en-us/windows/win32/direct3d11/how-to--use-dynamic-resources
 	// Step 1 goes here
 	// Set up the description of the static vertex buffer.
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	//If you want to make dynamic changes to resources, the buffer description's usage has to be set to dynamic
+	vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	vertexBufferDesc.ByteWidth = sizeof(VertexType) * vertexCount;
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //Set it as writeable instead of 0!!
 	vertexBufferDesc.MiscFlags = 0;
 	vertexBufferDesc.StructureByteStride = 0;
 	// Give the subresource structure a pointer to the vertex data.
