@@ -16,26 +16,8 @@
     <Filter Include="Source Files\ShaderManagers">
       <UniqueIdentifier>{4f418244-520a-41d3-af7e-9079520a2962}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\App1">
-      <UniqueIdentifier>{838b5c3e-b293-4f18-a9e4-8d2ad09017eb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\ShaderManagers">
       <UniqueIdentifier>{3a0d3d56-9d30-4405-ab2d-7a6436a89ece}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\ShaderManagers\App1">
-      <UniqueIdentifier>{1fc8ebb0-facf-46bc-9005-4693167434d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\ShaderManagers\App1">
-      <UniqueIdentifier>{fc1c9c0e-cbc8-41ed-8107-c9c0200c5d89}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\ShaderManagers\App2">
-      <UniqueIdentifier>{5b54061b-fcf3-4f81-af7c-f306f8084217}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\ShaderManagers\App2">
-      <UniqueIdentifier>{5229ccdb-27d3-431d-8e0b-2ad47a431e1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\App2">
-      <UniqueIdentifier>{d868dcbb-6719-4075-8971-70e1d7bf89d5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\LaplacianGrowth">
       <UniqueIdentifier>{d0c39a55-a295-4c03-824f-8b75b9eddae1}</UniqueIdentifier>
@@ -45,23 +27,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="App1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="App2_Cubes.cpp">
+    <ClCompile Include="LightningApp.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LightsSM.cpp">
-      <Filter>Source Files\ShaderManagers\App1</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureSM.cpp">
-      <Filter>Source Files\ShaderManagers\App1</Filter>
-    </ClCompile>
-    <ClCompile Include="LinearSM.cpp">
-      <Filter>Source Files\ShaderManagers\App2</Filter>
     </ClCompile>
     <ClCompile Include="CELL.cpp">
       <Filter>Source Files\LaplacianGrowth</Filter>
@@ -91,24 +61,15 @@
       <Filter>Source Files\LaplacianGrowth</Filter>
     </ClCompile>
     <ClCompile Include="LightningSM.cpp">
-      <Filter>Source Files\ShaderManagers\App2</Filter>
+      <Filter>Source Files\ShaderManagers</Filter>
+    </ClCompile>
+    <ClCompile Include="LinearSM.cpp">
+      <Filter>Source Files\ShaderManagers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="App1.h">
+    <ClInclude Include="LightningApp.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="App2_Cubes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LightsSM.h">
-      <Filter>Header Files\ShaderManagers\App1</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureSM.h">
-      <Filter>Header Files\ShaderManagers\App1</Filter>
-    </ClInclude>
-    <ClInclude Include="LinearSM.h">
-      <Filter>Header Files\ShaderManagers\App2</Filter>
     </ClInclude>
     <ClInclude Include="CELL.h">
       <Filter>Header Files\LaplacianGrowth</Filter>
@@ -138,38 +99,24 @@
       <Filter>Header Files\LaplacianGrowth</Filter>
     </ClInclude>
     <ClInclude Include="LightningSM.h">
-      <Filter>Header Files\ShaderManagers\App2</Filter>
+      <Filter>Header Files\ShaderManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="LinearSM.h">
+      <Filter>Header Files\ShaderManagers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="LightPS.hlsl">
-      <Filter>Resource Files\App1</Filter>
-    </FxCompile>
-    <FxCompile Include="LightVS.hlsl">
-      <Filter>Resource Files\App1</Filter>
-    </FxCompile>
-    <FxCompile Include="TexturePS.hlsl">
-      <Filter>Resource Files\App1</Filter>
-    </FxCompile>
-    <FxCompile Include="TextureVS.hlsl">
-      <Filter>Resource Files\App1</Filter>
-    </FxCompile>
     <FxCompile Include="LinearVS.hlsl">
-      <Filter>Resource Files\App2</Filter>
-    </FxCompile>
-    <FxCompile Include="LinearPS.hlsl">
-      <Filter>Resource Files\App2</Filter>
+      <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="LightningVS.hlsl">
-      <Filter>Resource Files\App2</Filter>
+      <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="LightningPS.hlsl">
-      <Filter>Resource Files\App2</Filter>
+      <Filter>Resource Files</Filter>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LightingCalcs.hlsli">
-      <Filter>Resource Files\App1</Filter>
-    </None>
+    <FxCompile Include="LinearPS.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

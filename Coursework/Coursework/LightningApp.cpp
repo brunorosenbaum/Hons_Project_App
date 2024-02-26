@@ -1,6 +1,6 @@
-#include "App2_Cubes.h"
+#include "LightningApp.h"
 
-App2_Cubes::App2_Cubes()
+LightningApp::LightningApp()
 {
 	plane_mesh_ = nullptr;
 	cube_mesh_ = nullptr;
@@ -9,7 +9,7 @@ App2_Cubes::App2_Cubes()
 
 }
 
-void App2_Cubes::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC,
+void LightningApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC,
 	bool FULL_SCREEN)
 {
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
@@ -22,7 +22,7 @@ void App2_Cubes::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scree
 
 }
 
-App2_Cubes::~App2_Cubes()
+LightningApp::~LightningApp()
 {
 	BaseApplication::~BaseApplication();
 	if (plane_mesh_) { delete plane_mesh_; plane_mesh_ = 0; }
@@ -31,7 +31,7 @@ App2_Cubes::~App2_Cubes()
 
 }
 
-bool App2_Cubes::frame()
+bool LightningApp::frame()
 {
 	bool result = BaseApplication::frame();
 	if (!result)
@@ -49,7 +49,7 @@ bool App2_Cubes::frame()
 	return true;
 }
 
-bool App2_Cubes::render()
+bool LightningApp::render()
 {
 	renderer->beginScene(0.19f, 0.03f, 0.36f, 1.0f);
 	camera->update();
@@ -86,7 +86,7 @@ bool App2_Cubes::render()
 	return true;
 }
 
-void App2_Cubes::gui()
+void LightningApp::gui()
 {
 	// Force turn off unnecessary shader stages.
 	renderer->getDeviceContext()->GSSetShader(NULL, NULL, 0);
@@ -99,7 +99,7 @@ void App2_Cubes::gui()
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool App2_Cubes::loadImages(string inputFile)
+bool LightningApp::loadImages(string inputFile)
 {
 	// load the files
 	int inputWidth = -1;
@@ -141,7 +141,7 @@ bool App2_Cubes::loadImages(string inputFile)
 	return success;
 }
 
-void App2_Cubes::addNodes() //CALLED IDLE() IN SRC CODE
+void LightningApp::addNodes() //CALLED IDLE() IN SRC CODE
 {
 	
 		for (int x = 0; x < 100; x++)
@@ -177,7 +177,7 @@ void App2_Cubes::addNodes() //CALLED IDLE() IN SRC CODE
 ////////////////////////////////////////////////////////////////////////////
 // render the glow
 ////////////////////////////////////////////////////////////////////////////
-void App2_Cubes::renderGlow(string filename, int scale)
+void LightningApp::renderGlow(string filename, int scale)
 {
 	int w = aggregate->xDagRes() * scale;
 	int h = aggregate->yDagRes() * scale;
@@ -222,7 +222,7 @@ void App2_Cubes::renderGlow(string filename, int scale)
 	delete[] cropped;
 }
 
-void App2_Cubes::readLightningFile()
+void LightningApp::readLightningFile()
 {
 
 	// see if the input is a *.lightning file

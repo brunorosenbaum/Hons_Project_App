@@ -168,39 +168,33 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="App1.cpp" />
-    <ClCompile Include="App2_Cubes.cpp" />
+    <ClCompile Include="LightningApp.cpp" />
     <ClCompile Include="CELL.cpp" />
     <ClCompile Include="CellMesh.cpp" />
     <ClCompile Include="CG_SOLVER.cpp" />
     <ClCompile Include="DAG.cpp" />
     <ClCompile Include="LightningMesh.cpp" />
     <ClCompile Include="LightningSM.cpp" />
-    <ClCompile Include="LightsSM.cpp" />
     <ClCompile Include="LinearSM.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ppm\ppm.cpp" />
     <ClCompile Include="QUAD_DBM_2D.cpp" />
     <ClCompile Include="QUAD_POISSON.cpp" />
     <ClCompile Include="RNG.cpp" />
-    <ClCompile Include="TextureSM.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="App1.h" />
-    <ClInclude Include="App2_Cubes.h" />
+    <ClInclude Include="LightningApp.h" />
     <ClInclude Include="CELL.h" />
     <ClInclude Include="CellMesh.h" />
     <ClInclude Include="CG_SOLVER.h" />
     <ClInclude Include="DAG.h" />
     <ClInclude Include="LightningMesh.h" />
     <ClInclude Include="LightningSM.h" />
-    <ClInclude Include="LightsSM.h" />
     <ClInclude Include="LinearSM.h" />
     <ClInclude Include="ppm\ppm.hpp" />
     <ClInclude Include="QUAD_DBM_2D.h" />
     <ClInclude Include="QUAD_POISSON.h" />
     <ClInclude Include="RNG.h" />
-    <ClInclude Include="TextureSM.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DXFramework\DXFramework.vcxproj">
@@ -220,18 +214,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="LightPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="LightVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
     <FxCompile Include="LinearPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -244,21 +226,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="TexturePS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="TextureVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LightingCalcs.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

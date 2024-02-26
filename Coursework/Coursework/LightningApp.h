@@ -8,12 +8,12 @@
 #include "ppm\ppm.hpp"
 
 
-class App2_Cubes : public BaseApplication
+class LightningApp : public BaseApplication
 {
 public:
 
-	App2_Cubes();
-	~App2_Cubes();
+	LightningApp();
+	~LightningApp();
 
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
 
