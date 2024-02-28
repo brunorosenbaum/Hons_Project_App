@@ -53,23 +53,27 @@ void CG_SOLVER::reallocate()
 }
 
 //////////////////////////////////////////////////////////////////////
-// conjugate gradient solver - This method takes in a list of CELL ptrs. 
+// conjugate gradient solver 
 //////////////////////////////////////////////////////////////////////
 int CG_SOLVER::solve(std::list<CELL*> cells)
 {
-    // counters
+    //This method takes in a list of CELL ptrs, and then creates an iterator to go through them.
+
+    // counters - TODO: MAKE SENSE OF THIS
     int x, y, index;
 
-    //ITERATOR of a LIST of CELL object POINTERS, which is exactly what we have for our grid representation
+    //Cell* type list iterator for our list. This goes through the grid, one cell at a time. 
     std::list<CELL*>::iterator cellIterator; 
 
-    // i = 0 (Current number of iterations. Set to 0 at first)
+    //Current number of iterations. Set to 0 at first.
     int i = 0; 
 
-    // precalculate stencils - bc Laplace's eq can be solved by
-    // limiting the possible values of variables in the model (CONSTRAINT) of the grid cells
-    //  according to the Laplacian stencil... which coincidentally is a quadtree,
-    //  since it's a 5 pt Laplacian stencil is a point in the grid together with its NESW neighbors
+    // Precalculate stencils - bc Laplace's eq can be solved by
+    //  limiting the possible values of variables in the model (this is called CONSTRAINT)
+    //  of the grid cells according to the Laplacian stencil
+    //  ... which is represented with a quadtree.
+    //  Since it's a 5 point Laplacian stencil,
+    //  it's a cell in the grid together with its NESW neighbors
     calcStencils(cells);
 
     // reallocate scratch arrays if necessary
@@ -199,47 +203,57 @@ float CG_SOLVER::calcResidual(std::list<CELL*> cells)
 // cells according to the 5 point Laplacian stencil(Figure 1(b)).
 //These constraints produce a linear system that can then be
 // solved with an efficient solver such as conjugate gradient.
+
 //////////////////////////////////////////////////////////////////////
 void CG_SOLVER::calcStencils(std::list<CELL*> cells)
 {
-	std::list<CELL*>::iterator cellIterator = cells.begin();
-    for (cellIterator = cells.begin(); cellIterator != cells.end(); cellIterator++)
+    //Takes in a list of the cells in the grid
+
+	std::list<CELL*>::iterator cellIterator = cells.begin(); //Iterator 
+
+    for (cellIterator = cells.begin(); cellIterator != cells.end(); cellIterator++) //Iterate through the list
     {
-        CELL* currentCell = *cellIterator;
-        float invDx = 1.0f / _dx[currentCell->depth];
+        CELL* currentCell = *cellIterator; //Current cell 
+        float invDx = 1.0f / _dx[currentCell->depth]; //invDx = 1/(x length of the cell in that depth. the deeper, the smaller)
+        //Therefore, as we go deeper in the tree --> invDx's value gets larger.
+        //In the paper Dx == DELTAx
 
-        // sum over faces
-        float deltaSum = 0.0f;
-        float bSum = 0.0f;
+        // sum over faces TODO: HUH? Look up symmetric discretization on the paper
+        float deltaSum = 0.0f; //Sum of all stencils?
+        float bSum = 0.0f; //Boundary sum?
 
-        for (int x = 0; x < 4; x++)
+        for (int x = 0; x < 4; x++) //Stencil weight is calculated 4 times - once per stencil member
         {
-            int i = x * 2;
-            currentCell->stencil[i] = 0.0f;
-            currentCell->stencil[i + 1] = 0.0f;
+            int i = x * 2; //i = The index of each stencil. Values for this each iteration are 0, 2, 4, 6.
+            currentCell->stencil[i] = 0.0f; //This is because neighbors 0, 2, 4 & 6 should always exist,
+            currentCell->stencil[i + 1] = 0.0f; //and neighbors 1, 3, 5 & 7 may not exist if it's not very refined.
+            //Either way both are initialized to 0. 
 
-            if (currentCell->neighbors[i + 1] == NULL) {
-                // if it is the same refinement level (case 1)
+            if (currentCell->neighbors[i + 1] == NULL) { //If neighbors 1, 3, 5 & 7 do not contain data
+                //We're only considering the data of 0, 2, 4 & 6 and adding it to the total stencil weight and boundary sums.
+
+                // If current cell is at the same refinement level of its neighbors (case 1) ((Same size))
                 if (currentCell->depth == currentCell->neighbors[i]->depth) {
-                    deltaSum += invDx;
-                    if (!currentCell->neighbors[i]->boundary)
-                        currentCell->stencil[i] = invDx;
-                    else
-                        bSum += (currentCell->neighbors[i]->potential) * invDx;
+                    deltaSum += invDx; //Add invDx to the sum of stencil weight
+                    if (!currentCell->neighbors[i]->boundary)//If the neighbor's boundary is not gonna be included in solver
+                        currentCell->stencil[i] = invDx; //Set stencil weight to invDx
+                    else //If it's gonna be included
+                        bSum += (currentCell->neighbors[i]->potential) * invDx; //Multiply neighbor's phi * 1/dx and add to the boundary sum
                 }
-                // else it is less refined (case 3)
+                // else it is less refined (case 3) ((Current cell bigger than the neighbors))
                 else {
-                    deltaSum += 0.5f * invDx;
+                    deltaSum += 0.5f * invDx; //Add half of invDx to the sum of stencil weight (half the square) 
                     if (!currentCell->neighbors[i]->boundary)
-                        currentCell->stencil[i] = 0.5f * invDx;
+                        currentCell->stencil[i] = 0.5f * invDx; //Set stencil weight to half of invDx
                     else
-                        bSum += currentCell->neighbors[i]->potential * 0.5f * invDx;
+                        bSum += currentCell->neighbors[i]->potential * 0.5f * invDx; //phi * 0.5 * 1/dx
                 }
             }
-            // if the neighbor is at a lower level (case 2)
+            // if the neighbor is at a lower level (case 2) - ((neighbors 1, 3, 5 & 7 contain data, and are bigger than current cell))
+            //We're also considering the data of 1, 3, 5 & 7 and adding it to the total stencil weight and boundary sums.
             else {
-                deltaSum += 2.0f * invDx;
-                if (!currentCell->neighbors[i]->boundary)
+                deltaSum += 2.0f * invDx; //Add double invDx to the sum of stencil weight
+                if (!currentCell->neighbors[i]->boundary) 
                     currentCell->stencil[i] = invDx;
                 else
                     bSum += currentCell->neighbors[i]->potential * invDx;
@@ -250,7 +264,8 @@ void CG_SOLVER::calcStencils(std::list<CELL*> cells)
             }
         }
 
-        currentCell->stencil[8] = deltaSum;
-        currentCell->b = bSum;
+        currentCell->stencil[8] = deltaSum; //Central stencil weight = sum of the neighbors depending on size
+        //LAPLACE'S EQUATION: Laplacian^2 * phi = 0
+        currentCell->b = bSum; //Here, we set that 0 to the boundary sum. 
     }
 }
