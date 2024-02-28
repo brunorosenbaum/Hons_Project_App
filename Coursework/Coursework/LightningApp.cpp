@@ -59,7 +59,7 @@ bool LightningApp::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	// read in the *.ppm input file
-	string inputFile = "examples/hint.ppm"; 
+	string inputFile = "examples/spine.ppm"; 
 	if (!loadImages(inputFile))
 	{
 		cout << " ERROR: " << inputFile.c_str() << " is not a valid PPM file." << endl;
@@ -70,7 +70,7 @@ bool LightningApp::render()
 	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
 
 	//This is what Display() does in src code
-	//aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
 	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), lightningSM, worldMatrix, viewMatrix, projectionMatrix);
 	//This is 'idle'
 	addNodes();
