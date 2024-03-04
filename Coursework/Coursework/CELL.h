@@ -106,7 +106,7 @@ public:
          stencils 1,3,5,7 may or may not exist. If they are not
          present, the pointer value should be NULL.    */
 
-    float center[2];    ///< center of the cell (coordinates)
+    float center[2];    ///< center of the cell (xy coordinates)
     int depth;          ///< current tree depth
     bool candidate;     ///< already a member of candidate list? (for growth direction)
 

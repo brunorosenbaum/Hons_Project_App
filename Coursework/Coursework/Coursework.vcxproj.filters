@@ -19,11 +19,17 @@
     <Filter Include="Header Files\ShaderManagers">
       <UniqueIdentifier>{3a0d3d56-9d30-4405-ab2d-7a6436a89ece}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\LaplacianGrowth">
+    <Filter Include="Header Files\Yuns_Method">
+      <UniqueIdentifier>{7195afe2-8289-4af9-843a-391d58d96c24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Kims_Method">
+      <UniqueIdentifier>{218bbb78-68ca-4731-a3ee-c23f5a092ca1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Kims_Method">
       <UniqueIdentifier>{d0c39a55-a295-4c03-824f-8b75b9eddae1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\LaplacianGrowth">
-      <UniqueIdentifier>{218bbb78-68ca-4731-a3ee-c23f5a092ca1}</UniqueIdentifier>
+    <Filter Include="Source Files\Yuns_Method">
+      <UniqueIdentifier>{5e178a64-cdd1-4d77-882c-bc2078fa5bf8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -34,31 +40,31 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CELL.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="CG_SOLVER.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="QUAD_POISSON.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="QUAD_DBM_2D.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="DAG.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="CellMesh.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="LightningMesh.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="RNG.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="ppm\ppm.cpp">
-      <Filter>Source Files\LaplacianGrowth</Filter>
+      <Filter>Source Files\Kims_Method</Filter>
     </ClCompile>
     <ClCompile Include="LightningSM.cpp">
       <Filter>Source Files\ShaderManagers</Filter>
@@ -66,43 +72,55 @@
     <ClCompile Include="LinearSM.cpp">
       <Filter>Source Files\ShaderManagers</Filter>
     </ClCompile>
+    <ClCompile Include="RATIONAL_SOLVER.cpp">
+      <Filter>Source Files\Yuns_Method</Filter>
+    </ClCompile>
+    <ClCompile Include="CELL_DERV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightningApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CELL.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="CG_SOLVER.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="QUAD_POISSON.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="QUAD_DBM_2D.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="DAG.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="CellMesh.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="LightningMesh.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="RNG.h">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="ppm\ppm.hpp">
-      <Filter>Header Files\LaplacianGrowth</Filter>
+      <Filter>Header Files\Kims_Method</Filter>
     </ClInclude>
     <ClInclude Include="LightningSM.h">
       <Filter>Header Files\ShaderManagers</Filter>
     </ClInclude>
     <ClInclude Include="LinearSM.h">
       <Filter>Header Files\ShaderManagers</Filter>
+    </ClInclude>
+    <ClInclude Include="RATIONAL_SOLVER.h">
+      <Filter>Header Files\Yuns_Method</Filter>
+    </ClInclude>
+    <ClInclude Include="CELL_DERV.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -54,6 +54,8 @@ protected:
 	int _listSize;      ///< current system size
 
 	//! compute stencils once and store
+	//TODO: SUBSTITUTE LIST FOR VECTORS, MAYBE? SINCE THAT'S WHAT THEY DO IN THE OTHER 
+	//TALK ABOUT IT WITH ERIN - im more familiar w vectors but idk if.. lists offer an advantage? 
 	void calcStencils(std::list<CELL*> cells);
 
 	//! reallocate the scratch arrays
