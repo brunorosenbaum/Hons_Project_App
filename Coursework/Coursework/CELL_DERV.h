@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+
 #include "CELL.h"
 class CELL_DERV :
     public CELL
@@ -24,5 +26,25 @@ public:
     /*we compute potentials by assuming that each charged point is
     in the center of a cell.As a result, the 1/r term cannot create
     extremely small values between even neighboring cells.'*/
+};
+
+class CLUSTER //Class that holds small groups of cells in proximity. Necessary to compute the average x and y coords
+//of a same group of cells. Used for equation 4, where we calculate the potential of a cell taking into account
+//the distance between it and nearby cells (r).
+////This is done to generate stronger negative potentials among nearby negative charges.
+{
+public:
+    CLUSTER(): c_x(0), c_y(0), c_xSum(0), c_ySum(0), c_xAvg(0), c_yAvg(0)
+    {
+        cluster_Cells.clear(); 
+    }
+    virtual ~CLUSTER();
+
+public:
+    int c_x, c_y; //XY pos of multi scaled grid map (cluster)
+    int c_xSum, c_ySum; //Sum of xy coords in the same cluster
+    int c_xAvg, c_yAvg;  //Averages of xy coords
+
+    std::vector<CELL_DERV> cluster_Cells; //Cells in the same cluster
 };
 

@@ -20,11 +20,17 @@ public:
 	//Hear me out: we do NOT need to initialize negative potentials for the negative cells
 	//Bc both base constructors initialize potential value to 0. 
 
+	//Organizing into clusters
+	void CreateClusterMap(int clusterSize); //Organize negative cells into clusters and calculate their avg xy pos
+
 	//Computation funcs
 	bool InitializeGrid(const std::string& path);
 	void CreateCandidateMap();
-	void CalcPotential_Rational(); 
+	void CalcPotential_Rational();
+	void Calc_Normalization(); 
 
+	//Updating funcs
+	void AllCellsToCandidates(); 
 private:
 	//Helper funcs
 	float	CalcDistance(float x1, float y1, float x2, float y2) const //Vector magnitude (distance) between 2 points
@@ -39,7 +45,9 @@ private:
 	std::vector<CELL_DERV> positive_Cells; //With >0 potential (phi > 0)
 	std::vector<CELL_DERV> negative_Cells; //With 0 potential (phi == 0)
 
+	//Cells in the grid
 	std::vector<CELL_DERV*> all_Cells;
+	std::vector<CLUSTER> clusters_; //Vector of clusters: cells in the same region
 
 	//Candidates
 	std::map<int, CELL_DERV*> candidateMap_DS; //Map DATA STRUCTURE for each candidate cell. Each has a different position. This is for potential calcs.
@@ -51,6 +59,7 @@ private:
 	CELL_DERV* endPoint_Cell; //Initial positive charge
 
 	int gridSize_; //Size of the grid. Both use 256x256. This value is set to 64 tho bc its * 4 (64*4 = 256)
+	int clusterSize_; //Size of cluster. Set to 16.
 	int eta_;
 	int power_of_Rho_; 
 };

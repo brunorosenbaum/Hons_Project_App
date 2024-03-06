@@ -7,7 +7,7 @@
 #define POW_OF_RHO 3 //Rho is P, or p parameter. 
 
 RATIONAL_SOLVER::RATIONAL_SOLVER() :
-eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0)
+eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
 {
 	//Clear all vectors
 	boundary_Cells.clear();
@@ -169,9 +169,56 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 	}
 }
 
-bool RATIONAL_SOLVER::InitializeGrid(const std::string& path)
+void RATIONAL_SOLVER::CreateClusterMap(int clusterSize)
+{
+
+	clusterSize_ = clusterSize; //size of multi scaled cluster grid map ( 8 x 8 ) = 16. Remember the grid is 64 x 64
+
+	int regionSize = gridSize_ / clusterSize_; //64x64/8x8 = 4096/16 = 256.
+	//Meaning there are 256 clusters in a 64x64 map
+
+	clusters_.clear();
+	clusters_.reserve(clusterSize_ * clusterSize_); //Make the cluster vector 16x16 = 256 (same as region size)
+
+	CLUSTER current_cluster;
+
+	//Initialize x and y of cell clusters in cluster vector
+	for(int i = 0; i < clusterSize_; ++i) //y 
+	{
+		for (int j = 0; j < clusterSize_; ++j) //x
+		{
+			current_cluster.c_x = j;
+			current_cluster.c_y = i;
+			clusters_.push_back(current_cluster); 
+		}
+	}
+	int x, y;
+	int iIndex;
+
+	auto negItr = negative_Cells.begin();
+	while(negItr != negative_Cells.end())
+	{
+		x = negItr->center[0] / regionSize; //x = x.pos/256
+		y = negItr->center[1] / regionSize; //y = y.pos/256
+
+		iIndex = y * clusterSize_ + x;
+		clusters_[iIndex].cluster_Cells.push_back(*negItr); //Fill all the clusters with the negative cells
+
+		clusters_[iIndex].c_xSum += negItr->center[0]; //Add the xy coords of negative cells to clusters
+		clusters_[iIndex].c_ySum += negItr->center[1]; //This is to calc the average xy pos
+
+		//Calc avg xy pos of each cluster
+		clusters_[iIndex].c_xAvg = (float)clusters_[iIndex].c_xSum / clusters_[iIndex].cluster_Cells.size(); 
+		clusters_[iIndex].c_yAvg = (float)clusters_[iIndex].c_ySum / clusters_[iIndex].cluster_Cells.size(); 
+		++negItr; 
+	}
+
+}
+
+bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
 {
 	ClearVectors();
+
 	bool result = LoadMap(path);
 	if(result)
 	{
@@ -179,10 +226,13 @@ bool RATIONAL_SOLVER::InitializeGrid(const std::string& path)
 		CalcBoundaryPotential(); //Calc phi of all cells.
 		CalcPositivePotential();//Negative is not needed since cells default phi is 0. 
 
+		//Create clusters
+		CreateClusterMap(clusterSize_); 
+
 		//Generate initial candidate map
 		CreateCandidateMap(); 
 		//And calculate phi for candidate cells (here's the rational method)
-
+		CalcPotential_Rational();
 	}
 	return result; 
 }
@@ -239,7 +289,7 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 
 void RATIONAL_SOLVER::CalcPotential_Rational()
 {
-	unsigned int totalCells = gridSize_ * gridSize_; //256 cells
+	unsigned int totalCells = gridSize_ * gridSize_; //4096 cells
 	if(all_Cells.size() < totalCells)
 	{
 		//Cell size error
@@ -251,6 +301,10 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 	float phi; 
 	float r; //TODO: I HAVE NO CLUE ABOUT R
 	float B, N, P; //Boundary, negative, positive phi. These are the ones from the formula.
+
+	int regionSize = gridSize_ / clusterSize_; 
+	int iClusterIndex; //TODO: THIS SEEMS KINDA IFFY TO HAVE INDEXES NO?
+	int iCandidateClusterX, iCandidateClusterY, iCandidateClusterIndex; 
 
 	int mapKey; //Value that'll be assigned to the int map key of the candidate cells map.
 	CELL_DERV* current_Cell;
@@ -278,17 +332,69 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 			// for positive charges, use pre-computed value
 			P = positive_Cells[mapKey].potential;
 			// -----------------------------------------------------------
-			// for negative charge cells (phi = 0)
-			N = 0;
+			// for negative charge cells 
+			iCandidateClusterX = current_Cell->center[0] / regionSize; //X
+			iCandidateClusterY = current_Cell->center[1] / regionSize; //Y
+			iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX; 
+			iClusterIndex = 0; 
 
-			//TODO: I DON'T UNDERSTAND THE CLUSTERED CELLS THING 8(
-			//TODO: AND R IS NEEDED TO CALCULATE P TT_TT
-			//r = CalcDistance()
+			N = 0; //(phi = 0)
 
+			//Use clustered cells to calculate equation 4.
+			//Theory: Potential depends on distance to each type of cell.
+			//A potential at a point x that satisfies Laplace's eq = avg potential of a 'virtual' sphere at point x
+			//This potential is described by eq 3, but tldr doesn't generate interesting branching.
+			//This is bc potentials between candidates and other cells can be very similar.
+			//Instead we cluster cells together and use eq. 4:
+			//Where approx potential = (1/r)^rho; r = distance between a cell and other cluster cells
 
-			//HERE IT IS!! THIS IS THE FORMULA ON THE PAPER PHI = P / (N X B)
+			//Remember each cluster is 16 columns x 16 rows.
+			for (int cy = 0; cy < clusterSize_; cy++) //Cluster columns
+			{
+				for (int cx = 0; cx < clusterSize_; cx++) //Cluster rows
+				{
+					if(!clusters_[iClusterIndex].cluster_Cells.empty()) //If there's cells in the cluster
+					{
+						if(iClusterIndex != iCandidateClusterIndex) //If negative charge cells are NOT in the same cluster
+						{
+							r = CalcDistance(clusters_[iClusterIndex].c_xAvg, //Distance is the magnitude between
+								clusters_[iClusterIndex].c_yAvg,//current cluster's average xy
+								current_Cell->center[0], //and current cell's xy
+								current_Cell->center[1]);
+							if(power_of_Rho_ > 1) //r = r^p
+							{
+								r = pow(r, power_of_Rho_); 
+							}
+							//TODO: FIND OUT
+							//We add [cluster size? idk if 16 help TT__TT]/r to the negative potential
+							N += clusters_[iClusterIndex].cluster_Cells.size() / r;
+						}
+						else //For negative cells in the same cluster
+						{
+							auto nItr = clusters_[iClusterIndex].cluster_Cells.begin();
+							while(nItr != clusters_[iClusterIndex].cluster_Cells.end())
+							{
+								r = CalcDistance(nItr->center[0], nItr->center[1], //Distance is magnitude between
+									current_Cell->center[0], current_Cell->center[1]); //Cluster's xy coords and current cell's
+								if(power_of_Rho_>1)
+								{
+									r = pow(r, power_of_Rho_);
+								}
+								N += 1.0f / r; //Eq. 4 relationship.
+								++nItr; 
+							}
+
+						}
+					}
+					++iClusterIndex; 
+				}
+			}
+
+			//Use equation 5: PHI = P / (N X B)
 			phi = (1.0f / B) * (1.0f / N) * P;
 
+			//Because we divide positive potentials with those of negative ones,
+			////we can generate stronger negative potentials among nearby negative charges.
 			current_Cell->N_ = N;
 			current_Cell->P_ = P;
 			current_Cell->B_ = B;
@@ -297,6 +403,34 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 		++mapItr; 
 	}
 
+}
+
+void RATIONAL_SOLVER::Calc_Normalization()
+{
+	/*Once we have computed the electric potential between the
+	candidate cells and other charged cells, we use the normalization equation, Equation 2.*/
+	//I wonder if this is it?  If so, it calculates P(i), the probability of selection of each candidate cell
+
+	int iIndex;
+
+}
+
+void RATIONAL_SOLVER::AllCellsToCandidates() //Turns all cells into candidates. Will be called in main. 
+{
+	candidateMap_DS.clear();
+	int iIndex;
+
+	for(int i = 0; i < gridSize_; ++i) //Columns
+	{
+		for (int j = 0; j < gridSize_; ++j) //Rows
+		{
+			iIndex = i * gridSize_ + j;
+			if(all_Cells[iIndex] && all_Cells[iIndex]->state == EMPTY) //If cells exist and theyre empty
+			{//Map all cells to candidate map
+				candidateMap_DS.insert(std::map<int, CELL_DERV*>::value_type(iIndex, all_Cells[iIndex]));
+			}
+		}
+	}
 }
 
 void RATIONAL_SOLVER::ClearVectors()
