@@ -11,7 +11,8 @@ public:
 	RATIONAL_SOLVER(); 
 	~RATIONAL_SOLVER();
 
-	bool LoadMap(const std::string& path); 
+	//Grid functions----------------------------------------------------------------------
+	bool LoadMap(const std::string& path);
 	//Pre-computation functions
 	void CreateBoundaryCells(); //Create boundary grid cells (just position, coords)
 	// pre-computation of electric potential for each type of cells
@@ -27,10 +28,22 @@ public:
 	bool InitializeGrid(const std::string& path);
 	void CreateCandidateMap();
 	void CalcPotential_Rational();
-	void Calc_Normalization(); 
+	void CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cell);
+	void Calc_Normalization();
+	bool SelectCandidate(CELL_DERV& outNextCell); 
 
 	//Updating funcs
-	void AllCellsToCandidates(); 
+	void AllCellsToCandidates();
+	void UpdateCandidates();
+	void UpdateCandidateMap(const CELL_DERV& next_Cell);
+	void UpdateClusterMap(const CELL_DERV& next_Cell);
+
+	//Lightning formation funcs-------------------------------------------------------------------------
+	void AddNewLightningPath();
+	bool ProcessLightning();
+	void initLightningTree(); 
+
+
 private:
 	//Helper funcs
 	float	CalcDistance(float x1, float y1, float x2, float y2) const //Vector magnitude (distance) between 2 points
@@ -60,7 +73,7 @@ private:
 
 	int gridSize_; //Size of the grid. Both use 256x256. This value is set to 64 tho bc its * 4 (64*4 = 256)
 	int clusterSize_; //Size of cluster. Set to 16.
-	int eta_;
+	int eta_; 
 	int power_of_Rho_; 
 };
 
