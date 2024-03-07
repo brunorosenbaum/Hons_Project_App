@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -39,7 +40,7 @@ public:
 	void UpdateClusterMap(const CELL_DERV& next_Cell);
 
 	//Lightning formation funcs-------------------------------------------------------------------------
-	void AddNewLightningPath();
+	void AddNewLightningPath(const CELL_DERV& newPath, bool bIsEndCell = false, bool bTargetCell = false);
 	bool ProcessLightning();
 	void initLightningTree(); 
 
@@ -50,7 +51,8 @@ private:
 	{
 		return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 	}
-	void ClearVectors(); 
+	void ClearVectors();
+	bool IsNearEndCell(int x, int y, int& outEndX, int& outEndY) const; //Returns true if cell is near ground target cell
 
 private:
 	//Should we make these cell_derv* instead? 
@@ -74,6 +76,9 @@ private:
 	int gridSize_; //Size of the grid. Both use 256x256. This value is set to 64 tho bc its * 4 (64*4 = 256)
 	int clusterSize_; //Size of cluster. Set to 16.
 	int eta_; 
-	int power_of_Rho_; 
+	int power_of_Rho_;
+	//Mersenne Twister 19937 generator. Pseudo-random generator of 32-bit numbers with a state size of 19937 bits.
+	std::mt19937 rng_; //TODO: ALSO DO THIS IN KIM'S CODE
+
 };
 

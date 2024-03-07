@@ -176,6 +176,7 @@
     <ClCompile Include="DAG.cpp" />
     <ClCompile Include="LightningMesh.cpp" />
     <ClCompile Include="LightningSM.cpp" />
+    <ClCompile Include="LIGHTNING_TREE.cpp" />
     <ClCompile Include="LinearSM.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ppm\ppm.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="DAG.h" />
     <ClInclude Include="LightningMesh.h" />
     <ClInclude Include="LightningSM.h" />
+    <ClInclude Include="LIGHTNING_TREE.h" />
     <ClInclude Include="LinearSM.h" />
     <ClInclude Include="ppm\ppm.hpp" />
     <ClInclude Include="QUAD_DBM_2D.h" />

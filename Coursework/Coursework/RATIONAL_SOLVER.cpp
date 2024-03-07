@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <ostream>
+#include <random>
 
 #define ETA 2 //Eta (H or squiggly n) parameter
 #define POW_OF_RHO 3 //Rho is P, or p parameter. 
@@ -18,6 +19,8 @@ eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
 	all_Cells.clear(); 
 
 	//Rng probably here
+	std::random_device	rd;
+	rng_.seed(rd());
 }
 
 RATIONAL_SOLVER::~RATIONAL_SOLVER()
@@ -519,13 +522,33 @@ bool RATIONAL_SOLVER::SelectCandidate(CELL_DERV& outNextCell) //Choose next ligh
 	auto itr = candidate_Cells.begin();
 	while(itr != candidate_Cells.end())
 	{
+		//P(i) is calculated with equation 2 (Y) or eq. 10 (K), and represents the probability of selection.
 		//Apply eta parameter (squiggly n, for branching)
-		//This is equation 2 (Y) or eq. 10 (K)
+		//And store into a vector
 		selection_Probability.push_back(pow(fabs(itr->b), eta_));
 		++itr; 
 	}
-	//TODO: I DON'T HAVE THE BRIAN TO DO THIS RN
-	return true; 
+	//Make a discrete distribution, with the weights being their selection probabilities.
+	std::discrete_distribution<> distribution(selection_Probability.begin(), selection_Probability.end());
+
+	iIndex = distribution(rng_); //iIndex is a random index from the distribution
+	int iErrorCount = 0;
+
+	while(candidate_Cells.size() == iIndex) //So iIndex is the same size as candidate cells, right?
+	{//I think this has to do with.. candidates not being suitable
+		++iErrorCount;
+		std::cout << "Index error !!!!!" << std::endl;
+		if(iErrorCount >= 10)
+		{
+			result = false;
+			break; 
+		}
+		iIndex = distribution(rng_); 
+	}
+	if (result) //If result is true and there are no errors, select the (random index)th from the candidate list
+		outNextCell = candidate_Cells[iIndex]; //To be the next lightning cell
+
+	return result; 
 }
 #pragma endregion
 
@@ -706,7 +729,66 @@ void RATIONAL_SOLVER::UpdateClusterMap(const CELL_DERV& next_Cell)
 	clusters_[iIndex].c_yAvg = (float)clusters_[iIndex].c_ySum / clusters_[iIndex].cluster_Cells.size();
 }
 
+#pragma endregion
 
+#pragma region LIGHTNING FUNCTIONS
+void RATIONAL_SOLVER::AddNewLightningPath(const CELL_DERV& newPath, bool bIsEndCell, bool bTargetCell)
+{
+	int iIndex = newPath.center[1] * gridSize_ + newPath.center[0]; //Grid index
+
+	if(!bIsEndCell) //If not end cell
+	{
+		//Update cell type
+		if(iIndex >= 0 && iIndex < all_Cells.size())
+		{
+			if(all_Cells[iIndex] && all_Cells[iIndex]->state == EMPTY)
+			{//Only empty cells can be changed to other types
+				
+				all_Cells[iIndex]->state = NEGATIVE; //Set to negative
+				negative_Cells.push_back(*all_Cells[iIndex]); //And add to negative cells vector
+			}
+		}
+	}
+	//Add lightning node to tree
+
+}
+
+
+bool RATIONAL_SOLVER::ProcessLightning()
+{
+	bool isLooping = true;
+	while(isLooping)
+	{
+			UpdateCandidates(); //Get candidates
+
+		//And select next cell from candidates
+		CELL_DERV next_Cell(0, 0, 0, 0);
+		bool result_ = SelectCandidate(next_Cell); 
+
+		if(result_)
+		{
+			int iEndX, iEndY; 
+			if(IsNearEndCell(next_Cell.center[0], next_Cell.center[1], iEndX, iEndY)) //If lightning is near end cell (attractor)
+			{
+				isLooping = false;
+				AddNewLightningPath();
+				//Add final target position
+				next_Cell.parent->center[0] = next_Cell.center[0]; 
+				next_Cell.parent->center[1] = next_Cell.center[1];
+				next_Cell.center[0] = iEndX; 
+				next_Cell.center[1] = iEndY;
+				AddNewLightningPath(); 
+			}
+			else
+			{
+				AddNewLightningPath();
+				UpdateClusterMap(next_Cell);
+				UpdateCandidateMap(next_Cell);
+			}
+		}
+	}
+	return true;
+}
 #pragma endregion
 
 #pragma region HELPER FUNCTIONS
@@ -727,5 +809,50 @@ void RATIONAL_SOLVER::ClearVectors()
 	negative_Cells.clear();
 	candidate_Cells.clear();
 	all_Cells.clear();
+}
+bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) const
+{
+	//Same code as previous functions but instead of checking if cell is empty you check if cell is an attractor
+	bool result = false;
+	outEndX = 0; outEndY = 0;
+
+	if(x >= 0 && x < gridSize_ && y >= 0 && y < gridSize_)
+	{
+		int c_x, c_y;
+		int iIndex;
+		std::vector<int> outEndX_vector; std::vector<int> outEndY_vector;
+
+		//Check neighbors
+		for (auto n : *all_Cells[iIndex]->neighbors)
+		{
+			c_x = x + all_Cells[n]->neighbors[n]->center[0];
+			c_y = y + all_Cells[n]->neighbors[n]->center[1];
+			iIndex = c_y * gridSize_ + c_x;
+			if(c_x >= 0 && c_x < gridSize_ && c_y >= 0 && gridSize_ 
+				&& all_Cells[iIndex]) //Check cells
+			{
+				if( all_Cells[iIndex]->state == ATTRACTOR)
+				{
+					result = true;
+					////Add candidate coords to vectors of end x and end y pos
+					outEndX_vector.push_back(c_x);
+					outEndY_vector.push_back(c_y);
+				}
+			}
+			if(outEndX_vector.size() > 0) //If Vector is filled
+			{
+				int iCandidateIndex = 0;
+				if(outEndX_vector.size() > 1) //If there's at least more than 1 element
+				{
+					//Randomly choose new candidate
+					iCandidateIndex = rand() % outEndX_vector.size(); 
+				}
+				outEndX = outEndX_vector[iCandidateIndex];
+				outEndY = outEndY_vector[iCandidateIndex];
+			}
+
+		}
+	}
+	return result; 
 }
 #pragma region
