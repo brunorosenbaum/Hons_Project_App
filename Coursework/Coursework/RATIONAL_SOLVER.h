@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "CELL_DERV.h"
+#include "LIGHTNING_TREE.h"
 
 class RATIONAL_SOLVER
 {
@@ -54,7 +55,8 @@ private:
 	void ClearVectors();
 	bool IsNearEndCell(int x, int y, int& outEndX, int& outEndY) const; //Returns true if cell is near ground target cell
 
-private:
+private: //------------- Grid and potential vars
+
 	//Should we make these cell_derv* instead? 
 	std::vector<CELL_DERV> boundary_Cells; //Serve as boundary condition. 'Borders' of simulation. 
 	std::vector<CELL_DERV> positive_Cells; //With >0 potential (phi > 0)
@@ -79,6 +81,9 @@ private:
 	int power_of_Rho_;
 	//Mersenne Twister 19937 generator. Pseudo-random generator of 32-bit numbers with a state size of 19937 bits.
 	std::mt19937 rng_; //TODO: ALSO DO THIS IN KIM'S CODE
+
+private: //---------Lightning tree and segments vars
+	LIGHTNING_TREE lightning_tree_; 
 
 };
 

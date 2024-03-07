@@ -750,7 +750,8 @@ void RATIONAL_SOLVER::AddNewLightningPath(const CELL_DERV& newPath, bool bIsEndC
 		}
 	}
 	//Add lightning node to tree
-
+	lightning_tree_.AddChild(newPath.parent->center[0], newPath.parent->center[1],
+		newPath.center[0], newPath.center[1], bTargetCell); 
 }
 
 
@@ -771,23 +772,56 @@ bool RATIONAL_SOLVER::ProcessLightning()
 			if(IsNearEndCell(next_Cell.center[0], next_Cell.center[1], iEndX, iEndY)) //If lightning is near end cell (attractor)
 			{
 				isLooping = false;
-				AddNewLightningPath();
+				AddNewLightningPath(next_Cell);
 				//Add final target position
 				next_Cell.parent->center[0] = next_Cell.center[0]; 
 				next_Cell.parent->center[1] = next_Cell.center[1];
 				next_Cell.center[0] = iEndX; 
 				next_Cell.center[1] = iEndY;
-				AddNewLightningPath(); 
+				AddNewLightningPath(next_Cell, true); 
 			}
 			else
 			{
-				AddNewLightningPath();
+				AddNewLightningPath(next_Cell);
 				UpdateClusterMap(next_Cell);
 				UpdateCandidateMap(next_Cell);
 			}
 		}
 	}
 	return true;
+}
+
+void RATIONAL_SOLVER::initLightningTree()
+{
+	//Takes starting point cell and initializes it to parent, updating all xy pos of this. 
+	CELL_DERV next_Cell(0, 0, 0, 0);
+	bool isRoot = true;
+
+	next_Cell.parent->center[0] = next_Cell.center[0];
+	next_Cell.parent->center[1] = next_Cell.center[1];
+	next_Cell.center[0] = startPoint_Cell->center[0];
+	next_Cell.center[1] = startPoint_Cell->center[1];
+
+	if(isRoot)
+	{
+		isRoot = false;
+		//Set root of new tree
+		LIGHTNING_TREE_NODE* rootPtr = new LIGHTNING_TREE_NODE();
+		if(rootPtr)
+		{
+			rootPtr->x_ = next_Cell.center[0]; 
+			rootPtr->y_ = next_Cell.center[1];
+			rootPtr->parent_ = NULL;
+			lightning_tree_.SetRoot(rootPtr);  
+		}
+	}
+	else
+	{
+		//Else, add child
+		lightning_tree_.AddChild(next_Cell.parent->center[0], next_Cell.parent->center[1],
+			next_Cell.center[0], next_Cell.center[1]); 
+	}
+
 }
 #pragma endregion
 
@@ -807,8 +841,13 @@ void RATIONAL_SOLVER::ClearVectors()
 	boundary_Cells.clear();
 	positive_Cells.clear();
 	negative_Cells.clear();
+
 	candidate_Cells.clear();
+	candidateMap_DS.clear();
+
 	all_Cells.clear();
+	clusters_.clear(); 
+	lightning_tree_.ClearNodes(); 
 }
 bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) const
 {

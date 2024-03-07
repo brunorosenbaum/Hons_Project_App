@@ -32,9 +32,23 @@ public:
 
 class LIGHTNING_TREE
 {
-	LIGHTNING_TREE() {}
-	virtual ~LIGHTNING_TREE(){}
+public:
+	LIGHTNING_TREE();
+	virtual ~LIGHTNING_TREE(); 
 
-	
+	//Add child node
+	void AddChild(int iParent_x, int iParent_y, int iChild_x, int iChild_y, bool isTarget = false); 
+	//Clear all nodes
+	void ClearNodes(); 
+
+	//Getsetters
+	const LIGHTNING_TREE_NODE* GetRoot()const { return root_; }
+	bool SetRoot(LIGHTNING_TREE_NODE* root_);
+
+	std::vector<LIGHTNING_TREE_NODE*>& GetNodes() { return nodes_; }
+
+private:
+	LIGHTNING_TREE_NODE* root_; //Root of lightning tree
+	std::vector<LIGHTNING_TREE_NODE*> nodes_; //Vector of child nodes
 };
 
