@@ -3,12 +3,13 @@
 #include <iostream>
 #include <ostream>
 #include <random>
+#include <sstream>
 
 #define ETA 2 //Eta (H or squiggly n) parameter
-#define POW_OF_RHO 3 //Rho is P, or p parameter. 
+#define POW_OF_RHO 3 //Rho is P, or long p parameter. 
 
 RATIONAL_SOLVER::RATIONAL_SOLVER() :
-eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
+eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0), startPoint_Cell(NULL), endPoint_Cell(NULL)
 {
 	//Clear all vectors
 	boundary_Cells.clear();
@@ -21,6 +22,8 @@ eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
 	//Rng probably here
 	std::random_device	rd;
 	rng_.seed(rd());
+	srand(static_cast<unsigned>(time(0)));
+
 }
 
 RATIONAL_SOLVER::~RATIONAL_SOLVER()
@@ -29,9 +32,148 @@ RATIONAL_SOLVER::~RATIONAL_SOLVER()
 
 }
 
+bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
+{
+	ClearVectors();
+
+	bool result = LoadMap(path);
+	if (result)
+	{
+		CreateBoundaryCells();//Create boundary grid cells (just position, coords)
+		CalcBoundaryPotential(); //Calc phi of all cells.
+		CalcPositivePotential();//Negative is not needed since cells default phi is 0. 
+
+		//Create clusters
+		CreateClusterMap(clusterSize_);
+
+		//Generate initial candidate map
+		CreateCandidateMap();
+		//And calculate phi for candidate cells (here's the rational method)
+		CalcPotential_Rational();
+	}
+	return result;
+}
+
 bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 {
-	return false;
+	std::cout << "Load map file : " << path.c_str() << std::endl;
+	// read map file
+	std::ifstream in(path.c_str(), std::ios::in);
+	if (!in)
+	{
+		std::cerr << "Cannot open " << path.c_str() << std::endl;
+		return false;
+	}
+	// parse map
+	std::string strLine;
+
+	int iLine = 0;
+	float fDefaultX = 0.5f;
+
+	CELL_DERV* cellPtr;
+	bool bMapStart = false;
+	int iCellType;
+	int iCellIndex = 0;
+	int iCellX, iCellY;
+
+
+	while (std::getline(in, strLine))
+	{
+		++iLine;
+
+		if ('#' == strLine[0])
+		{
+			// ignore comments
+		}
+		else if (strLine.substr(0, 8) == "VERSION:")
+		{
+			// TODO : check version
+			// ignore version
+		}
+		else if (strLine.substr(0, 10) == "GRID_SIZE:")
+		{
+			std::istringstream pos(strLine.substr(10));
+			pos >> gridSize_;
+		}
+		else if (strLine.substr(0, 20) == "CLUSTERED_GRID_SIZE:")
+		{
+			std::istringstream pos(strLine.substr(20));
+			pos >> clusterSize_;
+		}
+		else if (strLine.substr(0, 10) == "MAP_START:")
+		{
+			bMapStart = true;
+		}
+		else if (strLine.substr(0, 8) == "MAP_END:")
+		{
+			bMapStart = false;
+		}
+		else if (strLine.substr(0, 2) == "M:")
+		{
+			if (bMapStart)
+			{
+				std::istringstream pos(strLine.substr(2));
+
+				for (int i = 0; i < gridSize_; ++i)
+				{
+					pos >> iCellType; //TODO: THIS WILL THROW ERRORS
+
+					iCellX = iCellIndex % gridSize_;
+					iCellY = iCellIndex / gridSize_;
+
+					cellPtr = new CELL_DERV(0, 0, 0, 0);
+					cellPtr->center[0] = iCellX; cellPtr->center[1] = iCellY;
+					cellPtr->state = EMPTY;
+					cellPtr->potential = fDefaultX; 
+
+					if (cellPtr)
+					{
+						all_Cells.push_back(cellPtr);
+
+						switch (iCellType)
+						{
+						case CELL_STATE::REPULSOR:
+							{
+								cellPtr->state = REPULSOR;
+
+								startPoint_Cell = cellPtr;
+								negative_Cells.push_back(*cellPtr);
+								
+							}
+							break;
+						case CELL_STATE::ATTRACTOR:
+							{
+								cellPtr->state = ATTRACTOR;
+
+								endPoint_Cell = cellPtr;
+								positive_Cells.push_back(*cellPtr);
+								
+
+							}
+						}
+							break;
+						++iCellIndex;
+					}
+				}
+			}
+			else
+			{
+				std::cerr << "Map file is invalid !! (line: " << iLine << ", file: " << path.c_str() << ")" << std::endl;
+			}
+		}
+	}
+
+	if (bMapStart)
+	{
+		std::cerr << "MAP_END: is missed !! (line: " << iLine << ", file: " << path.c_str() << ")" << std::endl;
+	}
+
+	// initialize lightning tree
+	initLightningTree();
+
+	std::cout << "Finish loading map file (" << path.c_str() << ") !!" << std::endl;
+
+	return true;
 }
 
 #pragma region PRECOMPUTATION FUNCTIONS
@@ -225,27 +367,6 @@ void RATIONAL_SOLVER::CreateClusterMap(int clusterSize)
 
 #pragma region COMPUTATION FUNCTIONS
 //-----------------------------------------------COMPUTATION FUNCTIONS----------------------------------------------------
-bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
-{
-	ClearVectors();
-
-	bool result = LoadMap(path);
-	if(result)
-	{
-		CreateBoundaryCells();//Create boundary grid cells (just position, coords)
-		CalcBoundaryPotential(); //Calc phi of all cells.
-		CalcPositivePotential();//Negative is not needed since cells default phi is 0. 
-
-		//Create clusters
-		CreateClusterMap(clusterSize_); 
-
-		//Generate initial candidate map
-		CreateCandidateMap(); 
-		//And calculate phi for candidate cells (here's the rational method)
-		CalcPotential_Rational();
-	}
-	return result; 
-}
 
 void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRUCTURE.
 //Maps index of all cells vector to elements of candidate cells vector.
@@ -266,7 +387,7 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 		if(all_Cells[iIndex]) //Go through all cells
 		{
 			//Go through neighbors of each cell & update the candidates' xy coords to that
-			for(auto n : *all_Cells[iIndex]->neighbors)
+			for(int n = 0; n < 8; ++n)
 			{
 				//Candidate's xPos = current cell's xPos + n neighbor's xPos
 				candidateX = cellX + all_Cells[n]->neighbors[n]->center[0];
@@ -591,7 +712,7 @@ void RATIONAL_SOLVER::UpdateCandidates()
 		if(all_Cells[iIndex])
 		{
 			//Check neighbors
-			for(auto n : *all_Cells[iIndex]->neighbors){
+			for(int n = 0; n < 8; ++n){
 				c_x = p_x + all_Cells[n]->neighbors[n]->center[0];
 				c_y = p_y + all_Cells[n]->neighbors[n]->center[1];
 				iNeighborIndex = c_y * gridSize_ + c_x;
@@ -685,7 +806,7 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_DERV& next_Cell)
 		int iChildIndex;
 
 		//Check neighbors
-		for (auto n : *all_Cells[iIndex]->neighbors)
+		for (int n = 0; n < 8; ++n)
 		{
 			c_x = x + all_Cells[n]->neighbors[n]->center[0]; //Update xy coords
 			c_y = y + all_Cells[n]->neighbors[n]->center[1];
@@ -842,6 +963,9 @@ void RATIONAL_SOLVER::ClearVectors()
 	positive_Cells.clear();
 	negative_Cells.clear();
 
+	startPoint_Cell = NULL; 
+	endPoint_Cell = NULL;
+
 	candidate_Cells.clear();
 	candidateMap_DS.clear();
 
@@ -849,6 +973,7 @@ void RATIONAL_SOLVER::ClearVectors()
 	clusters_.clear(); 
 	lightning_tree_.ClearNodes(); 
 }
+
 bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) const
 {
 	//Same code as previous functions but instead of checking if cell is empty you check if cell is an attractor
@@ -862,7 +987,7 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 		std::vector<int> outEndX_vector; std::vector<int> outEndY_vector;
 
 		//Check neighbors
-		for (auto n : *all_Cells[iIndex]->neighbors)
+		for (int n = 0; n < 8; ++n)
 		{
 			c_x = x + all_Cells[n]->neighbors[n]->center[0];
 			c_y = y + all_Cells[n]->neighbors[n]->center[1];
@@ -894,4 +1019,4 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 	}
 	return result; 
 }
-#pragma region
+#pragma endregion

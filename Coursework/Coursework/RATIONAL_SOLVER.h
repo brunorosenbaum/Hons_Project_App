@@ -3,6 +3,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include "CELL_DERV.h"
 #include "LIGHTNING_TREE.h"
@@ -15,7 +16,9 @@ public:
 
 	//Grid functions----------------------------------------------------------------------
 	bool LoadMap(const std::string& path);
-	//Pre-computation functions
+	bool InitializeGrid(const std::string& path); //This is Load() in the other code
+
+	//Pre-computation functions-----------------------------------------------------------
 	void CreateBoundaryCells(); //Create boundary grid cells (just position, coords)
 	// pre-computation of electric potential for each type of cells
 	void	CalcBoundaryPotential();
@@ -23,18 +26,17 @@ public:
 	//Hear me out: we do NOT need to initialize negative potentials for the negative cells
 	//Bc both base constructors initialize potential value to 0. 
 
-	//Organizing into clusters
+	//Organizing into clusters-------------------------------------------------------
 	void CreateClusterMap(int clusterSize); //Organize negative cells into clusters and calculate their avg xy pos
 
-	//Computation funcs
-	bool InitializeGrid(const std::string& path);
+	//Computation funcs------------------------------------------------------------------
 	void CreateCandidateMap();
 	void CalcPotential_Rational();
 	void CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cell);
 	void Calc_Normalization();
 	bool SelectCandidate(CELL_DERV& outNextCell); 
 
-	//Updating funcs
+	//Updating funcs---------------------------------------------------------------------
 	void AllCellsToCandidates();
 	void UpdateCandidates();
 	void UpdateCandidateMap(const CELL_DERV& next_Cell);

@@ -38,7 +38,7 @@ public:
     {
         cluster_Cells.clear(); 
     }
-    virtual ~CLUSTER();
+	~CLUSTER(){}
 
 public:
     int c_x, c_y; //XY pos of multi scaled grid map (cluster)
