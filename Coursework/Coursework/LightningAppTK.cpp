@@ -1,6 +1,6 @@
-#include "LightningApp.h"
+#include "LightningAppTK.h"
 
-LightningApp::LightningApp()
+LightningAppTK::LightningAppTK()
 {
 	plane_mesh_ = nullptr;
 	cube_mesh_ = nullptr;
@@ -9,7 +9,7 @@ LightningApp::LightningApp()
 
 }
 
-void LightningApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC,
+void LightningAppTK::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC,
 	bool FULL_SCREEN)
 {
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
@@ -22,7 +22,7 @@ void LightningApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int scr
 
 }
 
-LightningApp::~LightningApp()
+LightningAppTK::~LightningAppTK()
 {
 	BaseApplication::~BaseApplication();
 	if (plane_mesh_) { delete plane_mesh_; plane_mesh_ = 0; }
@@ -31,7 +31,7 @@ LightningApp::~LightningApp()
 
 }
 
-bool LightningApp::frame()
+bool LightningAppTK::frame()
 {
 	bool result = BaseApplication::frame();
 	if (!result)
@@ -49,7 +49,7 @@ bool LightningApp::frame()
 	return true;
 }
 
-bool LightningApp::render()
+bool LightningAppTK::render()
 {
 	renderer->beginScene(0.19f, 0.03f, 0.36f, 1.0f);
 	camera->update();
@@ -70,7 +70,7 @@ bool LightningApp::render()
 	//linearSM->render(renderer->getDeviceContext(), line_mesh_->getIndexCount());
 
 	//This is what Display() does in src code
-	//aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
+	aggregate->drawQuadtreeCells(renderer->getDevice(), renderer->getDeviceContext(), linearSM, worldMatrix, viewMatrix, projectionMatrix);
 	aggregate->drawSegments(renderer->getDevice(), renderer->getDeviceContext(), lightningSM, worldMatrix, viewMatrix, projectionMatrix);
 	//This is 'idle'
 	addNodes();
@@ -86,7 +86,7 @@ bool LightningApp::render()
 	return true;
 }
 
-void LightningApp::gui()
+void LightningAppTK::gui()
 {
 	// Force turn off unnecessary shader stages.
 	renderer->getDeviceContext()->GSSetShader(NULL, NULL, 0);
@@ -99,7 +99,7 @@ void LightningApp::gui()
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool LightningApp::loadImages(string inputFile)
+bool LightningAppTK::loadImages(string inputFile)
 {
 	// load the files
 	int inputWidth = -1;
@@ -141,7 +141,7 @@ bool LightningApp::loadImages(string inputFile)
 	return success;
 }
 
-void LightningApp::addNodes() //CALLED IDLE() IN SRC CODE
+void LightningAppTK::addNodes() //CALLED IDLE() IN SRC CODE
 {
 	
 		for (int x = 0; x < 100; x++)
@@ -177,7 +177,7 @@ void LightningApp::addNodes() //CALLED IDLE() IN SRC CODE
 ////////////////////////////////////////////////////////////////////////////
 // render the glow
 ////////////////////////////////////////////////////////////////////////////
-void LightningApp::renderGlow(string filename, int scale)
+void LightningAppTK::renderGlow(string filename, int scale)
 {
 	int w = aggregate->xDagRes() * scale;
 	int h = aggregate->yDagRes() * scale;
@@ -222,7 +222,7 @@ void LightningApp::renderGlow(string filename, int scale)
 	delete[] cropped;
 }
 
-void LightningApp::readLightningFile()
+void LightningAppTK::readLightningFile()
 {
 
 	// see if the input is a *.lightning file

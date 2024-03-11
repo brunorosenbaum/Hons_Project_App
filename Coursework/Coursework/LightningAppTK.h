@@ -8,12 +8,12 @@
 #include "ppm\ppm.hpp"
 
 
-class LightningApp : public BaseApplication
+class LightningAppTK : public BaseApplication
 {
 public:
 
-	LightningApp();
-	~LightningApp();
+	LightningAppTK();
+	~LightningAppTK();
 
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
 

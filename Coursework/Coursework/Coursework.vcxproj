@@ -169,7 +169,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CELL_DERV.cpp" />
-    <ClCompile Include="LightningApp.cpp" />
+    <ClCompile Include="LightningAppJY.cpp" />
+    <ClCompile Include="LightningAppTK.cpp" />
     <ClCompile Include="CELL.cpp" />
     <ClCompile Include="CellMesh.cpp" />
     <ClCompile Include="CG_SOLVER.cpp" />
@@ -187,7 +188,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CELL_DERV.h" />
-    <ClInclude Include="LightningApp.h" />
+    <ClInclude Include="LightningAppJY.h" />
+    <ClInclude Include="LightningAppTK.h" />
     <ClInclude Include="CELL.h" />
     <ClInclude Include="CellMesh.h" />
     <ClInclude Include="CG_SOLVER.h" />

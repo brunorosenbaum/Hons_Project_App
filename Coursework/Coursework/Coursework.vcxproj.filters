@@ -36,7 +36,7 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LightningApp.cpp">
+    <ClCompile Include="LightningAppTK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CELL.cpp">
@@ -79,11 +79,14 @@
       <Filter>Source Files\Yuns_Method</Filter>
     </ClCompile>
     <ClCompile Include="LIGHTNING_TREE.cpp">
+      <Filter>Source Files\Yuns_Method</Filter>
+    </ClCompile>
+    <ClCompile Include="LightningAppJY.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LightningApp.h">
+    <ClInclude Include="LightningAppTK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CELL.h">
@@ -126,6 +129,9 @@
       <Filter>Header Files\Yuns_Method</Filter>
     </ClInclude>
     <ClInclude Include="LIGHTNING_TREE.h">
+      <Filter>Header Files\Yuns_Method</Filter>
+    </ClInclude>
+    <ClInclude Include="LightningAppJY.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

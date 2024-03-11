@@ -1,17 +1,19 @@
 // Main.cpp
 #include "../DXFramework/System.h"
-#include  "LightningApp.h"
+#include  "LightningAppTK.h"
+#include  "LightningAppJY.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
 {
-	LightningApp* lightning_app = new LightningApp(); 
+	LightningAppTK* lightning_appTK = new LightningAppTK();
+	LightningAppJY* lightning_appJY = new LightningAppJY(); 
 	System* system;
 
 	srand(time(NULL));
 
 	// Create the system object.
 	//system = new System(app, 1200, 675, true, false);
-	system = new System(lightning_app, 1200, 675, true, false);
+	system = new System(lightning_appJY, 1200, 675, true, false);
 
 	// Initialize and run the system object.
 	system->run();

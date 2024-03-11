@@ -8,6 +8,7 @@
 #include "CELL_DERV.h"
 #include "LIGHTNING_TREE.h"
 
+//Highest order class. Cell_derv and lightning_tree are utility classes for this one
 class RATIONAL_SOLVER
 {
 public:
@@ -47,6 +48,9 @@ public:
 	bool ProcessLightning();
 	void initLightningTree(); 
 
+	//Getsetters
+	LIGHTNING_TREE& GetLightningTree() { return lightning_tree_; }
+	int GetGridSize()const { return gridSize_; }
 
 private:
 	//Helper funcs

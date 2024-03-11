@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-//This class seems to be like the quad_dbm_2d, for drawing the segments & parent segments. Kinda like DAG 
 
+//File stores node information for classes. Will be used in rational_solver. 
 class LIGHTNING_TREE_NODE //Nodes of the tree. Has parent, children, and xy coords. 
 {
 public: 
