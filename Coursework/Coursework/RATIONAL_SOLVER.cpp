@@ -138,20 +138,22 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 
 								startPoint_Cell = cellPtr;
 								negative_Cells.push_back(*cellPtr);
-								break;
+								
 
 								
 							}
-						case POSITIVE:
+							break;
+							case POSITIVE:
 							{
-								cellPtr->state = NEGATIVE;
+								cellPtr->state = POSITIVE;
 
 								endPoint_Cell = cellPtr;
 								positive_Cells.push_back(*cellPtr);
 								
-								break;
+								
 
 							}
+							break;
 						}
 						++iCellIndex;
 					}
@@ -919,31 +921,37 @@ void RATIONAL_SOLVER::initLightningTree()
 	CELL_DERV next_Cell(0, 0, 0, 0);
 	bool isRoot = true;
 
-	//next_Cell.parent->center[0] = next_Cell.center[0];
-	//next_Cell.parent->center[1] = next_Cell.center[1];
-	next_Cell.center[0] = startPoint_Cell->center[0];
-	next_Cell.center[1] = startPoint_Cell->center[1];
-
-	if(isRoot)
+	auto itr = negative_Cells.begin();
+	while (itr != negative_Cells.end())
 	{
-		isRoot = false;
-		//Set root of new tree
-		LIGHTNING_TREE_NODE* rootPtr = new LIGHTNING_TREE_NODE();
-		if(rootPtr)
+	/*	next_Cell.parent->center[0] = next_Cell.center[0];
+		next_Cell.parent->center[1] = next_Cell.center[1];*/
+		next_Cell.center[0] = itr->center[0];
+		next_Cell.center[1] = itr->center[1];
+
+		if (isRoot)
 		{
-			rootPtr->x_ = next_Cell.center[0]; 
-			rootPtr->y_ = next_Cell.center[1];
-			rootPtr->parent_ = NULL;
-			lightning_tree_.SetRoot(rootPtr);  
+			isRoot = false;
+			//Set root of new tree
+			LIGHTNING_TREE_NODE* rootPtr = new LIGHTNING_TREE_NODE();
+			if (rootPtr)
+			{
+				rootPtr->x_ = next_Cell.center[0];
+				rootPtr->y_ = next_Cell.center[1];
+				rootPtr->parent_ = NULL;
+				lightning_tree_.SetRoot(rootPtr);
+			}
+		}
+		else
+		{
+			next_Cell.parent->center[0] = next_Cell.center[0];
+			next_Cell.parent->center[1] = next_Cell.center[1];
+			//Else, add child
+			lightning_tree_.AddChild(next_Cell.parent->center[0], next_Cell.parent->center[1],
+				next_Cell.center[0], next_Cell.center[1]);
 		}
 	}
-	else
-	{
-		
-		//Else, add child
-		lightning_tree_.AddChild(next_Cell.parent->center[0], next_Cell.parent->center[1],
-			next_Cell.center[0], next_Cell.center[1]); 
-	}
+	
 
 }
 #pragma endregion
