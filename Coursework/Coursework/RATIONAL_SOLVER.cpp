@@ -940,6 +940,10 @@ void RATIONAL_SOLVER::initLightningTree()
 				rootPtr->y_ = next_Cell.center[1];
 				rootPtr->parent_ = NULL;
 				lightning_tree_.SetRoot(rootPtr);
+				next_Cell.parent = new CELL(0, 0, 0, 0);
+				next_Cell.parent->center[0] = next_Cell.center[0];
+				next_Cell.parent->center[1] = next_Cell.center[1];
+
 			}
 		}
 		else

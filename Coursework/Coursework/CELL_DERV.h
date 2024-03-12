@@ -8,12 +8,16 @@ class CELL_DERV :
 ////and that way I wouldn't repeat code
 {
 public:
+    //As of 12/3/24 im changing the whole cell_derv class so it has its own functionality and doesnt have to inherit
+    //Im getting exceptions thrown bc of not being able to access the parent data in the first ones bc 
+
     CELL_DERV(float north, //Same constructor to call base class
         float east, //TODO: ASK IF THIS IS CORRECT?
         float south,
         float west,
         CELL* parent = nullptr,
         int depth = 0);
+
     ~CELL_DERV(); 
 public:
     //IMPORTANT: THESE ARE THE VARIABLES FROM EACH CELL THAT'LL HOLD THE INFO FOR THE FORMULA PHI = P/(N X B)
@@ -26,6 +30,8 @@ public:
     /*we compute potentials by assuming that each charged point is
     in the center of a cell.As a result, the 1/r term cannot create
     extremely small values between even neighboring cells.'*/
+
+    /*float x, y;*/
 };
 
 class CLUSTER //Class that holds small groups of cells in proximity. Necessary to compute the average x and y coords
