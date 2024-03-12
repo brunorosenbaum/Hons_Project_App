@@ -1,6 +1,7 @@
 #pragma once
 #include "CellMesh.h"
 #include "DXF.h"
+#include "LightningMesh.h"
 #include "RATIONAL_SOLVER.h"
 #include "LightningSM.h"
 #include "LinearSM.h"
@@ -17,13 +18,16 @@ public:
 
 	//Lightning rendering funcs
 	void initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
+	void initLightning(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
 
 protected:
 	bool render();
 	void gui();
 
 private:
-	CellMesh* grid_Cell_mesh; 
+	CellMesh* grid_Cell_mesh;
+	CellBoundsMesh* grid_bounds_mesh;
+	LightningMesh* lightning_mesh_; 
 
 	LinearSM* linear_SM; 
 	LightningSM* lightning_SM;
