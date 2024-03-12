@@ -28,8 +28,10 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	lightning_mesh_ = new LightningMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	lightning_Generator = new RATIONAL_SOLVER();
+	lightning_Generator->InitializeGrid("res/lightning_32.map"); 
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
+
 
 }
 
@@ -128,7 +130,7 @@ bool LightningAppJY::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
-	initLightning(worldMatrix, viewMatrix, projectionMatrix); 
+	//initLightning(worldMatrix, viewMatrix, projectionMatrix); 
 	// Render GUI
 	gui();
 

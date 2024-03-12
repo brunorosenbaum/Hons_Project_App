@@ -132,26 +132,27 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 
 						switch (iCellType)
 						{
-						case CELL_STATE::REPULSOR:
+						case NEGATIVE:
 							{
-								cellPtr->state = REPULSOR;
+								cellPtr->state = NEGATIVE;
 
 								startPoint_Cell = cellPtr;
 								negative_Cells.push_back(*cellPtr);
+								break;
+
 								
 							}
-							break;
-						case CELL_STATE::ATTRACTOR:
+						case POSITIVE:
 							{
-								cellPtr->state = ATTRACTOR;
+								cellPtr->state = NEGATIVE;
 
 								endPoint_Cell = cellPtr;
 								positive_Cells.push_back(*cellPtr);
 								
+								break;
 
 							}
 						}
-							break;
 						++iCellIndex;
 					}
 				}
@@ -918,8 +919,8 @@ void RATIONAL_SOLVER::initLightningTree()
 	CELL_DERV next_Cell(0, 0, 0, 0);
 	bool isRoot = true;
 
-	next_Cell.parent->center[0] = next_Cell.center[0];
-	next_Cell.parent->center[1] = next_Cell.center[1];
+	//next_Cell.parent->center[0] = next_Cell.center[0];
+	//next_Cell.parent->center[1] = next_Cell.center[1];
 	next_Cell.center[0] = startPoint_Cell->center[0];
 	next_Cell.center[1] = startPoint_Cell->center[1];
 
@@ -938,6 +939,7 @@ void RATIONAL_SOLVER::initLightningTree()
 	}
 	else
 	{
+		
 		//Else, add child
 		lightning_tree_.AddChild(next_Cell.parent->center[0], next_Cell.parent->center[1],
 			next_Cell.center[0], next_Cell.center[1]); 
