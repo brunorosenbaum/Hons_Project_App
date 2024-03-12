@@ -68,6 +68,10 @@ private: //------------- Grid and potential vars
 	std::vector<CELL_DERV> positive_Cells; //With >0 potential (phi > 0)
 	std::vector<CELL_DERV> negative_Cells; //With 0 potential (phi == 0)
 
+	//Vectors of potentials bc im so tired
+	std::vector<float> boundaryPotentials_;
+	std::vector<float> positivePotentials_; 
+
 	//Cells in the grid
 	std::vector<CELL_DERV*> all_Cells;
 	std::vector<CLUSTER> clusters_; //Vector of clusters: cells in the same region

@@ -130,7 +130,7 @@ bool LightningAppJY::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
-	//initLightning(worldMatrix, viewMatrix, projectionMatrix); 
+	initLightning(worldMatrix, viewMatrix, projectionMatrix); 
 	// Render GUI
 	gui();
 

@@ -14,7 +14,7 @@ void LIGHTNING_TREE::AddChild(int iParent_x, int iParent_y, int iChild_x, int iC
 {
 	if(root_)
 	{
-		LIGHTNING_TREE_NODE* parentPtr = nullptr;
+		LIGHTNING_TREE_NODE* parentPtr = NULL;
 		auto itr = nodes_.begin();
 		while(itr != nodes_.end())
 		{
@@ -22,7 +22,8 @@ void LIGHTNING_TREE::AddChild(int iParent_x, int iParent_y, int iChild_x, int iC
 			if(parentPtr && parentPtr->x_ == iParent_x && parentPtr->y_ == iParent_y)
 			{
 				//Add child node
-				LIGHTNING_TREE_NODE* childPtr = new LIGHTNING_TREE_NODE();
+				LIGHTNING_TREE_NODE* childPtr = new LIGHTNING_TREE_NODE(); //TODO: CAUSING MEMORY LEAK
+				//TODO: IS THIS RECURSING TO INFINITY?
 				if(childPtr)
 				{
 					childPtr->x_ = iChild_x; //Assign xy pos

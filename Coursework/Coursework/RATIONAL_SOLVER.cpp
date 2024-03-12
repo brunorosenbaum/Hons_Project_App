@@ -16,6 +16,9 @@ eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0), startPoint_
 	positive_Cells.clear();
 	negative_Cells.clear();
 
+	boundaryPotentials_.clear();
+	positivePotentials_.clear();
+
 	candidate_Cells.clear();
 	all_Cells.clear(); 
 
@@ -188,39 +191,40 @@ void RATIONAL_SOLVER::CreateBoundaryCells() //I'm assuming this method creates t
 	boundary_Cells.reserve(gridSize_ * 4 + 4);
 
 	//They don't use a pointer in here... this is gonna cause a memory leak isn't it
-	CELL_DERV* current_cell = new CELL_DERV(0, 0, 0, 0, nullptr, 0); 
+	//CELL_DERV* current_cell = new CELL_DERV(0, 0, 0, 0, nullptr, 0); 
+	CELL_DERV current_cell(0, 0, 0, 0); 
 	//Add boundary charges
 	for(int i = 0; i < gridSize_; ++i) //Initialize xy coords of grid
 	{
 		//Horizontal boundary cells
-		current_cell->center[0] = i; current_cell->center[1] = 0;
-		boundary_Cells.push_back(*current_cell); //And add to vector
+		current_cell.center[0] = i; current_cell.center[1] = -1;
+		boundary_Cells.push_back(current_cell); //And add to vector
 
-		//if (1 == m_vEndCells.size()) //This code will only execute if there is one endcell. 
-		//{ //I don't get it yet
-		current_cell->center[0] = i;			current_cell->center[1] = gridSize_;		boundary_Cells.push_back(*current_cell);
-		//}
+		if (positive_Cells.size() == 1) //This code will only execute if there is one endcell. 
+		{ //I don't get it yet
+		current_cell.center[0] = i;			current_cell.center[1] = gridSize_;		boundary_Cells.push_back(current_cell);
+		}
 
 		//Vertical boundary cells
-		current_cell->center[0] = 0; current_cell->center[1] = i; 
-		boundary_Cells.push_back(*current_cell); //And add to vector
+		current_cell.center[0] = -1; current_cell.center[1] = i; 
+		boundary_Cells.push_back(current_cell); //And add to vector
 
-		current_cell->center[0] = gridSize_; current_cell->center[1] = i; 
-		boundary_Cells.push_back(*current_cell); //And add to vector
+		current_cell.center[0] = gridSize_; current_cell.center[1] = i; 
+		boundary_Cells.push_back(current_cell); //And add to vector
 
 	}
 	//4 corners - clockwise
-	current_cell->center[0] = 0; current_cell->center[1] = 0; //Top left
-	boundary_Cells.push_back(*current_cell); 
+	current_cell.center[0] = -1; current_cell.center[1] = -1; //Top left
+	boundary_Cells.push_back(current_cell); 
 
-	current_cell->center[0] = gridSize_; current_cell->center[1] = 0; //Top right
-	boundary_Cells.push_back(*current_cell); 
+	current_cell.center[0] = gridSize_; current_cell.center[1] = -1; //Top right
+	boundary_Cells.push_back(current_cell); 
 
-	current_cell->center[0] = gridSize_; current_cell->center[1] = gridSize_; //Bottom right
-	boundary_Cells.push_back(*current_cell); 
+	current_cell.center[0] = gridSize_; current_cell.center[1] = gridSize_; //Bottom right
+	boundary_Cells.push_back(current_cell); 
 
-	current_cell->center[0] = 0; current_cell->center[1] = gridSize_; //Bottom left
-	boundary_Cells.push_back(*current_cell);
+	current_cell.center[0] = -1; current_cell.center[1] = gridSize_; //Bottom left
+	boundary_Cells.push_back(current_cell);
 }
 
 void RATIONAL_SOLVER::CalcBoundaryPotential()
@@ -234,11 +238,11 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 	//But since we're using whole cell ptrs here we don't need to clear as these potentials
 	//are all initialized to 0 upon creation
 	/*m_vBoundaryPotential.reserve(m_iGridSize * m_iGridSize);*/ //<- Shouldn't be an issue. This space is already reserved in prev function
-
+	boundaryPotentials_.reserve(gridSize_ * gridSize_);
 	int iIndex = 0;
 	CELL_DERV* current_Cell;
-	float boundaryPhi; // Called B in the other code and in the formula
-	float r; //Is B the RHS, or phi? 
+	float boundaryPhi; // Called b in the other code and in the formula
+	float r; //distance
 
 	for (int i = 0; i < gridSize_; ++i)
 	{
@@ -265,10 +269,10 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 				}
 			}
 
-			boundary_Cells[iIndex].potential = boundaryPhi; //B is the potential. Set it to that for each of the boundary cells
-			//TODO: THIS IS GONNA THROW ERRORS. I KNOW THIS IS WRONG.
-			//TODO: THIS IS NOT GOING TO GO THROUGH ALL THE BOUNDARY CELLS BC IT'S A NESTED LOOP. BE CAREFUL!! ASK!!
-
+			//boundary_Cells[iIndex].potential = boundaryPhi; //B is the potential. Set it to that for each of the boundary cells
+			////TODO: THIS IS GONNA THROW ERRORS. I KNOW THIS IS WRONG.
+			////TODO: THIS IS NOT GOING TO GO THROUGH ALL THE BOUNDARY CELLS BC IT'S A NESTED LOOP. BE CAREFUL!! ASK!!
+			boundaryPotentials_.push_back(boundaryPhi); 
 			++iIndex;
 		}
 	}
@@ -296,7 +300,7 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 			current_Cell = all_Cells[iIndex];
 
 			/*if (pCell && E_CT_END != pCell->m_eType)*/
-			if (current_Cell && current_Cell->state != ATTRACTOR) //Go through cells until they reach end cell
+			if (current_Cell && current_Cell->state != NEGATIVE) //Go through cells until they reach end cell
 			{
 				std::vector< CELL_DERV >::const_iterator pItr = positive_Cells.begin();
 				while (pItr != positive_Cells.end())
@@ -313,8 +317,8 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 				}
 			}
 		} 
-
-		positive_Cells[iIndex].potential = positivePhi;
+		positivePotentials_.push_back(positivePhi); 
+		//positive_Cells[iIndex].potential = positivePhi;
 		iIndex++; 
 	}
 }
@@ -461,7 +465,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 		{
 			// -----------------------------------------------------------
 			// for boundaries, use pre-computed values
-			B = boundary_Cells[mapKey].potential;
+			B = boundaryPotentials_[mapKey]; 
+			//B = boundary_Cells[mapKey].potential;
 			// -----------------------------------------------------------
 			// for positive charges, use pre-computed value
 			P = positive_Cells[mapKey].potential;
@@ -954,6 +959,7 @@ void RATIONAL_SOLVER::initLightningTree()
 			lightning_tree_.AddChild(next_Cell.parent->center[0], next_Cell.parent->center[1],
 				next_Cell.center[0], next_Cell.center[1]);
 		}
+		++itr; 
 	}
 	
 
