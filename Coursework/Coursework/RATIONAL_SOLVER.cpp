@@ -397,13 +397,14 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 			for(int n = 0; n < 8; ++n)
 			{
 				//Candidate's xPos = current cell's xPos + n neighbor's xPos
-				candidateX = cellX + all_Cells[n]->neighbors[n]->center[0];
+				candidateX = cellX + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n];
 				//Candidate's yPos = current cell's yPos + n neighbor's yPos
-				candidateX = cellX + all_Cells[n]->neighbors[n]->center[1];
+				candidateY = cellY + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
+
 				iChildIndex = cellY * gridSize_ + cellX;
 
 				//If cells xy coords are within the gridsize
-				if(cellX >= 0 && cellX < gridSize_ && cellY >= 0 && cellY < gridSize_ && all_Cells[iChildIndex])
+				if(candidateX >= 0 && candidateX < gridSize_ && candidateY >= 0 && candidateY < gridSize_ && all_Cells[iChildIndex])
 				{
 					if(all_Cells[iChildIndex]->state == EMPTY) //If cell is empty
 					{
@@ -721,8 +722,8 @@ void RATIONAL_SOLVER::UpdateCandidates()
 		{
 			//Check neighbors
 			for(int n = 0; n < 8; ++n){
-				c_x = p_x + all_Cells[n]->neighbors[n]->center[0];
-				c_y = p_y + all_Cells[n]->neighbors[n]->center[1];
+				c_x = p_x + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n];
+				c_y = p_y + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
 				iNeighborIndex = c_y * gridSize_ + c_x;
 
 				if (c_x >= 0 && c_x < gridSize_
@@ -756,6 +757,7 @@ void RATIONAL_SOLVER::UpdateCandidates()
 								CELL_DERV candidate(0, 0, 0, 0);
 								candidate.center[0] = c_x; 
 								candidate.center[1] = c_y;
+								candidate.parent = new CELL(0, 0, 0, 0); 
 								candidate.parent->center[0] = p_x; 
 								candidate.parent->center[1] = p_y;
 								candidate.b = all_Cells[iNeighborIndex]->potential;
@@ -816,8 +818,8 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_DERV& next_Cell)
 		//Check neighbors
 		for (int n = 0; n < 8; ++n)
 		{
-			c_x = x + all_Cells[n]->neighbors[n]->center[0]; //Update xy coords
-			c_y = y + all_Cells[n]->neighbors[n]->center[1];
+			c_x = x + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n]; //Update xy coords
+			c_y = y + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
 			iChildIndex = c_y * gridSize_ + c_x;
 
 			if(c_x >= 0 && c_x < gridSize_
@@ -1009,8 +1011,8 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 		//Check neighbors
 		for (int n = 0; n < 8; ++n)
 		{
-			c_x = x + all_Cells[n]->neighbors[n]->center[0];
-			c_y = y + all_Cells[n]->neighbors[n]->center[1];
+			c_x = x + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n];
+			c_y = y + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
 			iIndex = c_y * gridSize_ + c_x;
 			if(c_x >= 0 && c_x < gridSize_ && c_y >= 0 && gridSize_ 
 				&& all_Cells[iIndex]) //Check cells

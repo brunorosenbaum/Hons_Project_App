@@ -31,6 +31,9 @@ public:
     in the center of a cell.As a result, the 1/r term cannot create
     extremely small values between even neighboring cells.'*/
 
+    static const int NEIGHBORS_X_DIFFERENCE[8] ;
+    static const int NEIGHBORS_Y_DIFFERENCE[8] ;
+
     /*float x, y;*/
 };
 
