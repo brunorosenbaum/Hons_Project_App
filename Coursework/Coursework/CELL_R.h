@@ -46,8 +46,8 @@ public:
     extremely small values between even neighboring cells.'*/
     //^^^^ Using this as basis of why i shouldnt inherit from k's cell class
 
-    float x, y; 
-    float parentX, parentY;
+    int x, y; //XY coords on grid
+    int parentX, parentY;
     float potential; //Phi
     float selectionProb; //Probability of being selected. P(i) in formula. b in K's code.
     bool isBoundary;

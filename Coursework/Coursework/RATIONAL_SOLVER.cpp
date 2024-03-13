@@ -57,7 +57,7 @@ bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
 	return result;
 }
 
-bool RATIONAL_SOLVER::LoadMap(const std::string& path)
+bool RATIONAL_SOLVER::LoadMap(const std::string& path) //TODO: I SUSPECT READING THIS FILE MIGHT BE CAUSING ISSUES
 {
 	std::cout << "Load map file : " << path.c_str() << std::endl;
 	// read map file
@@ -442,7 +442,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 	float B, N, P; //Boundary, negative, positive phi. These are the ones from the formula.
 
 	int regionSize = gridSize_ / clusterSize_; 
-	int iClusterIndex; //TODO: THIS SEEMS KINDA IFFY TO HAVE INDEXES NO?
+	int iClusterIndex; 
 	int iCandidateClusterX, iCandidateClusterY, iCandidateClusterIndex; 
 
 	int mapKey; //Value that'll be assigned to the int map key of the candidate cells map.
@@ -641,8 +641,8 @@ void RATIONAL_SOLVER::Calc_Normalization()
 
 bool RATIONAL_SOLVER::SelectCandidate(CELL_R& outNextCell) //Choose next lightning cell among candidates
 { //Done by calculating P(i)
-	outNextCell.x = 0;
-	outNextCell.y = 0;
+	outNextCell.x = -1;
+	outNextCell.y = -1;
 
 	bool result = true;
 	int iIndex = 0;
@@ -1013,7 +1013,7 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 			if(c_x >= 0 && c_x < gridSize_ && c_y >= 0 && gridSize_ 
 				&& all_Cells[iIndex]) //Check cells
 			{
-				if( all_Cells[iIndex]->type_ == NEGATIVE_R)
+				if( all_Cells[iIndex]->type_ == POSITIVE_R)
 				{
 					result = true;
 					////Add candidate coords to vectors of end x and end y pos
