@@ -73,7 +73,7 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 	int iLine = 0;
 	float fDefaultX = 0.5f;
 
-	CELL_DERV* cellPtr;
+	CELL_R* cellPtr;
 	bool bMapStart = false;
 	int iCellType;
 	int iCellIndex = 0;
@@ -124,9 +124,9 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 					iCellX = iCellIndex % gridSize_;
 					iCellY = iCellIndex / gridSize_;
 
-					cellPtr = new CELL_DERV(0, 0, 0, 0);
-					cellPtr->center[0] = iCellX; cellPtr->center[1] = iCellY;
-					cellPtr->state = EMPTY;
+					cellPtr = new CELL_R();
+					cellPtr->x = iCellX; cellPtr->y = iCellY;
+					cellPtr->type_ = EMPTY_R;
 					cellPtr->potential = fDefaultX; 
 
 					if (cellPtr)
@@ -135,9 +135,9 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 
 						switch (iCellType)
 						{
-						case NEGATIVE:
+						case NEGATIVE_R:
 							{
-								cellPtr->state = NEGATIVE;
+								cellPtr->type_ = NEGATIVE_R;
 
 								startPoint_Cell = cellPtr;
 								negative_Cells.push_back(*cellPtr);
@@ -146,9 +146,9 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path)
 								
 							}
 							break;
-							case POSITIVE:
+							case POSITIVE_R:
 							{
-								cellPtr->state = POSITIVE;
+								cellPtr->type_ = POSITIVE_R;
 
 								endPoint_Cell = cellPtr;
 								positive_Cells.push_back(*cellPtr);
@@ -191,39 +191,39 @@ void RATIONAL_SOLVER::CreateBoundaryCells() //I'm assuming this method creates t
 	boundary_Cells.reserve(gridSize_ * 4 + 4);
 
 	//They don't use a pointer in here... this is gonna cause a memory leak isn't it
-	//CELL_DERV* current_cell = new CELL_DERV(0, 0, 0, 0, nullptr, 0); 
-	CELL_DERV current_cell(0, 0, 0, 0); 
+	//CELL_R* current_cell = new CELL_R(0, 0, 0, 0, nullptr, 0); 
+	CELL_R current_cell; 
 	//Add boundary charges
 	for(int i = 0; i < gridSize_; ++i) //Initialize xy coords of grid
 	{
 		//Horizontal boundary cells
-		current_cell.center[0] = i; current_cell.center[1] = -1;
+		current_cell.x = i; current_cell.y = -1;
 		boundary_Cells.push_back(current_cell); //And add to vector
 
 		if (positive_Cells.size() == 1) //This code will only execute if there is one endcell. 
 		{ //I don't get it yet
-		current_cell.center[0] = i;			current_cell.center[1] = gridSize_;		boundary_Cells.push_back(current_cell);
+		current_cell.x = i;			current_cell.y = gridSize_;		boundary_Cells.push_back(current_cell);
 		}
 
 		//Vertical boundary cells
-		current_cell.center[0] = -1; current_cell.center[1] = i; 
+		current_cell.x = -1; current_cell.y = i; 
 		boundary_Cells.push_back(current_cell); //And add to vector
 
-		current_cell.center[0] = gridSize_; current_cell.center[1] = i; 
+		current_cell.x = gridSize_; current_cell.y = i; 
 		boundary_Cells.push_back(current_cell); //And add to vector
 
 	}
 	//4 corners - clockwise
-	current_cell.center[0] = -1; current_cell.center[1] = -1; //Top left
+	current_cell.x = -1; current_cell.y = -1; //Top left
 	boundary_Cells.push_back(current_cell); 
 
-	current_cell.center[0] = gridSize_; current_cell.center[1] = -1; //Top right
+	current_cell.x = gridSize_; current_cell.y = -1; //Top right
 	boundary_Cells.push_back(current_cell); 
 
-	current_cell.center[0] = gridSize_; current_cell.center[1] = gridSize_; //Bottom right
+	current_cell.x = gridSize_; current_cell.y = gridSize_; //Bottom right
 	boundary_Cells.push_back(current_cell); 
 
-	current_cell.center[0] = -1; current_cell.center[1] = gridSize_; //Bottom left
+	current_cell.x = -1; current_cell.y = gridSize_; //Bottom left
 	boundary_Cells.push_back(current_cell);
 }
 
@@ -240,7 +240,7 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 	/*m_vBoundaryPotential.reserve(m_iGridSize * m_iGridSize);*/ //<- Shouldn't be an issue. This space is already reserved in prev function
 	boundaryPotentials_.reserve(gridSize_ * gridSize_);
 	int iIndex = 0;
-	CELL_DERV* current_Cell;
+	CELL_R* current_Cell;
 	float boundaryPhi; // Called b in the other code and in the formula
 	float r; //distance
 
@@ -253,11 +253,11 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 
 			if (current_Cell)
 			{
-				std::vector< CELL_DERV >::const_iterator bItr = boundary_Cells.begin();
+				std::vector< CELL_R >::const_iterator bItr = boundary_Cells.begin();
 				while (bItr != boundary_Cells.end()) //Iterate through boundary cells
 				{
 					//r = distance (scalar value) between all cells (i think) and boundary cells
-					r = CalcDistance(bItr->center[0], bItr->center[1], current_Cell->center[0], current_Cell->center[1]);
+					r = CalcDistance(bItr->x, bItr->y, current_Cell->x, current_Cell->y);
 					if (power_of_Rho_ > 1) //RHO is the p parameter to prevent excessive branching TODO: REREAD THIS
 					{//This condition will always be true then bc it's initialized by a macro 
 						r = pow(r, power_of_Rho_); //Square the distance
@@ -287,7 +287,7 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 
 	
 	//m_vPositivePotential.assign(m_iGridSize * m_iGridSize, 0.0f); //Assign value 0 to all positive elec potential cells
-	CELL_DERV* current_Cell; 
+	CELL_R* current_Cell; 
 	float positivePhi = 0;
 	float r;
 	int iIndex = 0;
@@ -300,12 +300,12 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 			current_Cell = all_Cells[iIndex];
 
 			/*if (pCell && E_CT_END != pCell->m_eType)*/
-			if (current_Cell && current_Cell->state != NEGATIVE) //Go through cells until they reach end cell
+			if (current_Cell && current_Cell->type_ != NEGATIVE_R) //Go through cells until they reach end cell
 			{
-				std::vector< CELL_DERV >::const_iterator pItr = positive_Cells.begin();
+				std::vector< CELL_R >::const_iterator pItr = positive_Cells.begin();
 				while (pItr != positive_Cells.end())
 				{
-					r = CalcDistance(pItr->center[0], pItr->center[1], current_Cell->center[0], current_Cell->center[1]);
+					r = CalcDistance(pItr->x, pItr->y, current_Cell->x, current_Cell->y);
 					if (power_of_Rho_ > 1)
 					{
 						r = pow(r, power_of_Rho_);
@@ -354,14 +354,14 @@ void RATIONAL_SOLVER::CreateClusterMap(int clusterSize)
 	auto negItr = negative_Cells.begin();
 	while(negItr != negative_Cells.end())
 	{
-		x = negItr->center[0] / regionSize; //x = x.pos/256
-		y = negItr->center[1] / regionSize; //y = y.pos/256
+		x = negItr->x / regionSize; //x = x.pos/256
+		y = negItr->y / regionSize; //y = y.pos/256
 
 		iIndex = y * clusterSize_ + x;
 		clusters_[iIndex].cluster_Cells.push_back(*negItr); //Fill all the clusters with the negative cells
 
-		clusters_[iIndex].c_xSum += negItr->center[0]; //Add the xy coords of negative cells to clusters
-		clusters_[iIndex].c_ySum += negItr->center[1]; //This is to calc the average xy pos
+		clusters_[iIndex].c_xSum += negItr->x; //Add the xy coords of negative cells to clusters
+		clusters_[iIndex].c_ySum += negItr->y; //This is to calc the average xy pos
 
 		//Calc avg xy pos of each cluster
 		clusters_[iIndex].c_xAvg = (float)clusters_[iIndex].c_xSum / clusters_[iIndex].cluster_Cells.size(); 
@@ -384,11 +384,11 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 	int candidateX, candidateY; //Candidate cells vector x and y pos
 	int iChildIndex;
 
-	std::vector< CELL_DERV >::iterator itr = negative_Cells.begin(); //Go through negative cells
+	std::vector< CELL_R >::iterator itr = negative_Cells.begin(); //Go through negative cells
 	while (itr != negative_Cells.end())
 	{
-		cellX = (*itr).center[0]; 
-		cellY = (*itr).center[1];
+		cellX = (*itr).x; 
+		cellY = (*itr).y;
 		iIndex = cellY * gridSize_ + cellX;
 
 		if(all_Cells[iIndex]) //Go through all cells
@@ -397,23 +397,23 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 			for(int n = 0; n < 8; ++n)
 			{
 				//Candidate's xPos = current cell's xPos + n neighbor's xPos
-				candidateX = cellX + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n];
+				candidateX = cellX + CELL_R::NEIGHBORS_X_DIFFERENCE[n];
 				//Candidate's yPos = current cell's yPos + n neighbor's yPos
-				candidateY = cellY + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
+				candidateY = cellY + CELL_R::NEIGHBORS_Y_DIFFERENCE[n];
 
 				iChildIndex = cellY * gridSize_ + cellX;
 
 				//If cells xy coords are within the gridsize
 				if(candidateX >= 0 && candidateX < gridSize_ && candidateY >= 0 && candidateY < gridSize_ && all_Cells[iChildIndex])
 				{
-					if(all_Cells[iChildIndex]->state == EMPTY) //If cell is empty
+					if(all_Cells[iChildIndex]->type_ == EMPTY_R) //If cell is empty
 					{
 						//Find each iChildIndex element in candidate cell map
-						std::map<int, CELL_DERV*>::iterator candidate_Itr = candidateMap_DS.find(iChildIndex);
+						std::map<int, CELL_R*>::iterator candidate_Itr = candidateMap_DS.find(iChildIndex);
 						if(candidate_Itr == candidateMap_DS.end())
 						{
 							//Insert cell at the end of the map
-							candidateMap_DS.insert(std::map<int, CELL_DERV*>::value_type(iChildIndex, all_Cells[iChildIndex]));
+							candidateMap_DS.insert(std::map<int, CELL_R*>::value_type(iChildIndex, all_Cells[iChildIndex]));
 						}
 					}
 				}
@@ -446,7 +446,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 	int iCandidateClusterX, iCandidateClusterY, iCandidateClusterIndex; 
 
 	int mapKey; //Value that'll be assigned to the int map key of the candidate cells map.
-	CELL_DERV* current_Cell;
+	CELL_R* current_Cell;
 
 	if(candidateMap_DS.size() == 0)
 	{
@@ -462,7 +462,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 		mapKey = mapItr->first;
 		current_Cell = mapItr->second;
 
-		if(current_Cell && current_Cell->state == EMPTY) //If current cell is empty
+		if(current_Cell && current_Cell->type_ == EMPTY_R) //If current cell is empty
 		{
 			// -----------------------------------------------------------
 			// for boundaries, use pre-computed values
@@ -473,8 +473,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 			P = positive_Cells[mapKey].potential;
 			// -----------------------------------------------------------
 			// for negative charge cells 
-			iCandidateClusterX = current_Cell->center[0] / regionSize; //X
-			iCandidateClusterY = current_Cell->center[1] / regionSize; //Y
+			iCandidateClusterX = current_Cell->x / regionSize; //X
+			iCandidateClusterY = current_Cell->y / regionSize; //Y
 			iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX; 
 			iClusterIndex = 0; 
 
@@ -499,8 +499,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 						{
 							r = CalcDistance(clusters_[iClusterIndex].c_xAvg, //Distance is the magnitude between
 								clusters_[iClusterIndex].c_yAvg,//current cluster's average xy
-								current_Cell->center[0], //and current cell's xy
-								current_Cell->center[1]);
+								current_Cell->x, //and current cell's xy
+								current_Cell->y);
 							if(power_of_Rho_ > 1) //r = r^p
 							{
 								r = pow(r, power_of_Rho_); 
@@ -514,8 +514,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 							auto nItr = clusters_[iClusterIndex].cluster_Cells.begin();
 							while(nItr != clusters_[iClusterIndex].cluster_Cells.end())
 							{
-								r = CalcDistance(nItr->center[0], nItr->center[1], //Distance is magnitude between
-									current_Cell->center[0], current_Cell->center[1]); //Cluster's xy coords and current cell's
+								r = CalcDistance(nItr->x, nItr->y, //Distance is magnitude between
+									current_Cell->x, current_Cell->y); //Cluster's xy coords and current cell's
 								if(power_of_Rho_>1)
 								{
 									r = pow(r, power_of_Rho_);
@@ -545,7 +545,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 
 }
 
-void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cell)
+void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_R* candidate_cell)
 {
 	// calculate electric potential (Phi) for only candidate cells
 	float phi;
@@ -557,9 +557,9 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cel
 	int iCandidateClusterX, iCandidateClusterY, iCandidateClusterIndex;
 
 
-	if (candidate_cell && candidate_cell->state == EMPTY) //If current cell is empty
+	if (candidate_cell && candidate_cell->type_ == EMPTY_R) //If current cell is empty
 	{
-		int iKey = candidate_cell->center[1] * gridSize_ + candidate_cell->center[0];
+		int iKey = candidate_cell->y * gridSize_ + candidate_cell->x;
 
 		// -----------------------------------------------------------
 		// for boundaries, use pre-computed values
@@ -569,8 +569,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cel
 		P = positive_Cells[iKey].potential;
 		// -----------------------------------------------------------
 		// for negative charge cells 
-		iCandidateClusterX = candidate_cell->center[0] / regionSize; //X
-		iCandidateClusterY = candidate_cell->center[1] / regionSize; //Y
+		iCandidateClusterX = candidate_cell->x / regionSize; //X
+		iCandidateClusterY = candidate_cell->y / regionSize; //Y
 		iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX;
 		iClusterIndex = 0;
 
@@ -586,8 +586,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cel
 					{
 						r = CalcDistance(clusters_[iClusterIndex].c_xAvg, //Distance is the magnitude between
 							clusters_[iClusterIndex].c_yAvg,//current cluster's average xy
-							candidate_cell->center[0], //and current cell's xy
-							candidate_cell->center[1]);
+							candidate_cell->x, //and current cell's xy
+							candidate_cell->y);
 						if (power_of_Rho_ > 1) //r = r^p
 						{
 							r = pow(r, power_of_Rho_);
@@ -600,8 +600,8 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cel
 						auto nItr = clusters_[iClusterIndex].cluster_Cells.begin();
 						while (nItr != clusters_[iClusterIndex].cluster_Cells.end())
 						{
-							r = CalcDistance(nItr->center[0], nItr->center[1], //Distance is magnitude between
-								candidate_cell->center[0], candidate_cell->center[1]); //Cluster's xy coords and current cell's
+							r = CalcDistance(nItr->x, nItr->y, //Distance is magnitude between
+								candidate_cell->x, candidate_cell->y); //Cluster's xy coords and current cell's
 							if (power_of_Rho_ > 1)
 							{
 								r = pow(r, power_of_Rho_);
@@ -639,10 +639,10 @@ void RATIONAL_SOLVER::Calc_Normalization()
 
 }
 
-bool RATIONAL_SOLVER::SelectCandidate(CELL_DERV& outNextCell) //Choose next lightning cell among candidates
+bool RATIONAL_SOLVER::SelectCandidate(CELL_R& outNextCell) //Choose next lightning cell among candidates
 { //Done by calculating P(i)
-	outNextCell.center[0] = 0;
-	outNextCell.center[1] = 0;
+	outNextCell.x = 0;
+	outNextCell.y = 0;
 
 	bool result = true;
 	int iIndex = 0;
@@ -655,7 +655,7 @@ bool RATIONAL_SOLVER::SelectCandidate(CELL_DERV& outNextCell) //Choose next ligh
 		//P(i) is calculated with equation 2 (Y) or eq. 10 (K), and represents the probability of selection.
 		//Apply eta parameter (squiggly n, for branching)
 		//And store into a vector
-		selection_Probability.push_back(pow(fabs(itr->b), eta_));
+		selection_Probability.push_back(pow(fabs(itr->selectionProb), eta_));
 		++itr; 
 	}
 	//Make a discrete distribution, with the weights being their selection probabilities.
@@ -694,9 +694,9 @@ void RATIONAL_SOLVER::AllCellsToCandidates() //Turns all cells into candidates. 
 		for (int j = 0; j < gridSize_; ++j) //Rows
 		{
 			iIndex = i * gridSize_ + j;
-			if(all_Cells[iIndex] && all_Cells[iIndex]->state == EMPTY) //If cells exist and theyre empty
+			if(all_Cells[iIndex] && all_Cells[iIndex]->type_ == EMPTY_R) //If cells exist and theyre empty
 			{//Map all cells to candidate map
-				candidateMap_DS.insert(std::map<int, CELL_DERV*>::value_type(iIndex, all_Cells[iIndex]));
+				candidateMap_DS.insert(std::map<int, CELL_R*>::value_type(iIndex, all_Cells[iIndex]));
 			}
 		}
 	}
@@ -714,23 +714,23 @@ void RATIONAL_SOLVER::UpdateCandidates()
 	auto itr = negative_Cells.begin();
 	while(itr != negative_Cells.end())
 	{
-		p_x = itr->center[0]; 
-		p_y = itr->center[1];
+		p_x = itr->x; 
+		p_y = itr->y;
 		iIndex = p_y * gridSize_ + p_x;
 
 		if(all_Cells[iIndex])
 		{
 			//Check neighbors
 			for(int n = 0; n < 8; ++n){
-				c_x = p_x + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n];
-				c_y = p_y + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
+				c_x = p_x + CELL_R::NEIGHBORS_X_DIFFERENCE[n];
+				c_y = p_y + CELL_R::NEIGHBORS_Y_DIFFERENCE[n];
 				iNeighborIndex = c_y * gridSize_ + c_x;
 
 				if (c_x >= 0 && c_x < gridSize_
 					&& c_y >= 0 && c_y < gridSize_
 					&& all_Cells[iNeighborIndex])
 				{
-					if(all_Cells[iNeighborIndex]->state == EMPTY) 
+					if(all_Cells[iNeighborIndex]->type_ == EMPTY_R) 
 					{
 						if(all_Cells[iNeighborIndex]->potential != 0)
 						{
@@ -743,24 +743,23 @@ void RATIONAL_SOLVER::UpdateCandidates()
 							bool xEmpty = true;
 							bool yEmpty = true;
 
-							if(x_index >= 0 && x_index < gridSize_ * gridSize_ && all_Cells[x_index]->state == REPULSOR)
+							if(x_index >= 0 && x_index < gridSize_ * gridSize_ && all_Cells[x_index]->type_ == NEGATIVE_R)
 							{ //Cell is at the start. For x
 								xEmpty = false; 
 							}
-							if (y_index >= 0 && y_index < gridSize_ * gridSize_ && all_Cells[y_index]->state == REPULSOR)
+							if (y_index >= 0 && y_index < gridSize_ * gridSize_ && all_Cells[y_index]->type_ == NEGATIVE_R)
 							{ //Cell is at the start. For x
 								yEmpty = false;
 							}
 							if(xEmpty || yEmpty) //If cell is feasible to be a candidate
 							{
 								//Set its xy, parents xy and phi to new ones
-								CELL_DERV candidate(0, 0, 0, 0);
-								candidate.center[0] = c_x; 
-								candidate.center[1] = c_y;
-								candidate.parent = new CELL(0, 0, 0, 0); 
-								candidate.parent->center[0] = p_x; 
-								candidate.parent->center[1] = p_y;
-								candidate.b = all_Cells[iNeighborIndex]->potential;
+								CELL_R candidate;
+								candidate.x = c_x; 
+								candidate.y = c_y;
+								candidate.parentX = p_x; 
+								candidate.parentY = p_y;
+								candidate.selectionProb = all_Cells[iNeighborIndex]->potential;
 								candidate_Cells.push_back(candidate); //And push to candidate cells
 							}
 
@@ -774,11 +773,11 @@ void RATIONAL_SOLVER::UpdateCandidates()
 
 }
 
-void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_DERV& next_Cell)
+void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_R& next_Cell)
 {
 	//Same as calcPotential_Rational()
-	int x = next_Cell.center[0];
-	int y = next_Cell.center[1];
+	int x = next_Cell.x;
+	int y = next_Cell.y;
 	int iIndex = y * gridSize_ + x;
 
 	//Remove cell from candidate map
@@ -790,14 +789,14 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_DERV& next_Cell)
 
 	//Update electric potential (phi) for candidate cells
 	float r;
-	CELL_DERV* candidate_Cell;
+	CELL_R* candidate_Cell;
 	auto itr = candidateMap_DS.begin();
 	while(itr != candidateMap_DS.end()) //Go through mapped candidates
 	{
 		candidate_Cell = itr->second;
 		if(candidate_Cell)
 		{
-			r = CalcDistance(x, y, candidate_Cell->center[0], candidate_Cell->center[1]);
+			r = CalcDistance(x, y, candidate_Cell->x, candidate_Cell->y);
 			if(power_of_Rho_>1)
 			{
 				r = pow(r, power_of_Rho_);
@@ -818,20 +817,20 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_DERV& next_Cell)
 		//Check neighbors
 		for (int n = 0; n < 8; ++n)
 		{
-			c_x = x + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n]; //Update xy coords
-			c_y = y + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
+			c_x = x + CELL_R::NEIGHBORS_X_DIFFERENCE[n]; //Update xy coords
+			c_y = y + CELL_R::NEIGHBORS_Y_DIFFERENCE[n];
 			iChildIndex = c_y * gridSize_ + c_x;
 
 			if(c_x >= 0 && c_x < gridSize_
 				&& c_y>= 0 && c_y < gridSize_
 				&& all_Cells[iChildIndex])
 			{
-				if(all_Cells[iChildIndex]->state != EMPTY)
+				if(all_Cells[iChildIndex]->type_ != EMPTY_R)
 				{
 					auto itr = candidateMap_DS.find(iChildIndex);
 					if(candidateMap_DS.end() == itr)
 					{ //Insert at the end
-						candidateMap_DS.insert(std::map<int, CELL_DERV*>::value_type(iChildIndex, all_Cells[iChildIndex]));
+						candidateMap_DS.insert(std::map<int, CELL_R*>::value_type(iChildIndex, all_Cells[iChildIndex]));
 						// calculate electric potential for newly added candidate cells
 						CalcPotential_Rational_SingleCell(all_Cells[iChildIndex]); 
 					}
@@ -843,19 +842,19 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_DERV& next_Cell)
 
 }
 
-void RATIONAL_SOLVER::UpdateClusterMap(const CELL_DERV& next_Cell)
+void RATIONAL_SOLVER::UpdateClusterMap(const CELL_R& next_Cell)
 {
 	int iIndex;
 	int x, y;
 	int iRegionSize = gridSize_ / clusterSize_;
 
-	x = next_Cell.center[0] / iRegionSize; 
-	y = next_Cell.center[1] / iRegionSize;
+	x = next_Cell.x / iRegionSize; 
+	y = next_Cell.y / iRegionSize;
 	iIndex = y * clusterSize_ + x;
 
 	clusters_[iIndex].cluster_Cells.push_back(next_Cell);
-	clusters_[iIndex].c_xSum += next_Cell.center[0];
-	clusters_[iIndex].c_ySum += next_Cell.center[1];
+	clusters_[iIndex].c_xSum += next_Cell.x;
+	clusters_[iIndex].c_ySum += next_Cell.y;
 	clusters_[iIndex].c_xAvg = (float)clusters_[iIndex].c_xSum / clusters_[iIndex].cluster_Cells.size();
 	clusters_[iIndex].c_yAvg = (float)clusters_[iIndex].c_ySum / clusters_[iIndex].cluster_Cells.size();
 }
@@ -863,26 +862,26 @@ void RATIONAL_SOLVER::UpdateClusterMap(const CELL_DERV& next_Cell)
 #pragma endregion
 
 #pragma region LIGHTNING FUNCTIONS
-void RATIONAL_SOLVER::AddNewLightningPath(const CELL_DERV& newPath, bool bIsEndCell, bool bTargetCell)
+void RATIONAL_SOLVER::AddNewLightningPath(const CELL_R& newPath, bool bIsEndCell, bool bTargetCell)
 {
-	int iIndex = newPath.center[1] * gridSize_ + newPath.center[0]; //Grid index
+	int iIndex = newPath.y * gridSize_ + newPath.x; //Grid index
 
 	if(!bIsEndCell) //If not end cell
 	{
 		//Update cell type
 		if(iIndex >= 0 && iIndex < all_Cells.size())
 		{
-			if(all_Cells[iIndex] && all_Cells[iIndex]->state == EMPTY)
+			if(all_Cells[iIndex] && all_Cells[iIndex]->type_ == EMPTY_R)
 			{//Only empty cells can be changed to other types
 				
-				all_Cells[iIndex]->state = NEGATIVE; //Set to negative
+				all_Cells[iIndex]->type_ = NEGATIVE_R; //Set to negative
 				negative_Cells.push_back(*all_Cells[iIndex]); //And add to negative cells vector
 			}
 		}
 	}
 	//Add lightning node to tree
-	lightning_tree_.AddChild(newPath.parent->center[0], newPath.parent->center[1],
-		newPath.center[0], newPath.center[1], bTargetCell); 
+	lightning_tree_.AddChild(newPath.parentX, newPath.parentY,
+		newPath.x, newPath.y, bTargetCell); 
 }
 
 
@@ -894,21 +893,21 @@ bool RATIONAL_SOLVER::ProcessLightning()
 			UpdateCandidates(); //Get candidates
 
 		//And select next cell from candidates
-		CELL_DERV next_Cell(0, 0, 0, 0);
+		CELL_R next_Cell;
 		bool result_ = SelectCandidate(next_Cell); 
 
 		if(result_)
 		{
 			int iEndX, iEndY; 
-			if(IsNearEndCell(next_Cell.center[0], next_Cell.center[1], iEndX, iEndY)) //If lightning is near end cell (attractor)
+			if(IsNearEndCell(next_Cell.x, next_Cell.y, iEndX, iEndY)) //If lightning is near end cell (attractor)
 			{
 				isLooping = false;
 				AddNewLightningPath(next_Cell);
 				//Add final target position
-				next_Cell.parent->center[0] = next_Cell.center[0]; 
-				next_Cell.parent->center[1] = next_Cell.center[1];
-				next_Cell.center[0] = iEndX; 
-				next_Cell.center[1] = iEndY;
+				next_Cell.parentX = next_Cell.x; 
+				next_Cell.parentY = next_Cell.y;
+				next_Cell.x = iEndX; 
+				next_Cell.y = iEndY;
 				AddNewLightningPath(next_Cell, true); 
 			}
 			else
@@ -925,16 +924,16 @@ bool RATIONAL_SOLVER::ProcessLightning()
 void RATIONAL_SOLVER::initLightningTree()
 {
 	//Takes starting point cell and initializes it to parent, updating all xy pos of this. 
-	CELL_DERV next_Cell(0, 0, 0, 0);
+	CELL_R next_Cell;
 	bool isRoot = true;
 
 	auto itr = negative_Cells.begin();
 	while (itr != negative_Cells.end())
 	{
-	/*	next_Cell.parent->center[0] = next_Cell.center[0];
-		next_Cell.parent->center[1] = next_Cell.center[1];*/
-		next_Cell.center[0] = itr->center[0];
-		next_Cell.center[1] = itr->center[1];
+		next_Cell.parentX = next_Cell.x;
+		next_Cell.parentY = next_Cell.y;
+		next_Cell.x = itr->x;
+		next_Cell.y = itr->y;
 
 		if (isRoot)
 		{
@@ -943,23 +942,20 @@ void RATIONAL_SOLVER::initLightningTree()
 			LIGHTNING_TREE_NODE* rootPtr = new LIGHTNING_TREE_NODE();
 			if (rootPtr)
 			{
-				rootPtr->x_ = next_Cell.center[0];
-				rootPtr->y_ = next_Cell.center[1];
+				rootPtr->x_ = next_Cell.x;
+				rootPtr->y_ = next_Cell.y;
 				rootPtr->parent_ = NULL;
 				lightning_tree_.SetRoot(rootPtr);
-				next_Cell.parent = new CELL(0, 0, 0, 0);
-				next_Cell.parent->center[0] = next_Cell.center[0];
-				next_Cell.parent->center[1] = next_Cell.center[1];
 
 			}
 		}
 		else
 		{
-			next_Cell.parent->center[0] = next_Cell.center[0];
-			next_Cell.parent->center[1] = next_Cell.center[1];
+			next_Cell.parentX = next_Cell.x;
+			next_Cell.parentY = next_Cell.y;
 			//Else, add child
-			lightning_tree_.AddChild(next_Cell.parent->center[0], next_Cell.parent->center[1],
-				next_Cell.center[0], next_Cell.center[1]);
+			lightning_tree_.AddChild(next_Cell.parentX, next_Cell.parentY,
+				next_Cell.x, next_Cell.y);
 		}
 		++itr; 
 	}
@@ -971,7 +967,7 @@ void RATIONAL_SOLVER::initLightningTree()
 #pragma region HELPER FUNCTIONS
 void RATIONAL_SOLVER::ClearVectors()
 {
-	std::vector< CELL_DERV* >::iterator itr = all_Cells.begin();
+	std::vector< CELL_R* >::iterator itr = all_Cells.begin();
 	while (itr != all_Cells.end())
 	{
 		if (*itr) //Safe delete
@@ -1011,13 +1007,13 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 		//Check neighbors
 		for (int n = 0; n < 8; ++n)
 		{
-			c_x = x + CELL_DERV::NEIGHBORS_X_DIFFERENCE[n];
-			c_y = y + CELL_DERV::NEIGHBORS_Y_DIFFERENCE[n];
+			c_x = x + CELL_R::NEIGHBORS_X_DIFFERENCE[n];
+			c_y = y + CELL_R::NEIGHBORS_Y_DIFFERENCE[n];
 			iIndex = c_y * gridSize_ + c_x;
 			if(c_x >= 0 && c_x < gridSize_ && c_y >= 0 && gridSize_ 
 				&& all_Cells[iIndex]) //Check cells
 			{
-				if( all_Cells[iIndex]->state == ATTRACTOR)
+				if( all_Cells[iIndex]->type_ == NEGATIVE_R)
 				{
 					result = true;
 					////Add candidate coords to vectors of end x and end y pos

@@ -168,7 +168,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CELL_DERV.cpp" />
+    <ClCompile Include="CELL_R.cpp" />
     <ClCompile Include="LightningAppJY.cpp" />
     <ClCompile Include="LightningAppTK.cpp" />
     <ClCompile Include="CELL.cpp" />
@@ -187,7 +187,7 @@
     <ClCompile Include="RNG.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CELL_DERV.h" />
+    <ClInclude Include="CELL_R.h" />
     <ClInclude Include="LightningAppJY.h" />
     <ClInclude Include="LightningAppTK.h" />
     <ClInclude Include="CELL.h" />

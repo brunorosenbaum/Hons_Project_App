@@ -110,6 +110,13 @@ void LightningAppJY::initLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 			endX = -difference_ * nodePtr->x_;
 			endY = -difference_ * nodePtr->y_;
 		}
+		else
+		{
+			startX = -difference_ + center_;
+			startY = difference_ + center_;
+			endX = -difference_ * nodePtr->x_;
+			endY = -difference_ * nodePtr->y_;
+		}
 		XMFLOAT2 start_ = XMFLOAT2(startX, startY);
 		XMFLOAT2 end_ = XMFLOAT2(endX, endY);
 		lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINELIST);

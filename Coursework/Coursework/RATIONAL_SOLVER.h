@@ -5,7 +5,7 @@
 #include <vector>
 #include <fstream>
 
-#include "CELL_DERV.h"
+#include "CELL_R.h"
 #include "LIGHTNING_TREE.h"
 
 //Highest order class. Cell_derv and lightning_tree are utility classes for this one
@@ -33,18 +33,18 @@ public:
 	//Computation funcs------------------------------------------------------------------
 	void CreateCandidateMap();
 	void CalcPotential_Rational();
-	void CalcPotential_Rational_SingleCell(CELL_DERV* candidate_cell);
+	void CalcPotential_Rational_SingleCell(CELL_R* candidate_cell);
 	void Calc_Normalization();
-	bool SelectCandidate(CELL_DERV& outNextCell); 
+	bool SelectCandidate(CELL_R& outNextCell); 
 
 	//Updating funcs---------------------------------------------------------------------
 	void AllCellsToCandidates();
 	void UpdateCandidates();
-	void UpdateCandidateMap(const CELL_DERV& next_Cell);
-	void UpdateClusterMap(const CELL_DERV& next_Cell);
+	void UpdateCandidateMap(const CELL_R& next_Cell);
+	void UpdateClusterMap(const CELL_R& next_Cell);
 
 	//Lightning formation funcs-------------------------------------------------------------------------
-	void AddNewLightningPath(const CELL_DERV& newPath, bool bIsEndCell = false, bool bTargetCell = false);
+	void AddNewLightningPath(const CELL_R& newPath, bool bIsEndCell = false, bool bTargetCell = false);
 	bool ProcessLightning();
 	void initLightningTree(); 
 
@@ -64,26 +64,26 @@ private:
 private: //------------- Grid and potential vars
 
 	//Should we make these cell_derv* instead? 
-	std::vector<CELL_DERV> boundary_Cells; //Serve as boundary condition. 'Borders' of simulation. 
-	std::vector<CELL_DERV> positive_Cells; //With >0 potential (phi > 0)
-	std::vector<CELL_DERV> negative_Cells; //With 0 potential (phi == 0)
+	std::vector<CELL_R> boundary_Cells; //Serve as boundary condition. 'Borders' of simulation. 
+	std::vector<CELL_R> positive_Cells; //With >0 potential (phi > 0)
+	std::vector<CELL_R> negative_Cells; //With 0 potential (phi == 0)
 
 	//Vectors of potentials bc im so tired
 	std::vector<float> boundaryPotentials_;
 	std::vector<float> positivePotentials_; 
 
 	//Cells in the grid
-	std::vector<CELL_DERV*> all_Cells;
+	std::vector<CELL_R*> all_Cells;
 	std::vector<CLUSTER> clusters_; //Vector of clusters: cells in the same region
 
 	//Candidates
-	std::map<int, CELL_DERV*> candidateMap_DS; //Map DATA STRUCTURE for each candidate cell. Each has a different position. This is for potential calcs.
-	std::vector<CELL_DERV> candidate_Cells; //Vector of candidate cells. They may have the same position, but each has a different parent.This is for selecting next lightning branch growth.  
+	std::map<int, CELL_R*> candidateMap_DS; //Map DATA STRUCTURE for each candidate cell. Each has a different position. This is for potential calcs.
+	std::vector<CELL_R> candidate_Cells; //Vector of candidate cells. They may have the same position, but each has a different parent.This is for selecting next lightning branch growth.  
 
 
 	// initial state
-	CELL_DERV* startPoint_Cell; //Initial negative charge
-	CELL_DERV* endPoint_Cell; //Initial positive charge
+	CELL_R* startPoint_Cell; //Initial negative charge
+	CELL_R* endPoint_Cell; //Initial positive charge
 
 	int gridSize_; //Size of the grid. Both use 256x256. This value is set to 64 tho bc its * 4 (64*4 = 256)
 	int clusterSize_; //Size of cluster. Set to 16.

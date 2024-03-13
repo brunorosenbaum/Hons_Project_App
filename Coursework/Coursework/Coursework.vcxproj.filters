@@ -75,7 +75,7 @@
     <ClCompile Include="RATIONAL_SOLVER.cpp">
       <Filter>Source Files\Yuns_Method</Filter>
     </ClCompile>
-    <ClCompile Include="CELL_DERV.cpp">
+    <ClCompile Include="CELL_R.cpp">
       <Filter>Source Files\Yuns_Method</Filter>
     </ClCompile>
     <ClCompile Include="LIGHTNING_TREE.cpp">
@@ -125,7 +125,7 @@
     <ClInclude Include="RATIONAL_SOLVER.h">
       <Filter>Header Files\Yuns_Method</Filter>
     </ClInclude>
-    <ClInclude Include="CELL_DERV.h">
+    <ClInclude Include="CELL_R.h">
       <Filter>Header Files\Yuns_Method</Filter>
     </ClInclude>
     <ClInclude Include="LIGHTNING_TREE.h">
