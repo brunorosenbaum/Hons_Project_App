@@ -996,7 +996,7 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 {
 	//Same code as previous functions but instead of checking if cell is empty you check if cell is an attractor
 	bool result = false;
-	outEndX = 0; outEndY = 0;
+	outEndX = -1; outEndY = -1;
 
 	if(x >= 0 && x < gridSize_ && y >= 0 && y < gridSize_)
 	{
@@ -1010,7 +1010,8 @@ bool RATIONAL_SOLVER::IsNearEndCell(int x, int y, int& outEndX, int& outEndY) co
 			c_x = x + CELL_R::NEIGHBORS_X_DIFFERENCE[n];
 			c_y = y + CELL_R::NEIGHBORS_Y_DIFFERENCE[n];
 			iIndex = c_y * gridSize_ + c_x;
-			if(c_x >= 0 && c_x < gridSize_ && c_y >= 0 && gridSize_ 
+
+			if(c_x >= 0 && c_x < gridSize_ && c_y >= 0 && c_y < gridSize_ 
 				&& all_Cells[iIndex]) //Check cells
 			{
 				if( all_Cells[iIndex]->type_ == POSITIVE_R)

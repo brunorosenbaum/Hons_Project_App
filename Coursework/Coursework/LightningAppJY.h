@@ -18,7 +18,8 @@ public:
 
 	//Lightning rendering funcs
 	void initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
-	void initLightning(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
+	void initLightning();
+	void drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX projection);
 
 protected:
 	bool render();
@@ -33,6 +34,8 @@ private:
 	LightningSM* lightning_SM;
 	RATIONAL_SOLVER* lightning_Generator;
 	float sceneSize, sceneHalf;
+
+	std::vector<LIGHTNING_TREE_NODE*> tree_nodes; 
 
 };
 

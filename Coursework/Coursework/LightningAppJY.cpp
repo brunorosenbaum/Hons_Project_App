@@ -4,7 +4,8 @@ LightningAppJY::LightningAppJY()
 {
 	grid_Cell_mesh = nullptr;
 	grid_bounds_mesh = nullptr;
-	lightning_mesh_ = nullptr; 
+	lightning_mesh_ = nullptr;
+	tree_nodes.clear(); 
 }
 
 LightningAppJY::~LightningAppJY()
@@ -32,6 +33,16 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
+	initLightning(); 
+}
+
+void LightningAppJY::initLightning()
+{
+	lightning_Generator->ProcessLightning();
+	//float fDiff = -fSceneSize / g_lightningGenerator.GetGridSize();
+
+	LIGHTNING_TREE& lightning_tree = lightning_Generator->GetLightningTree();
+	tree_nodes = lightning_tree.GetNodes();
 
 }
 
@@ -87,25 +98,20 @@ void LightningAppJY::initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projec
 	linear_SM->render(renderer->getDeviceContext(), grid_bounds_mesh->getIndexCount()); 
 }
 
-void LightningAppJY::initLightning(XMMATRIX world, XMMATRIX view, XMMATRIX projection)
+void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
-	lightning_Generator->ProcessLightning();
-	//float fDiff = -fSceneSize / g_lightningGenerator.GetGridSize();
+	LIGHTNING_TREE_NODE* nodePtr;
 	float difference_ = -1;
 	float center_ = difference_ * 0.5;
 	float startX, startY, endX, endY;
 
-	LIGHTNING_TREE_NODE* nodePtr;
-	LIGHTNING_TREE& lightning_tree = lightning_Generator->GetLightningTree();
-	std::vector<LIGHTNING_TREE_NODE*> tree_nodes = lightning_tree.GetNodes();
-
 	auto itr = tree_nodes.begin();
-	while(itr != tree_nodes.end()) //Set xy coords of starting and end points of lightning segments
+	while (itr != tree_nodes.end()) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
-		if(nodePtr && nodePtr->parent_)
+		if (nodePtr && nodePtr->parent_)
 		{
-			startX = -difference_ * nodePtr->parent_->x_ + center_; 
+			startX = -difference_ * nodePtr->parent_->x_ + center_;
 			startY = difference_ * nodePtr->parent_->y_ + center_;
 			endX = -difference_ * nodePtr->x_;
 			endY = -difference_ * nodePtr->y_;
@@ -123,9 +129,12 @@ void LightningAppJY::initLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 		lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_);
 		lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 
-		++itr; 
+		++itr;
 	}
+
 }
+
+
 
 bool LightningAppJY::render()
 {
@@ -137,7 +146,7 @@ bool LightningAppJY::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
-	initLightning(worldMatrix, viewMatrix, projectionMatrix); 
+	drawLightning(worldMatrix, viewMatrix, projectionMatrix); 
 	// Render GUI
 	gui();
 

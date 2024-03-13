@@ -30,7 +30,7 @@ public:
     CELL_R(int x, int y, CELL_TYPE type, float phi); */
     ~CELL_R();
 
-    void SetCellType(CELL_TYPE_R type) { type_ = type; }
+    void SetCellType(CELL_TYPE_R type);
 public:
     //Neighbors. Clockwise for 2d. 
     static const int NEIGHBORS_X_DIFFERENCE[8];

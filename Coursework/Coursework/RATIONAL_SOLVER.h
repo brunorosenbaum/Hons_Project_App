@@ -90,7 +90,7 @@ private: //------------- Grid and potential vars
 	int eta_; 
 	int power_of_Rho_;
 	//Mersenne Twister 19937 generator. Pseudo-random generator of 32-bit numbers with a state size of 19937 bits.
-	std::mt19937 rng_; //TODO: ALSO DO THIS IN KIM'S CODE
+	std::mt19937 rng_; 
 
 private: //---------Lightning tree and segments vars
 	LIGHTNING_TREE lightning_tree_; 

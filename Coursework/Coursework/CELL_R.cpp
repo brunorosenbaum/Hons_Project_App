@@ -15,3 +15,24 @@ CELL_R::CELL_R() :
 CELL_R::~CELL_R()
 {
 }
+
+void CELL_R::SetCellType(CELL_TYPE_R type)
+{
+	type_ = type;
+
+	switch(type)
+	{
+	case EMPTY_R:
+		isBoundary = false;
+		potential = 0.0f; 
+		break;
+	case NEGATIVE_R:
+		isBoundary = true;
+		potential = 0.0f;
+		break;
+	case POSITIVE_R:
+		isBoundary = true;
+		potential = 1.0f;
+		break;
+	}
+}
