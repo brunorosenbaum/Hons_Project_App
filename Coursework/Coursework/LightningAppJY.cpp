@@ -42,7 +42,7 @@ void LightningAppJY::initLightning()
 	//float fDiff = -fSceneSize / g_lightningGenerator.GetGridSize();
 
 	LIGHTNING_TREE& lightning_tree = lightning_Generator->GetLightningTree();
-	tree_nodes = lightning_tree.GetNodes();
+	tree_nodes = lightning_tree.GetNodes(); //Initialize to nodes from lightning tree
 
 }
 
@@ -73,11 +73,11 @@ void LightningAppJY::initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projec
 
 	for(int i = 0; i  < gridSize * 0.5; ++i)
 	{
-		yTransl = difference_ * i /*+ sceneHalf*/;
+		yTransl = /*difference_ **/ i /*+ sceneHalf*/;
 
 		for(int j = 0; j < gridSize * 0.5; ++j)
 		{
-			xTransl = -difference_ * j /*+ sceneHalf*/;
+			xTransl = -/*difference_ **/ j /*+ sceneHalf*/;
 
 			XMMATRIX scale_ = XMMatrixScaling(0.1, 0.1, 0.1);
 			XMMATRIX translation_ = /*scale_ **/ XMMatrixTranslation(xTransl, yTransl, 0) * scale_;
@@ -109,22 +109,38 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 	while (itr != tree_nodes.end()) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
-		if (nodePtr && nodePtr->parent_)
+		if (nodePtr && nodePtr->parent_) //If is NOT root
 		{
+			if (nodePtr->parent_) {
 			startX = -difference_ * nodePtr->parent_->x_ + center_;
 			startY = difference_ * nodePtr->parent_->y_ + center_;
 			endX = -difference_ * nodePtr->x_;
 			endY = -difference_ * nodePtr->y_;
+			}
+			
 		}
-		else
+		else //If it IS root
 		{
 			startX = -difference_ + center_;
 			startY = difference_ + center_;
 			endX = -difference_ * nodePtr->x_;
 			endY = -difference_ * nodePtr->y_;
 		}
-		XMFLOAT2 start_ = XMFLOAT2(startX, startY);
-		XMFLOAT2 end_ = XMFLOAT2(endX, endY);
+		
+		float xDiff = endX - startX; 
+		float yDiff = endY - startY; 
+		float fThetaInRadians = atan2f(yDiff, xDiff);
+		if (0 == yDiff && xDiff < 0) fThetaInRadians = 0.0f;
+
+		XMFLOAT2 vCorner; 
+		vCorner.x = sinf(fThetaInRadians);
+		vCorner.y = cosf(fThetaInRadians);
+
+
+		XMFLOAT2 start_ = XMFLOAT2(startX + vCorner.x, startY - vCorner.y);
+		XMFLOAT2 end_ = XMFLOAT2(endX + vCorner.x, endY + vCorner.y);
+
+
 		lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 		lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_);
 		lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
@@ -145,7 +161,7 @@ bool LightningAppJY::render()
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
-	initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
+	//initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
 	drawLightning(worldMatrix, viewMatrix, projectionMatrix); 
 	// Render GUI
 	gui();
