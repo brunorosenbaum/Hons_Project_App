@@ -29,7 +29,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	lightning_mesh_ = new LightningMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/lightning_64.map"); 
+	lightning_Generator->InitializeGrid("res/lightning_32.map"); 
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
@@ -106,7 +106,8 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 	float startX, startY, endX, endY;
 
 	auto itr = tree_nodes.begin();
-	while (itr != tree_nodes.end()) //Set xy coords of starting and end points of lightning segments
+	int i = 0; 
+	while (itr != tree_nodes.end() && i < 2) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
 		if (nodePtr && nodePtr->parent_) //If is NOT root
@@ -145,7 +146,7 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 		lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_);
 		lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 
-		++itr;
+		++itr; ++i; 
 	}
 
 }

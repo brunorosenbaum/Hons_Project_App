@@ -9,12 +9,14 @@
 #define POW_OF_RHO 3 //Rho is P, or long p parameter. 
 
 RATIONAL_SOLVER::RATIONAL_SOLVER() :
-eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0), startPoint_Cell(NULL), endPoint_Cell(NULL)
+eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
 {
 	//Clear all vectors
 	boundary_Cells.clear();
 	positive_Cells.clear();
 	negative_Cells.clear();
+	startpoint_Cells.clear(); 
+	endpoint_Cells.clear(); 
 
 	boundaryPotentials_.clear();
 	positivePotentials_.clear();
@@ -119,10 +121,10 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //TODO: I SUSPECT READING
 
 				for (int i = 0; i < gridSize_; ++i)
 				{
-					pos >> iCellType; //TODO: THIS WILL THROW ERRORS
+					pos >> iCellType; //TODO: PROBABLY THE ERROR IS HERE FOR THE 15 VALUE
 
-					iCellX = iCellIndex % gridSize_;
-					iCellY = iCellIndex / gridSize_;
+					iCellX = iCellIndex % gridSize_; //Is it bc of the modulo here? i = 1 --> cellx = 1, 2, and so on
+					iCellY = iCellIndex / gridSize_; //But this'll be 0.1, 0.2 and such. wont it be 0 if its an int?
 
 					cellPtr = new CELL_R();
 					cellPtr->x = iCellX; cellPtr->y = iCellY;
@@ -135,28 +137,28 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //TODO: I SUSPECT READING
 
 						switch (iCellType)
 						{
-						case NEGATIVE_R:
+							case NEGATIVE_R:
 							{
 								cellPtr->type_ = NEGATIVE_R;
 
-								startPoint_Cell = cellPtr;
+								startpoint_Cells.push_back(*cellPtr);
 								negative_Cells.push_back(*cellPtr);
-								
+								break;
+
 
 								
 							}
-							break;
-							case POSITIVE_R:
-							{
+								case POSITIVE_R:
+								{
 								cellPtr->type_ = POSITIVE_R;
 
-								endPoint_Cell = cellPtr;
+								endpoint_Cells.push_back(*cellPtr); 
 								positive_Cells.push_back(*cellPtr);
 								
-								
+								break;
 
-							}
-							break;
+
+								}
 						}
 						++iCellIndex;
 					}
@@ -200,7 +202,7 @@ void RATIONAL_SOLVER::CreateBoundaryCells() //I'm assuming this method creates t
 		current_cell.x = i; current_cell.y = -1;
 		boundary_Cells.push_back(current_cell); //And add to vector
 
-		if (positive_Cells.size() == 1) //This code will only execute if there is one endcell. 
+		if (endpoint_Cells.size() == 1) //This code will only execute if there is one endcell. 
 		{ //I don't get it yet
 		current_cell.x = i;			current_cell.y = gridSize_;		boundary_Cells.push_back(current_cell);
 		}
@@ -927,8 +929,8 @@ void RATIONAL_SOLVER::initLightningTree()
 	CELL_R next_Cell;
 	bool isRoot = true;
 
-	auto itr = negative_Cells.begin();
-	while (itr != negative_Cells.end())
+	auto itr = startpoint_Cells.begin();
+	while (itr != startpoint_Cells.end())
 	{
 		next_Cell.parentX = next_Cell.x;
 		next_Cell.parentY = next_Cell.y;
@@ -981,8 +983,8 @@ void RATIONAL_SOLVER::ClearVectors()
 	positive_Cells.clear();
 	negative_Cells.clear();
 
-	startPoint_Cell = NULL; 
-	endPoint_Cell = NULL;
+	startpoint_Cells.clear();
+	endpoint_Cells.clear(); 
 
 	candidate_Cells.clear();
 	candidateMap_DS.clear();

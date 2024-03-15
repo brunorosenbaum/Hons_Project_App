@@ -67,6 +67,8 @@ private: //------------- Grid and potential vars
 	std::vector<CELL_R> boundary_Cells; //Serve as boundary condition. 'Borders' of simulation. 
 	std::vector<CELL_R> positive_Cells; //With >0 potential (phi > 0)
 	std::vector<CELL_R> negative_Cells; //With 0 potential (phi == 0)
+	std::vector<CELL_R> startpoint_Cells; //Initial negative charge
+	std::vector<CELL_R> endpoint_Cells; //Initial positive charge
 
 	//Vectors of potentials bc im so tired
 	std::vector<float> boundaryPotentials_;
@@ -80,10 +82,6 @@ private: //------------- Grid and potential vars
 	std::map<int, CELL_R*> candidateMap_DS; //Map DATA STRUCTURE for each candidate cell. Each has a different position. This is for potential calcs.
 	std::vector<CELL_R> candidate_Cells; //Vector of candidate cells. They may have the same position, but each has a different parent.This is for selecting next lightning branch growth.  
 
-
-	// initial state
-	CELL_R* startPoint_Cell; //Initial negative charge
-	CELL_R* endPoint_Cell; //Initial positive charge
 
 	int gridSize_; //Size of the grid. Both use 256x256. This value is set to 64 tho bc its * 4 (64*4 = 256)
 	int clusterSize_; //Size of cluster. Set to 16.

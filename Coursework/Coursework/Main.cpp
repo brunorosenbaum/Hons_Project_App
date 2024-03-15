@@ -17,7 +17,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
 	// Initialize and run the system object.
 	system->run();
-
 	// Shutdown and release the system object.
 	delete system;
 	system = 0;
