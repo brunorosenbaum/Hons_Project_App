@@ -29,7 +29,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	lightning_mesh_ = new LightningMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/lightning_32.map"); 
+	lightning_Generator->InitializeGrid("res/simple_7.map"); 
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
@@ -101,50 +101,60 @@ void LightningAppJY::initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projec
 void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
 	LIGHTNING_TREE_NODE* nodePtr;
-	float difference_ = -1;
-	float center_ = difference_ * 0.5;
+
+	float scenesize = 10.0f;
+	float halfScenesize = scenesize * 0.5; 
+	float difference_ = -scenesize / lightning_Generator->GetGridSize();
+	float center_ = -difference_ * 0.5;
 	float startX, startY, endX, endY;
 
 	auto itr = tree_nodes.begin();
 	int i = 0; 
-	while (itr != tree_nodes.end() && i < 10) //Set xy coords of starting and end points of lightning segments
+	while (itr != tree_nodes.end() /*&& i < 50*/) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
 		if (nodePtr && nodePtr->parent_) //If is NOT root
 		{
 			if (nodePtr->parent_) {
-			startX = -difference_ * nodePtr->parent_->x_ + center_;
-			startY = difference_ * nodePtr->parent_->y_ + center_;
-			endX = -difference_ * nodePtr->x_;
-			endY = -difference_ * nodePtr->y_;
+			startX = -difference_ * nodePtr->parent_->x_ - halfScenesize + center_;
+			startY = difference_ * nodePtr->parent_->y_ + halfScenesize - center_;
+			endX = -difference_ * nodePtr->x_ - halfScenesize + center_;
+			endY = difference_ * nodePtr->y_ + halfScenesize - center_;
 			}
-			
+			float xDiff = endX - startX;
+			float yDiff = endY - startY;
+			float fThetaInRadians = atan2f(yDiff, xDiff);
+			if (0 == yDiff && xDiff < 0) fThetaInRadians = 0.0f;
+			XMFLOAT2 vCorner;
+			vCorner.x = sinf(fThetaInRadians);
+			vCorner.y = cosf(fThetaInRadians);
+
+
+			//XMFLOAT2 start_ = XMFLOAT2(startX + vCorner.x, startY - vCorner.y);
+			//XMFLOAT2 end_ = XMFLOAT2(endX + vCorner.x, endY + vCorner.y);
+
+			XMFLOAT2 start_ = XMFLOAT2(startX, startY);
+			XMFLOAT2 end_ = XMFLOAT2(endX, endY);
+
+
+			lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+			lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_);
+			lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 		}
-		else //If it IS root
-		{
-			startX = -difference_ + center_;
-			startY = difference_ + center_;
-			endX = -difference_ * nodePtr->x_;
-			endY = -difference_ * nodePtr->y_;
-		}
+		//else //If it IS root
+		//{
+		//	startX = -difference_ + center_;
+		//	startY = difference_ + center_;
+		//	endX = -difference_ * nodePtr->x_;
+		//	endY = -difference_ * nodePtr->y_;
+		//}
 		
-		float xDiff = endX - startX; 
-		float yDiff = endY - startY; 
-		float fThetaInRadians = atan2f(yDiff, xDiff);
-		if (0 == yDiff && xDiff < 0) fThetaInRadians = 0.0f;
+		
+		
 
-		XMFLOAT2 vCorner; 
-		vCorner.x = sinf(fThetaInRadians);
-		vCorner.y = cosf(fThetaInRadians);
+		
 
 
-		XMFLOAT2 start_ = XMFLOAT2(startX + vCorner.x, startY - vCorner.y);
-		XMFLOAT2 end_ = XMFLOAT2(endX + vCorner.x, endY + vCorner.y);
-
-
-		lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-		lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_);
-		lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 
 		++itr; ++i; 
 	}
