@@ -21,6 +21,7 @@ eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
 	boundaryPotentials_.clear();
 	positivePotentials_.clear();
 
+	candidateMap_DS.clear(); 
 	candidate_Cells.clear();
 	all_Cells.clear(); 
 
@@ -46,7 +47,7 @@ bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
 	{
 		CreateBoundaryCells();//Create boundary grid cells (just position, coords)
 		CalcBoundaryPotential(); //Calc phi of all cells.
-		CalcPositivePotential();//Negative is not needed since cells default phi is 0. 
+		CalcPositivePotential();//Potential of cells depending on their distance to the endpoint
 
 		//Create clusters
 		CreateClusterMap(clusterSize_);
@@ -59,7 +60,8 @@ bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
 	return result;
 }
 
-bool RATIONAL_SOLVER::LoadMap(const std::string& path) //TODO: I SUSPECT READING THIS FILE MIGHT BE CAUSING ISSUES
+
+bool RATIONAL_SOLVER::LoadMap(const std::string& path) //Reads a .map file
 {
 	std::cout << "Load map file : " << path.c_str() << std::endl;
 	// read map file
@@ -121,15 +123,15 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //TODO: I SUSPECT READING
 
 				for (int i = 0; i < gridSize_; ++i)
 				{
-					pos >> iCellType; //TODO: PROBABLY THE ERROR IS HERE FOR THE 15 VALUE
+					pos >> iCellType; //This works and it reads the numbers in the .map file. 
+					//Therefore, it'll be 0 for empty, 1 for negative, and 2 for positive.
 
-					iCellX = iCellIndex % gridSize_; //Is it bc of the modulo here? i = 1 --> cellx = 1, 2, and so on
-					iCellY = iCellIndex / gridSize_; //But this'll be 0.1, 0.2 and such. wont it be 0 if its an int?
+					iCellX = iCellIndex % gridSize_; //These are NOT the X and Y positions in the world or diagram!
+					iCellY = iCellIndex / gridSize_; //These are x and y ON THE .MAP FILE!!!!
 
-					cellPtr = new CELL_R();
-					cellPtr->x = iCellX; cellPtr->y = iCellY;
-					cellPtr->type_ = EMPTY_R;
-					cellPtr->potential = fDefaultX; 
+					cellPtr = new CELL_R(iCellX, iCellY, EMPTY_R, fDefaultX);
+					//So the first will be (15, 0) bc it's in the .map file line number
+					//Then (15, 1), (15, 2)... these numbers are the ones passed into the xy coords of each CELL. 
 
 					if (cellPtr)
 					{
@@ -137,28 +139,31 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //TODO: I SUSPECT READING
 
 						switch (iCellType)
 						{
-							case NEGATIVE_R:
+							case NEGATIVE_R: //If number read from .map == 1
 							{
-								cellPtr->type_ = NEGATIVE_R;
-
+								cellPtr->SetCellType(NEGATIVE_R);
+								//Here's where I find out that start point cells and negative cells are initialized in the same.
+								//Startpoint cells can be one cell ptr, no need for a vector. TODO: EDIT LATER
+								//So these are cells with the value type == 1.
+									//Upon initialization, both these vectors will be of size 1. 
 								startpoint_Cells.push_back(*cellPtr);
 								negative_Cells.push_back(*cellPtr);
-								break;
-
-
 								
 							}
-								case POSITIVE_R:
-								{
-								cellPtr->type_ = POSITIVE_R;
+							break;
 
+							case POSITIVE_R://If number read from .map == 2
+							{
+								cellPtr->SetCellType(POSITIVE_R);
+								//Same thing as before. Also, positive cells AND endpoint will be size 1 in this simulation. 
 								endpoint_Cells.push_back(*cellPtr); 
 								positive_Cells.push_back(*cellPtr);
-								
-								break;
-
-
-								}
+							}
+							break;
+							
+							//Why do we break here and not inside? I have to ask that.
+							//Why do we not have default for type == 0 (empty) cells?
+								//Because the purpose of this method is to read where the start and endpoint are in the GRID. 
 						}
 						++iCellIndex;
 					}
@@ -190,10 +195,8 @@ void RATIONAL_SOLVER::CreateBoundaryCells() //I'm assuming this method creates t
 //in the .ppm files in Kims method. These should be positive in charge. 
 { //I think this is the equivalent to the quad_dbm_2D's drawQuadTree() 
 	boundary_Cells.clear();
-	boundary_Cells.reserve(gridSize_ * 4 + 4);
+	boundary_Cells.reserve(gridSize_ * 4 + 4); //32*4 + 4 = 132
 
-	//They don't use a pointer in here... this is gonna cause a memory leak isn't it
-	//CELL_R* current_cell = new CELL_R(0, 0, 0, 0, nullptr, 0); 
 	CELL_R current_cell; 
 	//Add boundary charges
 	for(int i = 0; i < gridSize_; ++i) //Initialize xy coords of grid
@@ -202,8 +205,8 @@ void RATIONAL_SOLVER::CreateBoundaryCells() //I'm assuming this method creates t
 		current_cell.x = i; current_cell.y = -1;
 		boundary_Cells.push_back(current_cell); //And add to vector
 
-		if (endpoint_Cells.size() == 1) //This code will only execute if there is one endcell. 
-		{ //I don't get it yet
+		if (endpoint_Cells.size() == 1) //Will always execute 
+		{ 
 		current_cell.x = i;			current_cell.y = gridSize_;		boundary_Cells.push_back(current_cell);
 		}
 
@@ -288,7 +291,7 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 	//	electric potentials based on those types separately as **P**, N, and B.
 
 	
-	//m_vPositivePotential.assign(m_iGridSize * m_iGridSize, 0.0f); //Assign value 0 to all positive elec potential cells
+	positivePotentials_.assign(gridSize_ * gridSize_, 0.0f); //Assign value 0 to all positive elec potential cells
 	CELL_R* current_Cell; 
 	float positivePhi = 0;
 	float r;
@@ -300,9 +303,10 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 		for(int j = 0; j < gridSize_; ++j)
 		{
 			current_Cell = all_Cells[iIndex];
+			positivePhi = 0; 
 
 			/*if (pCell && E_CT_END != pCell->m_eType)*/
-			if (current_Cell && current_Cell->type_ != NEGATIVE_R) //Go through cells until they reach end cell
+			if (current_Cell && current_Cell->type_ != POSITIVE_R) //Go through cells until they reach end cell
 			{
 				std::vector< CELL_R >::const_iterator pItr = positive_Cells.begin();
 				while (pItr != positive_Cells.end())
@@ -319,8 +323,8 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 				}
 			}
 		} 
-		positivePotentials_.push_back(positivePhi); 
-		//positive_Cells[iIndex].potential = positivePhi;
+		positivePotentials_[iIndex] = positivePhi; 
+		
 		iIndex++; 
 	}
 }
@@ -386,7 +390,7 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 	int candidateX, candidateY; //Candidate cells vector x and y pos
 	int iChildIndex;
 
-	std::vector< CELL_R >::iterator itr = negative_Cells.begin(); //Go through negative cells
+	auto itr = negative_Cells.begin(); //Go through negative cells
 	while (itr != negative_Cells.end())
 	{
 		cellX = (*itr).x; 
@@ -406,7 +410,9 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 				iChildIndex = cellY * gridSize_ + cellX;
 
 				//If cells xy coords are within the gridsize
-				if(candidateX >= 0 && candidateX < gridSize_ && candidateY >= 0 && candidateY < gridSize_ && all_Cells[iChildIndex])
+				if(candidateX >= 0 && candidateX < gridSize_ 
+					&& candidateY >= 0 && candidateY < gridSize_ 
+					&& all_Cells[iChildIndex])
 				{
 					if(all_Cells[iChildIndex]->type_ == EMPTY_R) //If cell is empty
 					{
@@ -453,7 +459,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 	if(candidateMap_DS.size() == 0)
 	{
 		std::cout << "There is no candidate cells to compute electric potential !!" << std::endl;
-		return;
+		
 	}
 
 	//Now, go through candidate cells
@@ -892,7 +898,7 @@ bool RATIONAL_SOLVER::ProcessLightning()
 	bool isLooping = true;
 	while(isLooping)
 	{
-			UpdateCandidates(); //Get candidates
+		UpdateCandidates(); //Get candidates
 
 		//And select next cell from candidates
 		CELL_R next_Cell;
@@ -925,33 +931,33 @@ bool RATIONAL_SOLVER::ProcessLightning()
 
 void RATIONAL_SOLVER::initLightningTree()
 {
-	//Takes starting point cell and initializes it to parent, updating all xy pos of this. 
+	//Takes starting point cell and initializes it to parent/root of the tree.  
 	CELL_R next_Cell;
 	bool isRoot = true;
 
-	auto itr = startpoint_Cells.begin();
+	auto itr = startpoint_Cells.begin(); //This code is literally gonna run once then
 	while (itr != startpoint_Cells.end())
 	{
-		next_Cell.parentX = next_Cell.x;
+		next_Cell.parentX = next_Cell.x; 
 		next_Cell.parentY = next_Cell.y;
 		next_Cell.x = itr->x;
 		next_Cell.y = itr->y;
 
-		if (isRoot)
+		if (isRoot) //Since this method is called once (1 startpoint), then it'll only run this block of code
 		{
 			isRoot = false;
 			//Set root of new tree
 			LIGHTNING_TREE_NODE* rootPtr = new LIGHTNING_TREE_NODE();
 			if (rootPtr)
 			{
-				rootPtr->x_ = next_Cell.x;
+				rootPtr->x_ = next_Cell.x; //The root's pos will be (15, 0) then
 				rootPtr->y_ = next_Cell.y;
 				rootPtr->parent_ = NULL;
 				lightning_tree_.SetRoot(rootPtr);
 
 			}
 		}
-		else
+		else //This won't run. 
 		{
 			next_Cell.parentX = next_Cell.x;
 			next_Cell.parentY = next_Cell.y;

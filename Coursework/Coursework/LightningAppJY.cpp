@@ -107,7 +107,7 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 
 	auto itr = tree_nodes.begin();
 	int i = 0; 
-	while (itr != tree_nodes.end() && i < 2) //Set xy coords of starting and end points of lightning segments
+	while (itr != tree_nodes.end() && i < 10) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
 		if (nodePtr && nodePtr->parent_) //If is NOT root

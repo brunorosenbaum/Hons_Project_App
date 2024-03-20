@@ -26,8 +26,8 @@ public:
     //    CELL* parent = nullptr,
     //    int depth = 0);
     CELL_R(); 
- /*   CELL_R(int x, int y); 
-    CELL_R(int x, int y, CELL_TYPE type, float phi); */
+    //CELL_R(int x, int y); 
+    CELL_R(int x, int y, CELL_TYPE_R type, float phi); 
     ~CELL_R();
 
     void SetCellType(CELL_TYPE_R type);

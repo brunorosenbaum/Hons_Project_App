@@ -12,6 +12,15 @@ CELL_R::CELL_R() :
 	
 }
 
+CELL_R::CELL_R(int x, int y, CELL_TYPE_R type, float phi) :
+	x(x), y(y), parentX(-1), parentY(-1),
+	potential(phi), selectionProb(0), isBoundary(false), type_(EMPTY_R),
+	N_(0), P_(0), B_(0)
+{
+	if (EMPTY_R == type)	isBoundary = false;
+	else						isBoundary = true;
+}
+
 CELL_R::~CELL_R()
 {
 }
