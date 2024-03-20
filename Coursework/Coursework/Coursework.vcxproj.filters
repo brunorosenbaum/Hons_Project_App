@@ -84,6 +84,12 @@
     <ClCompile Include="LightningAppJY.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LightningMesh_JY.cpp">
+      <Filter>Source Files\Yuns_Method</Filter>
+    </ClCompile>
+    <ClCompile Include="Lightning_JY_SM.cpp">
+      <Filter>Source Files\Yuns_Method</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightningAppTK.h">
@@ -134,6 +140,12 @@
     <ClInclude Include="LightningAppJY.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LightningMesh_JY.h">
+      <Filter>Header Files\Yuns_Method</Filter>
+    </ClInclude>
+    <ClInclude Include="Lightning_JY_SM.h">
+      <Filter>Header Files\ShaderManagers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LinearVS.hlsl">
@@ -146,6 +158,9 @@
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="LinearPS.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="LightningVS_JY.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>

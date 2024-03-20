@@ -21,15 +21,15 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 {
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
 
-	lightning_SM = new LightningSM(renderer->getDevice(), hwnd);
+	lightning_SM = new Lightning_JY_SM(renderer->getDevice(), hwnd);
 	linear_SM = new LinearSM(renderer->getDevice(), hwnd);
 
 	grid_Cell_mesh = new CellMesh(renderer->getDevice(), renderer->getDeviceContext());
 	grid_bounds_mesh = new CellBoundsMesh(renderer->getDevice(), renderer->getDeviceContext());
-	lightning_mesh_ = new LightningMesh(renderer->getDevice(), renderer->getDeviceContext());
+	lightning_mesh_ = new LightningMesh_JY(renderer->getDevice(), renderer->getDeviceContext());
 
 	lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/simple_7.map"); 
+	lightning_Generator->InitializeGrid("res/lightning_32.map"); 
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
@@ -110,25 +110,22 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 
 	auto itr = tree_nodes.begin();
 	int i = 0; 
-	while (itr != tree_nodes.end() /*&& i < 50*/) //Set xy coords of starting and end points of lightning segments
+	while (itr != tree_nodes.end() && i < 10) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
 		if (nodePtr && nodePtr->parent_) //If is NOT root
 		{
 			if (nodePtr->parent_) {
-			startX = -difference_ * nodePtr->parent_->x_ - halfScenesize + center_;
-			startY = difference_ * nodePtr->parent_->y_ + halfScenesize - center_;
-			endX = -difference_ * nodePtr->x_ - halfScenesize + center_;
-			endY = difference_ * nodePtr->y_ + halfScenesize - center_;
+				startX = -difference_ * nodePtr->parent_->x_ - halfScenesize + center_;
+				startY = difference_ * nodePtr->parent_->y_ + halfScenesize - center_;
+				endX = -difference_ * nodePtr->x_ - halfScenesize + center_;
+				endY = difference_ * nodePtr->y_ + halfScenesize - center_;
 			}
 			float xDiff = endX - startX;
 			float yDiff = endY - startY;
 			float fThetaInRadians = atan2f(yDiff, xDiff);
 			if (0 == yDiff && xDiff < 0) fThetaInRadians = 0.0f;
-			XMFLOAT2 vCorner;
-			vCorner.x = sinf(fThetaInRadians);
-			vCorner.y = cosf(fThetaInRadians);
-
+			XMFLOAT2 vCorner = XMFLOAT2(sinf(fThetaInRadians), cosf(fThetaInRadians));
 
 			//XMFLOAT2 start_ = XMFLOAT2(startX + vCorner.x, startY - vCorner.y);
 			//XMFLOAT2 end_ = XMFLOAT2(endX + vCorner.x, endY + vCorner.y);
@@ -137,8 +134,8 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 			XMFLOAT2 end_ = XMFLOAT2(endX, endY);
 
 
-			lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-			lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_);
+			lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+			lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_, vCorner);
 			lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 		}
 		//else //If it IS root
@@ -147,6 +144,16 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 		//	startY = difference_ + center_;
 		//	endX = -difference_ * nodePtr->x_;
 		//	endY = -difference_ * nodePtr->y_;
+		//	XMFLOAT2 s = XMFLOAT2(startX, startY);
+		//	XMFLOAT2 e = XMFLOAT2(endX, endY);
+		//	float xDiff = endX - startX;
+		//	float yDiff = endY - startY;
+		//	float fThetaInRadians = atan2f(yDiff, xDiff);
+		//	if (0 == yDiff && xDiff < 0) fThetaInRadians = 0.0f;
+		//	XMFLOAT2 vCorner = XMFLOAT2(sinf(fThetaInRadians), cosf(fThetaInRadians));
+		//	lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		//	lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, s, e, vCorner);
+		//	lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 		//}
 		
 		

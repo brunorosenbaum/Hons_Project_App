@@ -1,9 +1,9 @@
 #pragma once
 #include "CellMesh.h"
 #include "DXF.h"
-#include "LightningMesh.h"
+#include "LightningMesh_JY.h"
 #include "RATIONAL_SOLVER.h"
-#include "LightningSM.h"
+#include "Lightning_JY_SM.h"
 #include "LinearSM.h"
 
 class LightningAppJY : public BaseApplication
@@ -28,10 +28,10 @@ protected:
 private:
 	CellMesh* grid_Cell_mesh;
 	CellBoundsMesh* grid_bounds_mesh;
-	LightningMesh* lightning_mesh_; 
+	LightningMesh_JY* lightning_mesh_; 
 
 	LinearSM* linear_SM; 
-	LightningSM* lightning_SM;
+	Lightning_JY_SM* lightning_SM;
 	RATIONAL_SOLVER* lightning_Generator;
 	float sceneSize, sceneHalf;
 

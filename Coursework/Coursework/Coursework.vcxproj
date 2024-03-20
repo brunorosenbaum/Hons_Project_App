@@ -176,7 +176,9 @@
     <ClCompile Include="CG_SOLVER.cpp" />
     <ClCompile Include="DAG.cpp" />
     <ClCompile Include="LightningMesh.cpp" />
+    <ClCompile Include="LightningMesh_JY.cpp" />
     <ClCompile Include="LightningSM.cpp" />
+    <ClCompile Include="Lightning_JY_SM.cpp" />
     <ClCompile Include="LIGHTNING_TREE.cpp" />
     <ClCompile Include="LinearSM.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -195,7 +197,9 @@
     <ClInclude Include="CG_SOLVER.h" />
     <ClInclude Include="DAG.h" />
     <ClInclude Include="LightningMesh.h" />
+    <ClInclude Include="LightningMesh_JY.h" />
     <ClInclude Include="LightningSM.h" />
+    <ClInclude Include="Lightning_JY_SM.h" />
     <ClInclude Include="LIGHTNING_TREE.h" />
     <ClInclude Include="LinearSM.h" />
     <ClInclude Include="ppm\ppm.hpp" />
@@ -217,6 +221,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="LightningVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="LightningVS_JY.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
