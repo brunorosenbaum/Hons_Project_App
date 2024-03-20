@@ -33,23 +33,45 @@ OutputType main(InputType input)
     OutputType output;
 
 
-   if(input.position.y == 1) //Vertices 1, 2
-   {
-        if (input.position.x == 1) //[2] (1, 1)
-            input.position.xy = float2(end.x + corner.x, end.y - corner.y); 
+   //if(input.position.y == 1) //Vertices 1, 2
+   //{
+   //     if (input.position.x == 0) //[2] (1, 1)
+   //         input.position.xy = float2(end.x + corner.x, end.y - corner.y); 
 
-        else //[1] (1, 0)
-            input.position.xy = float2(start.x - corner.x, start.y + corner.y); //
+   //     else //[1] (1, 0)
+   //         input.position.xy = float2(end.x - corner.x, end.y + corner.y ); //
         
         
-   }
+   //}
+   // else //Vertices 0, 3
+   // {
+   //     if (input.position.x == 1) //[3] (1, 0)
+   //         input.position.xy = float2(start.x - corner.x, start.y + corner.y);
+
+   //     else //[0] (0, 0)
+   //         input.position.xy = float2(start.x + corner.x, start.y - corner.y); //
+
+   // }
+
+    if (input.position.y == 0) //Vertices 1, 2
+    {
+        input.position.xy = float2(end.x, end.y);
+
+        //if (input.position.x == 0) //[2] (1, 1)
+        //    input.position.xy = float2(end.x, end.y);
+        //else //[1] (1, 0)
+        //    input.position.xy = float2(end.x, end.y); //
+        
+        
+    }
     else //Vertices 0, 3
     {
-        if (input.position.x == 1) //[3] (1, 0)
-            input.position.xy = float2(end.x - corner.x, end.y + corner.y);
+        input.position.xy = float2(start.x, start.y);
 
-        else //[0] (0, 0)
-            input.position.xy = float2(start.x + corner.x, start.y - corner.y); //
+        //if (input.position.x == 1) //[3] (1, 0)
+        //    input.position.xy = float2(start.x, start.y);
+        //else //[0] (0, 0)
+        //    input.position.xy = float2(start.x, start.y); //
 
     }
 	output.position = mul(input.position, worldMatrix);

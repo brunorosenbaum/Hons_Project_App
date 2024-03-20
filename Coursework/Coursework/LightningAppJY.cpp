@@ -67,7 +67,7 @@ bool LightningAppJY::frame()
 void LightningAppJY::initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projection)
 {
 	//For matrix transformation of vertices
-	int gridSize = 10; //lightning_Generator->GetGridSize();
+	int gridSize = 16; //lightning_Generator->GetGridSize();
 	float xTransl, yTransl;
 	float difference_ = -1;
 
@@ -77,12 +77,12 @@ void LightningAppJY::initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projec
 
 		for(int j = 0; j < gridSize * 0.5; ++j)
 		{
-			xTransl = -/*difference_ **/ j /*+ sceneHalf*/;
+			xTransl = /*difference_ **/ j /*+ sceneHalf*/;
 
 			XMMATRIX scale_ = XMMatrixScaling(0.1, 0.1, 0.1);
-			XMMATRIX translation_ = /*scale_ **/ XMMatrixTranslation(xTransl, yTransl, 0) * scale_;
+			XMMATRIX translation_ = /*scale_ **/ XMMatrixTranslation(xTransl, yTransl, 0);
 			grid_Cell_mesh->sendData(renderer->getDeviceContext());
-			linear_SM->setShaderParameters(renderer->getDeviceContext(), translation_, view, projection, false);
+			linear_SM->setShaderParameters(renderer->getDeviceContext(), translation_ * world, view, projection, false);
 			linear_SM->render(renderer->getDeviceContext(), grid_Cell_mesh->getIndexCount());
 
 		}
@@ -91,10 +91,10 @@ void LightningAppJY::initQuadGrid(XMMATRIX world, XMMATRIX view, XMMATRIX projec
 	//TODO: FIGURE THIS OUT
 	//For boundaries
 	/*XMMATRIX bscale_ = XMMatrixScaling(gridSize/2, gridSize/2, 0);*/
-	XMMATRIX btranslation_ = XMMatrixTranslation(0,-1, 0);
+	//XMMATRIX btranslation_ = XMMatrixTranslation(0,-1, 0);
 
 	grid_bounds_mesh->sendData(renderer->getDeviceContext());
-	linear_SM->setShaderParameters(renderer->getDeviceContext(),  btranslation_ * world, view, projection, true);
+	linear_SM->setShaderParameters(renderer->getDeviceContext(),  world, view, projection, true);
 	linear_SM->render(renderer->getDeviceContext(), grid_bounds_mesh->getIndexCount()); 
 }
 
@@ -110,7 +110,7 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 
 	auto itr = tree_nodes.begin();
 	int i = 0; 
-	while (itr != tree_nodes.end() && i < 10) //Set xy coords of starting and end points of lightning segments
+	while (itr != tree_nodes.end() /*&& i < 50*/) //Set xy coords of starting and end points of lightning segments
 	{
 		nodePtr = *itr;
 		if (nodePtr && nodePtr->parent_) //If is NOT root

@@ -5,7 +5,7 @@
 #include <random>
 #include <sstream>
 
-#define ETA 2 //Eta (H or squiggly n) parameter
+#define ETA 3 //Eta (H or squiggly n) parameter
 #define POW_OF_RHO 3 //Rho is P, or long p parameter. 
 
 RATIONAL_SOLVER::RATIONAL_SOLVER() :
