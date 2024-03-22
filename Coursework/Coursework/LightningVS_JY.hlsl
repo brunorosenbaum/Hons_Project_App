@@ -53,25 +53,25 @@ OutputType main(InputType input)
 
    // }
 
-    if (input.position.y == 0) //Vertices 1, 2
+    if (input.position.y == 0) //Vertices 0, 1
     {
         input.position.xy = float2(end.x, end.y);
 
-        //if (input.position.x == 0) //[2] (1, 1)
-        //    input.position.xy = float2(end.x, end.y);
+        //if (input.position.x == 0)  //[0] (0, 0)
+        //    input.position.xy = float2(start.x + corner.x, start.y - corner.y);
         //else //[1] (1, 0)
-        //    input.position.xy = float2(end.x, end.y); //
+        //    input.position.xy = float2(end.x - corner.x, end.y + corner.y); //
         
         
     }
-    else //Vertices 0, 3
+    else //Vertices 2, 3
     {
         input.position.xy = float2(start.x, start.y);
 
-        //if (input.position.x == 1) //[3] (1, 0)
-        //    input.position.xy = float2(start.x, start.y);
-        //else //[0] (0, 0)
-        //    input.position.xy = float2(start.x, start.y); //
+        //if (input.position.x == 0) //[2] (1, 0)
+        //    input.position.xy = float2(start.x + corner.x, start.y - corner.y);
+        //else //[3] (1, 1)
+        //    input.position.xy = float2(end.x + corner.x, end.y - corner.y); //
 
     }
 	output.position = mul(input.position, worldMatrix);

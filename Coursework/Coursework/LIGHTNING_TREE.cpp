@@ -57,6 +57,52 @@ void LIGHTNING_TREE::ClearNodes() //Safely deletes nodes
 	nodes_.clear(); 
 }
 
+void LIGHTNING_TREE::SetTreeThickness()
+{ //I THINK this method is for culling the smaller branches
+	if (nodes_.size() > 1 && root_) //If there are nodes and theres a root
+	{
+		root_->isMainChannel = true; //Set root as main channel
+		root_->thickness = THICKNESS;
+		root_->attenuation = 1.0f;
+
+		//Find last node/leaf
+		LIGHTNING_TREE_NODE* endNode = nodes_.back();
+		if (endNode)
+		{
+			while (root_ != endNode) //While the end node is not the root (theres root + other nodes)
+			{
+				endNode->isMainChannel = true;
+				endNode->thickness = THICKNESS;
+				endNode->attenuation = 1.0f; //Its attenuation value will always be 1 if on main channel
+				endNode = endNode->parent_; //Redefine ptr?
+			}
+			AttenuateThickness(root_); 
+		}
+	}
+}
+
+void LIGHTNING_TREE::AttenuateThickness(LIGHTNING_TREE_NODE* nodePtr)
+{ //This is a recursive function
+	if(nodePtr)
+	{
+		if(!nodePtr->isMainChannel && nodePtr->parent_) //If not on the main channel but has a parent
+		{//So, branching away
+			//Reduce its attenuation
+			nodePtr->attenuation = nodePtr->parent_->attenuation * ATTENUATION; //*0.7 everytime, so itll reduce more and more
+			if(nodePtr->parent_->thickness > 1.0f)
+			{
+				nodePtr->thickness = nodePtr->parent_->thickness / 2.0f; //And half its thickness
+			}
+		}
+		auto itr = nodePtr->children_.begin(); //Go through the nodes children
+		while (itr != nodePtr->children_.end())
+		{
+			AttenuateThickness(*itr); //Recursion
+			++itr; 
+		}
+	}
+}
+
 bool LIGHTNING_TREE::SetRoot(LIGHTNING_TREE_NODE* root) //Safely sets root by setting parent to null
 {
 	ClearNodes();

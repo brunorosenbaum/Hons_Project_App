@@ -70,7 +70,7 @@ class CLUSTER //Class that holds small groups of cells in proximity. Necessary t
 ////This is done to generate stronger negative potentials among nearby negative charges.
 {
 public:
-    CLUSTER(): c_x(0), c_y(0), c_xSum(0), c_ySum(0), c_xAvg(0), c_yAvg(0)
+    CLUSTER(): c_x(-1), c_y(-1), c_xSum(0), c_ySum(0), c_xAvg(0), c_yAvg(0)
     {
         cluster_Cells.clear(); 
     }

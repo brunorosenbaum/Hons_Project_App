@@ -29,7 +29,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	lightning_mesh_ = new LightningMesh_JY(renderer->getDevice(), renderer->getDeviceContext());
 
 	lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/lightning_32.map"); 
+	lightning_Generator->InitializeGrid("res/lightning_32.map");
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
@@ -38,6 +38,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 
 void LightningAppJY::initLightning()
 {
+	
 	lightning_Generator->ProcessLightning();
 	//float fDiff = -fSceneSize / g_lightningGenerator.GetGridSize();
 
@@ -105,6 +106,7 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 	float scenesize = 10.0f;
 	float halfScenesize = scenesize * 0.5; 
 	float difference_ = -scenesize / lightning_Generator->GetGridSize();
+	float thickness_; 
 	float center_ = -difference_ * 0.5;
 	float startX, startY, endX, endY;
 
@@ -115,6 +117,8 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 		nodePtr = *itr;
 		if (nodePtr && nodePtr->parent_) //If is NOT root
 		{
+			thickness_ = nodePtr->thickness;
+
 			if (nodePtr->parent_) {
 				startX = -difference_ * nodePtr->parent_->x_ - halfScenesize + center_;
 				startY = difference_ * nodePtr->parent_->y_ + halfScenesize - center_;
@@ -133,10 +137,19 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 			XMFLOAT2 start_ = XMFLOAT2(startX, startY);
 			XMFLOAT2 end_ = XMFLOAT2(endX, endY);
 
-
-			lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
-			lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_, vCorner);
-			lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
+			if(thickness_ < 1.0f)
+			{
+				/*lightning_mesh_->sendData(renderer->getDeviceContext(), D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
+				lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_, vCorner);
+				lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());*/
+			}
+			else
+			{
+				lightning_mesh_->sendData(renderer->getDeviceContext(), D3D10_PRIMITIVE_TOPOLOGY_LINELIST);
+				lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, start_, end_, vCorner);
+				lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
+			}
+			
 		}
 		//else //If it IS root
 		//{

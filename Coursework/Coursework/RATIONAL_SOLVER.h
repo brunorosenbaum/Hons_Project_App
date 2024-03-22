@@ -46,7 +46,8 @@ public:
 	//Lightning formation funcs-------------------------------------------------------------------------
 	void AddNewLightningPath(const CELL_R& newPath, bool bIsEndCell = false, bool bTargetCell = false);
 	bool ProcessLightning();
-	void initLightningTree(); 
+	void initLightningTree();
+	void ThinLightningTree(); 
 
 	//Getsetters
 	LIGHTNING_TREE& GetLightningTree() { return lightning_tree_; }

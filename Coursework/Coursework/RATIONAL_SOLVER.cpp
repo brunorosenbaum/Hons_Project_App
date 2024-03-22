@@ -6,7 +6,7 @@
 #include <sstream>
 
 #define ETA 3 //Eta (H or squiggly n) parameter
-#define POW_OF_RHO 3 //Rho is P, or long p parameter. 
+#define POW_OF_RHO 2 //Rho is P, or long p parameter. 
 
 RATIONAL_SOLVER::RATIONAL_SOLVER() :
 eta_(ETA), power_of_Rho_(POW_OF_RHO), gridSize_(0), clusterSize_(0)
@@ -37,29 +37,6 @@ RATIONAL_SOLVER::~RATIONAL_SOLVER()
 	ClearVectors(); 
 
 }
-
-bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
-{
-	ClearVectors();
-
-	bool result = LoadMap(path);
-	if (result)
-	{
-		CreateBoundaryCells();//Create boundary grid cells (just position, coords)
-		CalcBoundaryPotential(); //Calc phi of all cells.
-		CalcPositivePotential();//Potential of cells depending on their distance to the endpoint
-
-		//Create clusters
-		CreateClusterMap(clusterSize_);
-
-		//Generate initial candidate map
-		CreateCandidateMap();
-		//And calculate phi for candidate cells (here's the rational method)
-		CalcPotential_Rational();
-	}
-	return result;
-}
-
 
 bool RATIONAL_SOLVER::LoadMap(const std::string& path) //Reads a .map file
 {
@@ -187,6 +164,28 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //Reads a .map file
 	std::cout << "Finish loading map file (" << path.c_str() << ") !!" << std::endl;
 
 	return true;
+}
+
+bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
+{
+	ClearVectors();
+
+	bool result = LoadMap(path);
+	if (result)
+	{
+		CreateBoundaryCells();//Create boundary grid cells (just position, coords)
+		CalcBoundaryPotential(); //Calc phi of all cells.
+		CalcPositivePotential();//Potential of cells depending on their distance to the endpoint
+
+		//Create clusters
+		CreateClusterMap(clusterSize_);
+
+		//Generate initial candidate map
+		CreateCandidateMap();
+		//And calculate phi for candidate cells (here's the rational method)
+		CalcPotential_Rational();
+	}
+	return result;
 }
 
 #pragma region PRECOMPUTATION FUNCTIONS
@@ -343,6 +342,7 @@ void RATIONAL_SOLVER::CreateClusterMap(int clusterSize)
 	clusters_.reserve(clusterSize_ * clusterSize_); //Make the cluster vector 16x16 = 256 (same as region size)
 
 	CLUSTER current_cluster;
+	
 
 	//Initialize x and y of cell clusters in cluster vector
 	for(int i = 0; i < clusterSize_; ++i) //y 
@@ -407,7 +407,7 @@ void RATIONAL_SOLVER::CreateCandidateMap() //Map refers to the C++ MAP DATA STRU
 				//Candidate's yPos = current cell's yPos + n neighbor's yPos
 				candidateY = cellY + CELL_R::NEIGHBORS_Y_DIFFERENCE[n];
 
-				iChildIndex = cellY * gridSize_ + cellX;
+				iChildIndex = candidateY * gridSize_ + candidateX;
 
 				//If cells xy coords are within the gridsize
 				if(candidateX >= 0 && candidateX < gridSize_ 
@@ -478,7 +478,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational()
 			//B = boundary_Cells[mapKey].potential;
 			// -----------------------------------------------------------
 			// for positive charges, use pre-computed value
-			P = positive_Cells[mapKey].potential;
+			P = positivePotentials_[mapKey];
 			// -----------------------------------------------------------
 			// for negative charge cells 
 			iCandidateClusterX = current_Cell->x / regionSize; //X
@@ -571,10 +571,10 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_R* candidate_cell)
 
 		// -----------------------------------------------------------
 		// for boundaries, use pre-computed values
-		B = boundary_Cells[iKey].potential;
+		B = boundaryPotentials_[iKey];
 		// -----------------------------------------------------------
 		// for positive charges, use pre-computed value
-		P = positive_Cells[iKey].potential;
+		P = positivePotentials_[iKey];
 		// -----------------------------------------------------------
 		// for negative charge cells 
 		iCandidateClusterX = candidate_cell->x / regionSize; //X
@@ -672,6 +672,8 @@ bool RATIONAL_SOLVER::SelectCandidate(CELL_R& outNextCell) //Choose next lightni
 	iIndex = distribution(rng_); //iIndex is a random index from the distribution
 	int iErrorCount = 0;
 
+	//TODO: THE ERROR IS HERE, DISCRETE DISTRIBUTION GETS STUCK BECAUSE CANDIDATE CELLS.SIZE() == 0
+	//TODO: THERE SHOULD BE SOMETHING IN THE CODE (IN UPDATE CANDIDATE MAP OR UPDATE CANDIDATE) RESETTING
 	while(candidate_Cells.size() == iIndex) //So iIndex is the same size as candidate cells, right?
 	{//I think this has to do with.. candidates not being suitable
 		++iErrorCount;
@@ -833,7 +835,7 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_R& next_Cell)
 				&& c_y>= 0 && c_y < gridSize_
 				&& all_Cells[iChildIndex])
 			{
-				if(all_Cells[iChildIndex]->type_ != EMPTY_R)
+				if(all_Cells[iChildIndex]->type_ == EMPTY_R)
 				{
 					auto itr = candidateMap_DS.find(iChildIndex);
 					if(candidateMap_DS.end() == itr)
@@ -882,7 +884,7 @@ void RATIONAL_SOLVER::AddNewLightningPath(const CELL_R& newPath, bool bIsEndCell
 			if(all_Cells[iIndex] && all_Cells[iIndex]->type_ == EMPTY_R)
 			{//Only empty cells can be changed to other types
 				
-				all_Cells[iIndex]->type_ = NEGATIVE_R; //Set to negative
+				all_Cells[iIndex]->SetCellType(NEGATIVE_R);//Set to negative
 				negative_Cells.push_back(*all_Cells[iIndex]); //And add to negative cells vector
 			}
 		}
@@ -920,10 +922,16 @@ bool RATIONAL_SOLVER::ProcessLightning()
 			}
 			else
 			{
+				 
 				AddNewLightningPath(next_Cell);
 				UpdateClusterMap(next_Cell);
 				UpdateCandidateMap(next_Cell);
+
 			}
+		}
+		if(!isLooping) //Process finished
+		{
+			ThinLightningTree(); 
 		}
 	}
 	return true;
@@ -969,6 +977,11 @@ void RATIONAL_SOLVER::initLightningTree()
 	}
 	
 
+}
+
+void RATIONAL_SOLVER::ThinLightningTree() //Culls branches that diverge from main channel
+{
+	lightning_tree_.SetTreeThickness(); 
 }
 #pragma endregion
 

@@ -43,8 +43,8 @@ void LightningMesh_JY::initBuffers(ID3D11Device* device)
 	// Load the vertex array with data.
 	vertices[0].position = XMFLOAT3(0, 0, 0.0f);  
 	vertices[1].position = XMFLOAT3(0, 1, 0.0f);  
-	vertices[2].position = XMFLOAT3(1, 1, 0.0f);  
-	vertices[3].position = XMFLOAT3(1, 0, 0.0f);  
+	vertices[2].position = XMFLOAT3(1, 0, 0.0f);  
+	vertices[3].position = XMFLOAT3(1, 1, 0.0f);  
 
 	// Load the index array with data.
 	indices[0] = 0;  
