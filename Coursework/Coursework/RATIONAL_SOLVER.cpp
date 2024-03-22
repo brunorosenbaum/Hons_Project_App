@@ -289,7 +289,7 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 	//	lightning path, and boundary charges.We then calculate the
 	//	electric potentials based on those types separately as **P**, N, and B.
 
-	
+	positivePotentials_.clear(); 
 	positivePotentials_.assign(gridSize_ * gridSize_, 0.0f); //Assign value 0 to all positive elec potential cells
 	CELL_R* current_Cell; 
 	float positivePhi = 0;
@@ -304,7 +304,6 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 			current_Cell = all_Cells[iIndex];
 			positivePhi = 0; 
 
-			/*if (pCell && E_CT_END != pCell->m_eType)*/
 			if (current_Cell && current_Cell->type_ != POSITIVE_R) //Go through cells until they reach end cell
 			{
 				std::vector< CELL_R >::const_iterator pItr = positive_Cells.begin();
@@ -321,10 +320,12 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 					++pItr;
 				}
 			}
+			positivePotentials_[iIndex] = positivePhi;
+			iIndex++;
 		} 
-		positivePotentials_[iIndex] = positivePhi; 
 		
-		iIndex++; 
+		
+		
 	}
 }
 #pragma endregion
@@ -742,7 +743,7 @@ void RATIONAL_SOLVER::UpdateCandidates()
 				{
 					if(all_Cells[iNeighborIndex]->type_ == EMPTY_R) 
 					{
-						if(all_Cells[iNeighborIndex]->potential != 0)
+						if(all_Cells[iNeighborIndex]->potential != 0.0f)
 						{
 							int diff_x = p_x - c_x; //Differences in position between potential cells and candidate
 							int diff_y = p_y - c_y;
@@ -800,6 +801,7 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_R& next_Cell)
 	//Update electric potential (phi) for candidate cells
 	float r;
 	CELL_R* candidate_Cell;
+
 	auto itr = candidateMap_DS.begin();
 	while(itr != candidateMap_DS.end()) //Go through mapped candidates
 	{
@@ -832,7 +834,7 @@ void RATIONAL_SOLVER::UpdateCandidateMap(const CELL_R& next_Cell)
 			iChildIndex = c_y * gridSize_ + c_x;
 
 			if(c_x >= 0 && c_x < gridSize_
-				&& c_y>= 0 && c_y < gridSize_
+				&& c_y >= 0 && c_y < gridSize_
 				&& all_Cells[iChildIndex])
 			{
 				if(all_Cells[iChildIndex]->type_ == EMPTY_R)
@@ -904,7 +906,7 @@ bool RATIONAL_SOLVER::ProcessLightning()
 
 		//And select next cell from candidates
 		CELL_R next_Cell;
-		bool result_ = SelectCandidate(next_Cell); 
+		bool result_ = SelectCandidate(*&next_Cell); 
 
 		if(result_)
 		{
@@ -912,20 +914,20 @@ bool RATIONAL_SOLVER::ProcessLightning()
 			if(IsNearEndCell(next_Cell.x, next_Cell.y, iEndX, iEndY)) //If lightning is near end cell (attractor)
 			{
 				isLooping = false;
-				AddNewLightningPath(next_Cell);
+				AddNewLightningPath(*&next_Cell);
 				//Add final target position
 				next_Cell.parentX = next_Cell.x; 
 				next_Cell.parentY = next_Cell.y;
 				next_Cell.x = iEndX; 
 				next_Cell.y = iEndY;
-				AddNewLightningPath(next_Cell, true); 
+				AddNewLightningPath(*&next_Cell, true); 
 			}
 			else
 			{
 				 
-				AddNewLightningPath(next_Cell);
-				UpdateClusterMap(next_Cell);
-				UpdateCandidateMap(next_Cell);
+				AddNewLightningPath(*&next_Cell);
+				UpdateClusterMap(*&next_Cell);
+				UpdateCandidateMap(*&next_Cell);
 
 			}
 		}

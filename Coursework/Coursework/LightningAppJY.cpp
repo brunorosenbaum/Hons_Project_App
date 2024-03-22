@@ -29,7 +29,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	lightning_mesh_ = new LightningMesh_JY(renderer->getDevice(), renderer->getDeviceContext());
 
 	lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/lightning_32.map");
+	lightning_Generator->InitializeGrid("res/lightning_128.map");
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
