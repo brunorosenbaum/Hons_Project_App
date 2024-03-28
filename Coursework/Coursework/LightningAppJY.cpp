@@ -33,7 +33,11 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
-	initLightning(); 
+	initLightning();
+
+	//Init compute shader
+	compute_shader = new CSBuffer(renderer->getDevice(), hwnd);
+
 }
 
 void LightningAppJY::initLightning()
@@ -168,20 +172,11 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 		//	lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, s, e, vCorner);
 		//	lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
 		//}
-		
-		
-		
-
-		
-
-
 
 		++itr; ++i; 
 	}
 
 }
-
-
 
 bool LightningAppJY::render()
 {
@@ -193,7 +188,11 @@ bool LightningAppJY::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	//initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
-	drawLightning(worldMatrix, viewMatrix, projectionMatrix); 
+	drawLightning(worldMatrix, viewMatrix, projectionMatrix);
+
+	//Test compute shader
+	compute_shader->runComputeShader(renderer->getDeviceContext(), XMINT3(16, 16, 1)); 
+
 	// Render GUI
 	gui();
 

@@ -90,6 +90,9 @@
     <ClCompile Include="Lightning_JY_SM.cpp">
       <Filter>Source Files\Yuns_Method</Filter>
     </ClCompile>
+    <ClCompile Include="CSBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LightningAppTK.h">
@@ -146,6 +149,9 @@
     <ClInclude Include="Lightning_JY_SM.h">
       <Filter>Header Files\ShaderManagers</Filter>
     </ClInclude>
+    <ClInclude Include="CSBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LinearVS.hlsl">
@@ -161,6 +167,9 @@
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="LightningVS_JY.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="LightningCS.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>

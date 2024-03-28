@@ -5,6 +5,7 @@
 #include "RATIONAL_SOLVER.h"
 #include "Lightning_JY_SM.h"
 #include "LinearSM.h"
+#include "CSBuffer.h"
 
 class LightningAppJY : public BaseApplication
 {
@@ -37,5 +38,6 @@ private:
 
 	std::vector<LIGHTNING_TREE_NODE*> tree_nodes; 
 
+	CSBuffer* compute_shader; 
 };
 
