@@ -6,6 +6,20 @@ float CalcDistance(float x1, float y1, float x2, float y2)
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
+struct Cell
+{
+    int x, y;
+    float phi;
+    float N, P, B; 
+};
+
+struct Cluster
+{
+    int x, y;
+    int xSum, ySum;
+    int xAvg, yAvg; 
+    Cell clusterCells[]; //Youve to define this
+};
 
 struct DataType //Lightning data type. Read only..?
 {
@@ -19,9 +33,13 @@ struct OutputDataType //This one is for read & write data that we need to pass a
 {
     float r;
     float N;
+    float phi; 
 };
+
 //TODO: SEND THESE AS UAVs etc
-StructuredBuffer<DataType> CS_InputBuffer : register(t0); //Why do we register it as t tho? This is the reading one
+
+StructuredBuffer<Cluster> ClusterInput : register(t0); //Why do we register it as t tho? This is the reading one
+StructuredBuffer<Cell> CellInput : register(t1); //Why do we register it as t tho? This is the reading one
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
 
 [numthreads(1, 1, 1)]
@@ -51,9 +69,10 @@ void main( uint3 DTid : SV_DispatchThreadID,
     {
         for (int cx = 0; cx < clusterSize; ++cx)
         {
-	        if(!CS_InputBuffer[index].isClusterEmpty())
+	        if(!ClusterInput[index].clusterCells == 0) //If the array is not empty? 
 	        {
-                CS_OutputBuffer[index].r = CalcDistance(vars here);
+                CS_OutputBuffer[index].r = CalcDistance(ClusterInput[index].xAvg, ClusterInput[index].yAvg,
+											 CellInput[index].x, CellInput[index].y);
                 if(pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
                 {
                     CS_OutputBuffer[index].r = pow(CS_OutputBuffer[index].r, pow_rho); 
@@ -62,16 +81,26 @@ void main( uint3 DTid : SV_DispatchThreadID,
             }
             else
             {
-	            //Same as below but different
+                for (int i = 0; i < sizeof(ClusterInput[index].clusterCells); ++i)
+                {
+                    CS_OutputBuffer[index].r = CalcDistance(ClusterInput[index].xAvg, ClusterInput[index].yAvg,
+											 CellInput[index].x, CellInput[index].y);
+                    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
+                    {
+                        CS_OutputBuffer[index].r = pow(CS_OutputBuffer[index].r, pow_rho);
+                    }
+                    CS_OutputBuffer[index].N += 1.0f / CS_OutputBuffer[index].r;
+                }
+
             }
             //++clusterindex
         }
     }
 
+	GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
 
-
-        GroupMemoryBarrierWithGroupSync
-        (); //Waits until all threads are done
-    
+    float B = CellInput[index].B;
+    float P = CellInput[index].P; 
+    CS_OutputBuffer[index].phi = (1.0f / B) * (1.0f / CS_OutputBuffer[index].N) * P; 
     
 }

@@ -601,7 +601,6 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_R* candidate_cell)
 						{
 							r = pow(r, power_of_Rho_);
 						}
-						//We add [cluster size? idk if 16 help TT__TT]/r to the negative potential
 						N += clusters_[iClusterIndex].cluster_Cells.size() / r;
 					}
 					else //For negative cells in the same cluster
