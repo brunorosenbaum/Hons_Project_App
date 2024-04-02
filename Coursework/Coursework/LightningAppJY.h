@@ -2,10 +2,10 @@
 #include "CellMesh.h"
 #include "DXF.h"
 #include "LightningMesh_JY.h"
-#include "RATIONAL_SOLVER.h"
+//#include "RATIONAL_SOLVER.h"
+#include "PARALLELIZED_RATIONAL.h"
 #include "Lightning_JY_SM.h"
 #include "LinearSM.h"
-#include "CSBuffer.h"
 
 class LightningAppJY : public BaseApplication
 {
@@ -33,11 +33,11 @@ private:
 
 	LinearSM* linear_SM; 
 	Lightning_JY_SM* lightning_SM;
-	RATIONAL_SOLVER* lightning_Generator;
+	//RATIONAL_SOLVER* lightning_Generator;
+	PARALLELIZED_RATIONAL* parallelized_lightning_Generator; 
 	float sceneSize, sceneHalf;
 
 	std::vector<LIGHTNING_TREE_NODE*> tree_nodes; 
 
-	CSBuffer* compute_shader; 
 };
 

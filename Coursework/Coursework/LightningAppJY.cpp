@@ -11,7 +11,8 @@ LightningAppJY::LightningAppJY()
 LightningAppJY::~LightningAppJY()
 {
 	BaseApplication::~BaseApplication();
-	delete lightning_Generator; lightning_Generator = NULL;
+	//delete lightning_Generator; lightning_Generator = NULL;
+	delete parallelized_lightning_Generator; parallelized_lightning_Generator = NULL;
 	delete grid_Cell_mesh; grid_Cell_mesh = NULL;
 	delete grid_bounds_mesh; grid_bounds_mesh = NULL;
 	delete lightning_mesh_; lightning_mesh_ = NULL; 
@@ -28,25 +29,28 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	grid_bounds_mesh = new CellBoundsMesh(renderer->getDevice(), renderer->getDeviceContext());
 	lightning_mesh_ = new LightningMesh_JY(renderer->getDevice(), renderer->getDeviceContext());
 
-	lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/lightning_128.map");
+	/*lightning_Generator = new RATIONAL_SOLVER();
+	lightning_Generator->InitializeGrid("res/lightning_128.map");*/
 
+	parallelized_lightning_Generator = new PARALLELIZED_RATIONAL(renderer->getDevice(), renderer->getDeviceContext(), hwnd);
+	parallelized_lightning_Generator->InitializeGrid("res/lightning_128.map");
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
 	initLightning();
 
-	//Init compute shader
-	compute_shader = new CSBuffer(renderer->getDevice(), hwnd);
+	
 
 }
 
 void LightningAppJY::initLightning()
 {
 	
-	lightning_Generator->ProcessLightning();
+	//lightning_Generator->ProcessLightning();
+	parallelized_lightning_Generator->ProcessLightning();
 	//float fDiff = -fSceneSize / g_lightningGenerator.GetGridSize();
 
-	LIGHTNING_TREE& lightning_tree = lightning_Generator->GetLightningTree();
+	//LIGHTNING_TREE& lightning_tree = lightning_Generator->GetLightningTree();
+	LIGHTNING_TREE& lightning_tree = parallelized_lightning_Generator->GetLightningTree();
 	tree_nodes = lightning_tree.GetNodes(); //Initialize to nodes from lightning tree
 
 }
@@ -109,7 +113,8 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 
 	float scenesize = 10.0f;
 	float halfScenesize = scenesize * 0.5; 
-	float difference_ = -scenesize / lightning_Generator->GetGridSize();
+	//float difference_ = -scenesize / lightning_Generator->GetGridSize();
+	float difference_ = -scenesize / parallelized_lightning_Generator->GetGridSize();
 	float thickness_; 
 	float center_ = -difference_ * 0.5;
 	float startX, startY, endX, endY;
@@ -189,9 +194,6 @@ bool LightningAppJY::render()
 
 	//initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
 	drawLightning(worldMatrix, viewMatrix, projectionMatrix);
-
-	//Test compute shader
-	compute_shader->runComputeShader(renderer->getDeviceContext(), XMINT3(16, 16, 1)); 
 
 	// Render GUI
 	gui();

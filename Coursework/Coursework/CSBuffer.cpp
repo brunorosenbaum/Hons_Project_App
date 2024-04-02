@@ -17,10 +17,12 @@ CSBuffer::~CSBuffer()
 	BaseShader::~BaseShader();
 }
 
+
+
 void CSBuffer::initShader(const wchar_t* cs, const wchar_t* blank)
 {
 	loadComputeShader(cs);
-	createOutputUAV();
+	
 }
 
 void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11ShaderResourceView* srv, 
@@ -44,59 +46,46 @@ void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11Shader
 
 void CSBuffer::createClusterBuffer(ID3D11Device* device, std::vector<CLUSTER> clusters)
 {
-	HRESULT result;
+	HRESULT result; //Do I need this here? Isn't it just fine calling device->CreateBuffer?
 
-	//Create cluster buffer description
+	//Create cluster buffer description - to output data from the compute shader
 	D3D11_BUFFER_DESC clusterBufDesc;
 	clusterBufDesc.ByteWidth = sizeof(clusters);
 	clusterBufDesc.Usage = D3D11_USAGE_DYNAMIC;
-	clusterBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //We write to it from the cpu
-	clusterBufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	clusterBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //We write to it from the cpu?
+	clusterBufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS; //For uav
 	clusterBufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	clusterBufDesc.StructureByteStride = clusters.size(); //Is this even ok? total size of the buffer in bytes
 
-	//Create subresource - which is p much 0
+	//Create subresource - INITIAL data getting passed into the buffer
 	D3D11_SUBRESOURCE_DATA clusterSubrsc;
-	clusterSubrsc.pSysMem = 0; 
-	clusterSubrsc.SysMemPitch = 0; //Idk what this is for rn
-	clusterSubrsc.SysMemSlicePitch = 0;
+	clusterSubrsc.pSysMem = clusters.data(); 
+	//clusterSubrsc.SysMemPitch = 0; //Idk what this is for rn
+	//clusterSubrsc.SysMemSlicePitch = 0;
 
 	//Create buffer with cluster desc & subresource
-	result = device->CreateBuffer(&clusterBufDesc, &clusterSubrsc, NULL);
+	//The condition is tldr create resource if vector isnt empty
+	result = device->CreateBuffer(&clusterBufDesc, clusters.data() ? & clusterSubrsc : nullptr, NULL);
 
-	//Create SRV
+	//Create SRV - READ ONLY!!
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN; //0, unknown format since were passing in a custom struct
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-	srvDesc.Buffer.FirstElement = 0; 
+	//srvDesc.Buffer.FirstElement = 0; Do I need this?
 	srvDesc.Buffer.NumElements = clusters.size();
 
 	result = device->CreateShaderResourceView(clusterBuffer, &srvDesc, &srv);
 
-
-
-}
-
-void CSBuffer::createOutputUAV()
-{
-	
-//Make UAV
-	D3D11_UNORDERED_ACCESS_VIEW_DESC descUAV;
-	ZeroMemory(&descUAV, sizeof(descUAV));
-	descUAV.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; ;// DXGI_FORMAT_UNKNOWN;
-	descUAV.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-	descUAV.Texture2D.MipSlice = 0;
-	renderer->CreateUnorderedAccessView(srv, &descUAV, &uav);
-
-	//Make SRV
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	srvDesc.Format = textureDesc.Format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	renderer->CreateShaderResourceView(m_tex, &srvDesc, &srv);
+	//Create UAV - READ & WRITE!!
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER; //Views the resource as a buffer
+	uavDesc.Buffer.NumElements = clusters.size();
+	device->CreateUnorderedAccessView(CS_Output, &uavDesc, &uav); 
 
 }
+
+
 
 void CSBuffer::unbind(ID3D11DeviceContext* device)
 {
@@ -111,5 +100,85 @@ void CSBuffer::unbind(ID3D11DeviceContext* device)
 	device->CSSetShader(nullptr, nullptr, 0);
 }
 
+void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11Buffer* cbufferPtr, UINT numResources, 
+	ID3D11ShaderResourceView** SRV_Ptr, ID3D11UnorderedAccessView* UAV_Ptr, 
+	UINT X, UINT Y, UINT Z)
+{
+	deviceContext->CSSetShaderResources(0, numResources, SRV_Ptr);
+	deviceContext->CSSetUnorderedAccessViews(0, 1, &UAV_Ptr, nullptr);
+	if(cbufferPtr)
+	{
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		deviceContext->Map(cbufferPtr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+		memcpy(mappedResource.pData, nullptr, 0); //Don't understand why the source is 0 memory
+		deviceContext->Unmap(cbufferPtr, 0);
+		deviceContext->CSSetConstantBuffers(0, 1, &cbufferPtr);
+	}
+	deviceContext->Dispatch(X, Y, Z);
+	unbind(deviceContext); 
+}
 
+HRESULT CSBuffer::createStructuredBuffer(ID3D11Device* device, UINT elementSize, UINT elementCount, void* initData,
+	ID3D11Buffer** bufferOutPtr)
+{ //This method fills out the input resource from data processed in the CPU, to send to the GPU.
+	//These will be used to, at the same time, fill their respective SRVs.
+	*bufferOutPtr = nullptr;
+	D3D11_BUFFER_DESC bufferDesc = { };
+	bufferDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	bufferDesc.ByteWidth = elementSize * elementCount;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //We write to it from the cpu?
+	bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED; 
+	bufferDesc.StructureByteStride = elementSize;
+
+	//Init data for the buffer
+
+	D3D11_SUBRESOURCE_DATA initData_;
+	initData_.pSysMem = initData;
+	return device->CreateBuffer(&bufferDesc, initData ? &initData_ : nullptr, bufferOutPtr);
+
+}
+
+HRESULT CSBuffer::createBufferSRV(ID3D11Device* device, ID3D11Buffer* inputBuffer, ID3D11ShaderResourceView** SRVOutPtr)
+{
+	D3D11_BUFFER_DESC bufferDesc = {};
+	inputBuffer->GetDesc(&bufferDesc);
+
+	CD3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER; //It uses BUFFEREX in the sample project, but that's for raw buffers, which this isnt, so..?
+	//I could use unknown too (ask)
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.Buffer.NumElements = bufferDesc.ByteWidth / bufferDesc.StructureByteStride;
+
+	return device->CreateShaderResourceView(inputBuffer, &srvDesc, SRVOutPtr); 
+}
+
+HRESULT CSBuffer::createBufferUAV(ID3D11Device* device, ID3D11Buffer* inputBuffer, ID3D11UnorderedAccessView** UAVOutPtr)
+{
+	D3D11_BUFFER_DESC bufferDesc = {};
+	inputBuffer->GetDesc(&bufferDesc);
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	uavDesc.Buffer.FirstElement = 0;
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.Buffer.NumElements = bufferDesc.ByteWidth / bufferDesc.StructureByteStride;
+
+	return device->CreateUnorderedAccessView(inputBuffer, &uavDesc, UAVOutPtr); 
+}
+
+ID3D11Buffer* CSBuffer::createCPUReadBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11Buffer* bufferPtr)
+{
+	ID3D11Buffer* cpuBuffer = nullptr;
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferPtr->GetDesc(&bufferDesc);
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	bufferDesc.Usage = D3D11_USAGE_STAGING; //usage directly reflects whether a resource is accessible by the CPU and/or GPU
+	//Staging -> A resource that supports data transfer (copy) from the GPU to the CPU.
+	bufferDesc.BindFlags = 0; bufferDesc.MiscFlags = 0;
+	device->CreateBuffer(&bufferDesc, nullptr, &cpuBuffer);
+	deviceContext->CopyResource(cpuBuffer, bufferPtr);
+
+	return cpuBuffer; 
+}
 

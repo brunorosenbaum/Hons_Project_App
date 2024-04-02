@@ -183,6 +183,7 @@
     <ClCompile Include="LIGHTNING_TREE.cpp" />
     <ClCompile Include="LinearSM.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PARALLELIZED_RATIONAL.cpp" />
     <ClCompile Include="ppm\ppm.cpp" />
     <ClCompile Include="QUAD_DBM_2D.cpp" />
     <ClCompile Include="QUAD_POISSON.cpp" />
@@ -204,6 +205,7 @@
     <ClInclude Include="Lightning_JY_SM.h" />
     <ClInclude Include="LIGHTNING_TREE.h" />
     <ClInclude Include="LinearSM.h" />
+    <ClInclude Include="PARALLELIZED_RATIONAL.h" />
     <ClInclude Include="ppm\ppm.hpp" />
     <ClInclude Include="QUAD_DBM_2D.h" />
     <ClInclude Include="QUAD_POISSON.h" />
