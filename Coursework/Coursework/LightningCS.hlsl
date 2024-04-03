@@ -95,13 +95,13 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //float B = CellInput[index].B;
     //float P = CellInput[index].P; 
     //CS_OutputBuffer[index].phi = (1.0f / B) * (1.0f / CS_OutputBuffer[index].N) * P; 
-    CS_OutputBuffer[index].phi = (1.0f / 0.5) * (1.0f / CS_OutputBuffer[index].N) * 0.5;
+    //CS_OutputBuffer[index].phi = (1.0f / 0.5) * (1.0f / CS_OutputBuffer[index].N) * 0.5;
     //if (CS_OutputBuffer[index].phi == 0)
     //{
     //    CS_OutputBuffer[index].phi = 0.5; 
 
     //}
-    CS_OutputBuffer[index].phi = max(CS_OutputBuffer[index].phi, 0.00001f); 
-    CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.00001f); 
+    CS_OutputBuffer[index].phi = max(CS_OutputBuffer[index].phi, 0.5f); 
+    CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f); 
 
 }

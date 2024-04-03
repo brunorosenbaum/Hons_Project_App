@@ -28,20 +28,25 @@ void CSBuffer::initShader(const wchar_t* cs, const wchar_t* blank)
 void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11ShaderResourceView* srv, 
 	std::vector<CLUSTER> clusters)
 {
-	HRESULT result;
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	result = deviceContext->Map(clusterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	size_t byteSize = clusters.size();
-	memcpy_s(mappedResource.pData, byteSize, clusters.data(), byteSize);
-	deviceContext->Unmap(clusterBuffer, 0); 
-	
-	//Dispatch is for sending the number of threads to the CS that are gonna do your algorithm
-	//So, 'sending the amount of minions' that are gonna go do the job.
-	//If we send (2, 3, 5) then the group we're gonna send is of size 2*3*5 = 30, but in undefined order
-	deviceContext->Dispatch(16, 16, 1);
+	//deviceContext->CSSetShader(computeShader, nullptr, 0);
+	//deviceContext->CSSetShaderResources(0, 1, &srv);
+	//deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, 0);
 
-	deviceContext->CSSetShaderResources(0, 1, &srv);
-	deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, 0);
+
+	//HRESULT result;
+	//D3D11_MAPPED_SUBRESOURCE mappedResource;
+	//result = deviceContext->Map(clusterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	//size_t byteSize = clusters.size();
+	//memcpy_s(mappedResource.pData, byteSize, clusters.data(), byteSize);
+	//deviceContext->Unmap(clusterBuffer, 0); 
+	//
+	////Dispatch is for sending the number of threads to the CS that are gonna do your algorithm
+	////So, 'sending the amount of minions' that are gonna go do the job.
+	////If we send (2, 3, 5) then the group we're gonna send is of size 2*3*5 = 30, but in undefined order
+	//deviceContext->Dispatch(16, 16, 1);
+
+	//deviceContext->CSSetShaderResources(0, 1, &srv);
+	//deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, 0);
 }
 
 void CSBuffer::createClusterBuffer(ID3D11Device* device, std::vector<CLUSTER> clusters)
@@ -104,6 +109,7 @@ void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11Buffer
 	ID3D11ShaderResourceView** SRV_Ptr, ID3D11UnorderedAccessView* UAV_Ptr, 
 	UINT X, UINT Y, UINT Z)
 {
+	deviceContext->CSSetShader(computeShader, nullptr, 0); 
 	deviceContext->CSSetShaderResources(0, numResources, SRV_Ptr);
 	deviceContext->CSSetUnorderedAccessViews(0, 1, &UAV_Ptr, nullptr);
 	if(cbufferPtr)

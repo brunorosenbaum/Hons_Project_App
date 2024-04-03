@@ -506,7 +506,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			D3D11_MAPPED_SUBRESOURCE MappedResource;
 			DataBufferType* ptr_;
 			deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource); 
-			ptr_ = (DataBufferType*)MappedResource.pData; 
+			ptr_ = (DataBufferType*)MappedResource.pData;
 
 			if(ptr_->phi_ == 0)
 			{
@@ -520,7 +520,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 				phi = ptr_->phi_;
 				N = ptr_->N_; 
 			}
-			
+			deviceContext->Unmap(cpuBuf, 0);
 
 			//Because we divide positive potentials with those of negative ones,
 			////we can generate stronger negative potentials among nearby negative charges.
