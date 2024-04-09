@@ -101,10 +101,12 @@ private: //---------Lightning tree and cs
 	ID3D11DeviceContext* deviceContext = nullptr;
 
 	//TEST - WILL USE WITH RATIONAL METHOD
-	ID3D11Buffer* buffer0 = nullptr; //These are the buffers we're gonna write our cell info to 
+	ID3D11Buffer* clusterBuffer = nullptr; //These are the buffers we're gonna write our cell info to 
+	ID3D11Buffer* cellBuffer = nullptr; 
 	ID3D11Buffer* CPUReadBuffer = nullptr;
 	ID3D11Buffer* bufferResult = nullptr;
 	ID3D11ShaderResourceView* srvBuffer0 = nullptr;
+	ID3D11ShaderResourceView* srvBuffer1 = nullptr;
 	/*ID3D11ShaderResourceView* srvBuffer1 = nullptr;*/
 	ID3D11UnorderedAccessView* resultUAV = nullptr;
 

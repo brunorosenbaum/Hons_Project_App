@@ -49,46 +49,46 @@ void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11Shader
 	//deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, 0);
 }
 
-void CSBuffer::createClusterBuffer(ID3D11Device* device, std::vector<CLUSTER> clusters)
-{
-	HRESULT result; //Do I need this here? Isn't it just fine calling device->CreateBuffer?
-
-	//Create cluster buffer description - to output data from the compute shader
-	D3D11_BUFFER_DESC clusterBufDesc;
-	clusterBufDesc.ByteWidth = sizeof(clusters);
-	clusterBufDesc.Usage = D3D11_USAGE_DYNAMIC;
-	clusterBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //We write to it from the cpu?
-	clusterBufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS; //For uav
-	clusterBufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	clusterBufDesc.StructureByteStride = clusters.size(); //Is this even ok? total size of the buffer in bytes
-
-	//Create subresource - INITIAL data getting passed into the buffer
-	D3D11_SUBRESOURCE_DATA clusterSubrsc;
-	clusterSubrsc.pSysMem = clusters.data(); 
-	//clusterSubrsc.SysMemPitch = 0; //Idk what this is for rn
-	//clusterSubrsc.SysMemSlicePitch = 0;
-
-	//Create buffer with cluster desc & subresource
-	//The condition is tldr create resource if vector isnt empty
-	result = device->CreateBuffer(&clusterBufDesc, clusters.data() ? & clusterSubrsc : nullptr, NULL);
-
-	//Create SRV - READ ONLY!!
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	srvDesc.Format = DXGI_FORMAT_UNKNOWN; //0, unknown format since were passing in a custom struct
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-	//srvDesc.Buffer.FirstElement = 0; Do I need this?
-	srvDesc.Buffer.NumElements = clusters.size();
-
-	result = device->CreateShaderResourceView(clusterBuffer, &srvDesc, &srv);
-
-	//Create UAV - READ & WRITE!!
-	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER; //Views the resource as a buffer
-	uavDesc.Buffer.NumElements = clusters.size();
-	device->CreateUnorderedAccessView(CS_Output, &uavDesc, &uav); 
-
-}
+//void CSBuffer::createClusterBuffer(ID3D11Device* device, std::vector<CLUSTER> clusters)
+//{
+//	HRESULT result; //Do I need this here? Isn't it just fine calling device->CreateBuffer?
+//
+//	//Create cluster buffer description - to output data from the compute shader
+//	D3D11_BUFFER_DESC clusterBufDesc;
+//	clusterBufDesc.ByteWidth = sizeof(clusters);
+//	clusterBufDesc.Usage = D3D11_USAGE_DYNAMIC;
+//	clusterBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //We write to it from the cpu?
+//	clusterBufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS; //For uav
+//	clusterBufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+//	clusterBufDesc.StructureByteStride = clusters.size(); //Is this even ok? total size of the buffer in bytes
+//
+//	//Create subresource - INITIAL data getting passed into the buffer
+//	D3D11_SUBRESOURCE_DATA clusterSubrsc;
+//	clusterSubrsc.pSysMem = clusters.data(); 
+//	//clusterSubrsc.SysMemPitch = 0; //Idk what this is for rn
+//	//clusterSubrsc.SysMemSlicePitch = 0;
+//
+//	//Create buffer with cluster desc & subresource
+//	//The condition is tldr create resource if vector isnt empty
+//	result = device->CreateBuffer(&clusterBufDesc, clusters.data() ? & clusterSubrsc : nullptr, NULL);
+//
+//	//Create SRV - READ ONLY!!
+//	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+//	srvDesc.Format = DXGI_FORMAT_UNKNOWN; //0, unknown format since were passing in a custom struct
+//	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+//	//srvDesc.Buffer.FirstElement = 0; Do I need this?
+//	srvDesc.Buffer.NumElements = clusters.size();
+//
+//	result = device->CreateShaderResourceView(clusterBuffer, &srvDesc, &srv);
+//
+//	//Create UAV - READ & WRITE!!
+//	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+//	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+//	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER; //Views the resource as a buffer
+//	uavDesc.Buffer.NumElements = clusters.size();
+//	device->CreateUnorderedAccessView(CS_Output, &uavDesc, &uav); 
+//
+//}
 
 
 

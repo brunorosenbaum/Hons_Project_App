@@ -495,12 +495,15 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 			//Use compute shader
 			//Write candidate cell data to structured buffer
-			compute_shader->createStructuredBuffer(device, sizeof(clusters_), clusters_.size(), &clusters_[0], &buffer0);
+			compute_shader->createStructuredBuffer(device, sizeof(clusters_), clusters_.size(), &clusters_[0], &clusterBuffer);
+			compute_shader->createStructuredBuffer(device, sizeof(current_Cell), 1, &current_Cell, &cellBuffer); 
 			compute_shader->createStructuredBuffer(device, sizeof(clusters_), clusters_.size(), nullptr, &bufferResult);
 			//Write that structured buffer data to an srv buffer
-			compute_shader->createBufferSRV(device, buffer0, &srvBuffer0);
+			compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
+			compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer1);
 			compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
-			compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 16, 16, 1); 
+			ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
+			compute_shader->runComputeShader(deviceContext, nullptr, 2, srvs, resultUAV, 16, 16, 1); 
 			
 			ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult);
 			D3D11_MAPPED_SUBRESOURCE MappedResource;

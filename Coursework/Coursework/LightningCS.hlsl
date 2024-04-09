@@ -18,7 +18,7 @@ struct Cluster
     int x, y;
     int xSum, ySum;
     int xAvg, yAvg; 
-    Cell clusterCells[4]; //Youve to define this
+    /*Cell clusterCells[16]*/ //Youve to define this
 };
 
 
@@ -55,53 +55,64 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
     //ASK ABOUT GROUPSHARED
     //-------------------------------------------------------------------------------------------------------------
-    uint clusterSize = DTid.x; //They're the same, x or y since it's a square grid. 64x64
-    uint index = DTid.y * 4 + DTid.x; 
+    uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
+    uint candIndex = DTid.y * 4 + DTid.x;
+    uint clustIndex = 0;
+    float N = CS_OutputBuffer[candIndex].N;
+    float r = CS_OutputBuffer[candIndex].r; 
 
-    //for (int cy = 0; cy < DTid.y; ++cy) //This'd run 64 times, careful bc clusters are 16
-    //{
-    //    for (int cx = 0; cx < clusterSize; ++cx)
-    //    {
-	   //     if(/*ClusterInput[index].clusterCells*/ clusterSize != 0) //If the array is not empty? 
-	   //     {
-    //            CS_OutputBuffer[index].r = CalcDistance(ClusterInput[index].xAvg, ClusterInput[index].yAvg,
-				//							 CellInput[index].x, CellInput[index].y);
-    //            if(pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
-    //            {
-    //                CS_OutputBuffer[index].r = pow(CS_OutputBuffer[index].r, pow_rho); 
-    //            }
-    //            CS_OutputBuffer[index].N += clusterSize / CS_OutputBuffer[index].r; 
-    //        }
-    //        else
-    //        {
-    //            for (int i = 0; i < clusterSize/*sizeof(ClusterInput[index].clusterCells)*/; ++i)
-    //            {
-    //                CS_OutputBuffer[index].r = CalcDistance(ClusterInput[index].xAvg, ClusterInput[index].yAvg,
-				//							 CellInput[index].x, CellInput[index].y);
-    //                if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
-    //                {
-    //                    CS_OutputBuffer[index].r = pow(CS_OutputBuffer[index].r, pow_rho);
-    //                }
-    //                CS_OutputBuffer[index].N += 1.0f / CS_OutputBuffer[index].r;
-    //            }
+    for (int cy = 0; cy < DTid.y; ++cy) //This'd run 64 times, careful bc clusters are 16
+    {
+        for (int cx = 0; cx < clusterSize; ++cx)
+        {
+           
+            if ( clustIndex != candIndex) //Negative charge charge cells NOT in same cluster
+            {
+               r = CalcDistance(ClusterInput[candIndex].xAvg, ClusterInput[candIndex].yAvg,
+											 CellInput[candIndex].x, CellInput[candIndex].y);
+                if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
+                {
+                    r = pow(r, pow_rho);
+                }
+                N += clusterSize / r;
+            }
+            else //Negative cells in same cluster
+            {
+                for (int i = 0; i < clusterSize; ++i)
+                {
+                    r = CalcDistance(ClusterInput[candIndex].xAvg, ClusterInput[candIndex].yAvg,
+										 CellInput[candIndex].x, CellInput[candIndex].y);
+                    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
+                    {
+                        r = pow(r, pow_rho);
+                    }
+                    N += 1.0f / r;
+                }
 
-    //        }
-    //        //++clusterindex
-    //    }
-    //}
+            }
+
+            ++clustIndex; 
+        }
+    }
 
 	GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
 
-    //float B = CellInput[index].B;
-    //float P = CellInput[index].P; 
-    //CS_OutputBuffer[index].phi = (1.0f / B) * (1.0f / CS_OutputBuffer[index].N) * P; 
+    float B = CellInput[candIndex].B;
+    float P = CellInput[candIndex].P;
+    CS_OutputBuffer[candIndex].N = N;
+    CS_OutputBuffer[candIndex].r = r;
+  
+    CS_OutputBuffer[candIndex].phi = (1.0f / B) * (1.0f / N) * P;
+	
     //CS_OutputBuffer[index].phi = (1.0f / 0.5) * (1.0f / CS_OutputBuffer[index].N) * 0.5;
     //if (CS_OutputBuffer[index].phi == 0)
     //{
-    //    CS_OutputBuffer[index].phi = 0.5; 
+    //    CS_OutputBuffer[index].phi = 0.5;
 
     //}
-    CS_OutputBuffer[index].phi = max(CS_OutputBuffer[index].phi, 0.5f); 
-    CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f); 
+    CS_OutputBuffer[candIndex].phi = max(CS_OutputBuffer[candIndex].phi, 0.5f);
+    //CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f);
+
+    //CS_OutputBuffer[candIndex].phi = 
 
 }
