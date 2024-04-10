@@ -115,5 +115,19 @@ private: //---------Lightning tree and cs
 		float r_, N_, phi_; 
 	};
 
+	struct GPUCellData
+	{
+		int x, y;
+		float phi;
+		float N, P, B;
+	};
+	struct GPUClusterData
+	{
+		int x, y;
+		int xSum, ySum;
+		int xAvg, yAvg;
+		/*GPUCellData clusterCells[16];*/
+	};
+
 };
 

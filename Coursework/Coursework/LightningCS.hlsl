@@ -18,7 +18,7 @@ struct Cluster
     int x, y;
     int xSum, ySum;
     int xAvg, yAvg; 
-    /*Cell clusterCells[16]*/ //Youve to define this
+    //Cell clusterCells[16]; //Youve to define this
 };
 
 
@@ -32,7 +32,7 @@ struct OutputDataType //This one is for read & write data that we need to pass a
 //TODO: SEND THESE AS UAVs etc
 
 StructuredBuffer<Cluster> ClusterInput : register(t0); //Why do we register it as t tho? This is the reading one
-StructuredBuffer<Cell> CellInput : register(t1); //Why do we register it as t tho? This is the reading one
+StructuredBuffer<Cell> CellInput : register(t1);
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
 
 [numthreads(1, 1, 1)]
@@ -56,20 +56,25 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //ASK ABOUT GROUPSHARED
     //-------------------------------------------------------------------------------------------------------------
     uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
-    uint candIndex = DTid.y * 4 + DTid.x;
+    uint candIndex = Gid.y * 4 + Gid.x;
     uint clustIndex = 0;
     float N = CS_OutputBuffer[candIndex].N;
     float r = CS_OutputBuffer[candIndex].r; 
-
-    for (int cy = 0; cy < DTid.y; ++cy) //This'd run 64 times, careful bc clusters are 16
+    
+    //DTid would be, first run = 0*4 + 0 = 0 -> No runs
+    //2nd-> 1*4 + 1 = 5; -> Loop runs 5 times
+    //3rd -> 2*4 + 2 = 10 -> Loop runs 10 times
+    //15, 20, 25... this makes no sense
+    //We only want to run this 16 times each. Where can I use thread ids and such? 
+    for (int cy = 0; cy < /*DTid.y*/ clusterSize; ++cy) 
     {
         for (int cx = 0; cx < clusterSize; ++cx)
         {
            
-            if ( clustIndex != candIndex) //Negative charge charge cells NOT in same cluster
+            if ( clustIndex != candIndex) //Negative charge cells NOT in same cluster
             {
-               r = CalcDistance(ClusterInput[candIndex].xAvg, ClusterInput[candIndex].yAvg,
-											 CellInput[candIndex].x, CellInput[candIndex].y);
+                r = CalcDistance(ClusterInput[clustIndex].xAvg, ClusterInput[clustIndex].yAvg,
+											 CellInput[Gid.x].x, CellInput[Gid.x].y);
                 if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
                 {
                     r = pow(r, pow_rho);
@@ -80,8 +85,8 @@ void main( uint3 DTid : SV_DispatchThreadID,
             {
                 for (int i = 0; i < clusterSize; ++i)
                 {
-                    r = CalcDistance(ClusterInput[candIndex].xAvg, ClusterInput[candIndex].yAvg,
-										 CellInput[candIndex].x, CellInput[candIndex].y);
+                    r = CalcDistance(ClusterInput[clustIndex].xAvg, ClusterInput[clustIndex].yAvg,
+										 CellInput[Gid.x].x, CellInput[Gid.x].y);
                     if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
                     {
                         r = pow(r, pow_rho);
@@ -110,7 +115,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //    CS_OutputBuffer[index].phi = 0.5;
 
     //}
-    CS_OutputBuffer[candIndex].phi = max(CS_OutputBuffer[candIndex].phi, 0.5f);
+    //CS_OutputBuffer[candIndex].phi = max(CS_OutputBuffer[candIndex].phi, 0.5f);
     //CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f);
 
     //CS_OutputBuffer[candIndex].phi = 

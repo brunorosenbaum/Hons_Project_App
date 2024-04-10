@@ -493,11 +493,41 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 			N = 0; //(phi = 0)
 
+			std::vector<GPUClusterData> gpu_cluster;
+			for(int c = 0; c < clusters_.size(); ++c)
+			{
+				GPUClusterData temp; 
+				temp.x = clusters_[c].c_x; 
+				temp.y = clusters_[c].c_y;
+				temp.xAvg = clusters_[c].c_xAvg;
+				temp.yAvg = clusters_[c].c_yAvg;
+				temp.ySum = clusters_[c].c_ySum;
+				temp.xSum = clusters_[c].c_xSum;
+				/*for(int k = 0; k < clusters_[c].cluster_Cells.size(); ++k)
+				{
+					temp.clusterCells[k].phi = clusters_[c].cluster_Cells[k].potential;
+					temp.clusterCells[k].N = clusters_[c].cluster_Cells[k].N_;
+					temp.clusterCells[k].P = clusters_[c].cluster_Cells[k].P_;
+					temp.clusterCells[k].B = clusters_[c].cluster_Cells[k].B_;
+					temp.clusterCells[k].x = clusters_[c].cluster_Cells[k].x;
+					temp.clusterCells[k].y = clusters_[c].cluster_Cells[k].y;
+				}*/
+				gpu_cluster.push_back(temp); 
+			}
+			GPUCellData gpu_cell; 
+			gpu_cell.phi = current_Cell->potential;
+			gpu_cell.B = B;
+			gpu_cell.P = P;
+			gpu_cell.N = N;
+			gpu_cell.x = current_Cell->x;
+			gpu_cell.y = current_Cell->y;
+
+
 			//Use compute shader
 			//Write candidate cell data to structured buffer
-			compute_shader->createStructuredBuffer(device, sizeof(clusters_), clusters_.size(), &clusters_[0], &clusterBuffer);
-			compute_shader->createStructuredBuffer(device, sizeof(current_Cell), 1, &current_Cell, &cellBuffer); 
-			compute_shader->createStructuredBuffer(device, sizeof(clusters_), clusters_.size(), nullptr, &bufferResult);
+			compute_shader->createStructuredBuffer(device, sizeof(gpu_cluster[0]), gpu_cluster.size(), &gpu_cluster[0], &clusterBuffer);
+			compute_shader->createStructuredBuffer(device, sizeof(gpu_cell), 1, &gpu_cell, &cellBuffer); 
+			compute_shader->createStructuredBuffer(device, sizeof(gpu_cluster[0]), gpu_cluster.size(), nullptr, &bufferResult);
 			//Write that structured buffer data to an srv buffer
 			compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
 			compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer1);
