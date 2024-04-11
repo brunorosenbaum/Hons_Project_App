@@ -117,17 +117,19 @@ private: //---------Lightning tree and cs
 
 	struct GPUCellData
 	{
-		int x, y;
+		//int x, y;
 		float phi;
 		float N, P, B;
+		int isCandidate = false; 
 	};
 	struct GPUClusterData
 	{
 		int x, y;
 		int xSum, ySum;
 		int xAvg, yAvg;
-		/*GPUCellData clusterCells[16];*/
+		GPUCellData clusterCells[16];
 	};
+	
 
 };
 

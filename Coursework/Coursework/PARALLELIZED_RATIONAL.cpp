@@ -441,12 +441,48 @@ void PARALLELIZED_RATIONAL::CreateCandidateMap() //Map refers to the C++ MAP DAT
 
 void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 {
-	unsigned int totalCells = gridSize_ * gridSize_; //4096 cells
+	unsigned int totalCells = gridSize_ * gridSize_; //128x128 cells = 16,384
 	if (all_Cells.size() < totalCells)
 	{
 		//Cell size error
 		std::cout << "cell size error !! " << std::endl;
 		return;
+	}
+
+	std::vector<vector<GPUCellData>> gpu_allCells; //Make 128x128 gpu cell vector & fill it
+	for (int i = 0; i < gridSize_; ++i)
+	{
+		std::vector<GPUCellData> temp_rows;
+		GPUCellData temp_columnCell;
+
+		for (int j = 0; j < gridSize_; ++j)
+		{
+			temp_columnCell.N = all_Cells[j]->N_;
+			temp_columnCell.P = all_Cells[j]->P_;
+			temp_columnCell.B = all_Cells[j]->B_;
+			temp_columnCell.phi = all_Cells[j]->potential;
+
+			if(candidateMap_DS.empty())
+			{
+				temp_columnCell.isCandidate = 0;
+
+			}
+			else
+			{
+				auto mapItr = candidateMap_DS.begin();
+				while (mapItr != candidateMap_DS.end())
+				{
+					if (mapItr->second->y == j)
+						temp_columnCell.isCandidate = 1;
+					else
+						temp_columnCell.isCandidate = 0;
+					++mapItr; 
+				}
+				temp_rows.push_back(temp_columnCell);
+			}
+			
+		}
+		gpu_allCells.push_back(temp_rows); 
 	}
 
 	// calculate electric potential (Phi) for only candidate cells
@@ -475,6 +511,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		mapKey = mapItr->first;
 		current_Cell = mapItr->second;
 
+
 		if (current_Cell && current_Cell->type_ == EMPTY_R) //If current cell is empty
 		{
 			// -----------------------------------------------------------
@@ -491,9 +528,20 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX;
 			iClusterIndex = 0;
 
-			N = 0; //(phi = 0)
+			N = 0; 
 
-			std::vector<GPUClusterData> gpu_cluster;
+			//----------------------------------
+			//Update cell info in gpu cells struct
+			int cx = current_Cell->x;
+			int cy = current_Cell->y; 
+			gpu_allCells[cx][cy].N = N; 
+			gpu_allCells[cx][cy].P = P; 
+			gpu_allCells[cx][cy].B = B; 
+			gpu_allCells[cx][cy].isCandidate = true;
+			gpu_allCells[cx][cy].phi = current_Cell->potential;
+
+		
+		/*	std::vector<GPUClusterData> gpu_cluster;
 			for(int c = 0; c < clusters_.size(); ++c)
 			{
 				GPUClusterData temp; 
@@ -503,7 +551,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 				temp.yAvg = clusters_[c].c_yAvg;
 				temp.ySum = clusters_[c].c_ySum;
 				temp.xSum = clusters_[c].c_xSum;
-				/*for(int k = 0; k < clusters_[c].cluster_Cells.size(); ++k)
+				for(int k = 0; k < clusters_[c].cluster_Cells.size(); ++k)
 				{
 					temp.clusterCells[k].phi = clusters_[c].cluster_Cells[k].potential;
 					temp.clusterCells[k].N = clusters_[c].cluster_Cells[k].N_;
@@ -511,29 +559,20 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 					temp.clusterCells[k].B = clusters_[c].cluster_Cells[k].B_;
 					temp.clusterCells[k].x = clusters_[c].cluster_Cells[k].x;
 					temp.clusterCells[k].y = clusters_[c].cluster_Cells[k].y;
-				}*/
+				}
 				gpu_cluster.push_back(temp); 
-			}
-			GPUCellData gpu_cell; 
-			gpu_cell.phi = current_Cell->potential;
-			gpu_cell.B = B;
-			gpu_cell.P = P;
-			gpu_cell.N = N;
-			gpu_cell.x = current_Cell->x;
-			gpu_cell.y = current_Cell->y;
-
+			}*/ 
 
 			//Use compute shader
 			//Write candidate cell data to structured buffer
-			compute_shader->createStructuredBuffer(device, sizeof(gpu_cluster[0]), gpu_cluster.size(), &gpu_cluster[0], &clusterBuffer);
-			compute_shader->createStructuredBuffer(device, sizeof(gpu_cell), 1, &gpu_cell, &cellBuffer); 
-			compute_shader->createStructuredBuffer(device, sizeof(gpu_cluster[0]), gpu_cluster.size(), nullptr, &bufferResult);
+			compute_shader->createStructuredBuffer(device, sizeof(gpu_allCells[0][0]), gpu_allCells[0].size(), &gpu_allCells[0][0], &cellBuffer);
+			compute_shader->createStructuredBuffer(device, sizeof(gpu_allCells[0][0]), gpu_allCells[0].size(), nullptr, &bufferResult);
 			//Write that structured buffer data to an srv buffer
-			compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
-			compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer1);
+			//compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
+			compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
 			compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
-			ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
-			compute_shader->runComputeShader(deviceContext, nullptr, 2, srvs, resultUAV, 16, 16, 1); 
+			//ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
+			compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1); 
 			
 			ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult);
 			D3D11_MAPPED_SUBRESOURCE MappedResource;

@@ -8,18 +8,18 @@ float CalcDistance(float x1, float y1, float x2, float y2)
 
 struct Cell
 {
-    int x, y;
+    //int x, y; //We eont need this bc our threads are gonna figure this out (thread ID) 
     float phi;
-    float N, P, B; 
+    float N, P, B;
+    int isCandidate; 
 };
 
-struct Cluster
-{
-    int x, y;
-    int xSum, ySum;
-    int xAvg, yAvg; 
-    //Cell clusterCells[16]; //Youve to define this
-};
+//struct Cluster
+//{
+//    int x, y;
+//    int xSum, ySum;
+//    int xAvg, yAvg;
+//};
 
 
 struct OutputDataType //This one is for read & write data that we need to pass around
@@ -29,13 +29,11 @@ struct OutputDataType //This one is for read & write data that we need to pass a
     float phi; 
 };
 
-//TODO: SEND THESE AS UAVs etc
-
-StructuredBuffer<Cluster> ClusterInput : register(t0); //Why do we register it as t tho? This is the reading one
-StructuredBuffer<Cell> CellInput : register(t1);
+StructuredBuffer<Cell> Cells : register(t0); //Why do we register it as t tho? This is the reading one
+//StructuredBuffer<Cell> CellInput : register(t1);
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
 
-[numthreads(1, 1, 1)]
+[numthreads(16, 16, 1)]
 void main( uint3 DTid : SV_DispatchThreadID, 
     uint3 Gid : SV_GroupID, 
     uint GI : SV_GroupIndex)
@@ -46,7 +44,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     ////en este caso en la grid de 64x64)
     
     //DTid ->  global thread offset within the dispatch call across three dimensions.
-    //SV_DispatchThreadID (DTid) = (SV_GroupID (Gid) * NumThreadsPerGroup)+SV_GroupThreadID
+    //SV_DispatchThreadID (DTid) = (SV_GroupID (Gid) * NumThreadsPerGroup)+SV_GroupThreadID //WE WANT THIS .X AND .Y ARE THE XY FOR CELL
 
     //SV_GroupThreadID -> thread offset within the group across three dimensions (el id de la thread en la grid grande)
 
@@ -56,58 +54,55 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //ASK ABOUT GROUPSHARED
     //-------------------------------------------------------------------------------------------------------------
     uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
-    uint candIndex = Gid.y * 4 + Gid.x;
-    uint clustIndex = 0;
-    float N = CS_OutputBuffer[candIndex].N;
-    float r = CS_OutputBuffer[candIndex].r; 
-    
-    //DTid would be, first run = 0*4 + 0 = 0 -> No runs
-    //2nd-> 1*4 + 1 = 5; -> Loop runs 5 times
-    //3rd -> 2*4 + 2 = 10 -> Loop runs 10 times
-    //15, 20, 25... this makes no sense
-    //We only want to run this 16 times each. Where can I use thread ids and such? 
-    for (int cy = 0; cy < /*DTid.y*/ clusterSize; ++cy) 
+    uint cellIndex = DTid.y * 128 + DTid.x;
+    //uint clustIndex = 0;
+    float N = CS_OutputBuffer[cellIndex].N;
+    float r = CS_OutputBuffer[cellIndex].r;
+    //groupshared Cell gCache[CacheSize];
+
+    //Get rid of loops 
+    //if (clustIndex != cellIndex) //Negative charge cells NOT in same cluster
+    //{
+
+    if(Cells[cellIndex].isCandidate)
     {
-        for (int cx = 0; cx < clusterSize; ++cx)
+	      r = CalcDistance(DTid.x + 1, DTid.y + 1,
+											 DTid.x, DTid.y);
+        if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
         {
-           
-            if ( clustIndex != candIndex) //Negative charge cells NOT in same cluster
-            {
-                r = CalcDistance(ClusterInput[clustIndex].xAvg, ClusterInput[clustIndex].yAvg,
-											 CellInput[Gid.x].x, CellInput[Gid.x].y);
-                if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
-                {
-                    r = pow(r, pow_rho);
-                }
-                N += clusterSize / r;
-            }
-            else //Negative cells in same cluster
-            {
-                for (int i = 0; i < clusterSize; ++i)
-                {
-                    r = CalcDistance(ClusterInput[clustIndex].xAvg, ClusterInput[clustIndex].yAvg,
-										 CellInput[Gid.x].x, CellInput[Gid.x].y);
-                    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
-                    {
-                        r = pow(r, pow_rho);
-                    }
-                    N += 1.0f / r;
-                }
-
-            }
-
-            ++clustIndex; 
+            r = pow(r, pow_rho);
         }
+        N += clusterSize / r;
+        CS_OutputBuffer[cellIndex].N = N;
+        CS_OutputBuffer[cellIndex].r = r;
     }
+      
+    //}
+    else //Negative cells in same cluster
+    {
+        //for (int i = 0; i < clusterSize; ++i) //This for loop should be only the dynamic size of the cells cluster
+        //{
+        //    r = CalcDistance(DTid.x + 1, DTid.x + 1,
+								//		 DTid.x, DTid.y);
+        //    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
+        //    {
+        //        r = pow(r, pow_rho);
+        //    }
+        //    N += 1.0f / r;
+        //}
+        N = Cells[cellIndex].N; 
+        r = 0; 
+    }
+           
+
 
 	GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
 
-    float B = CellInput[candIndex].B;
-    float P = CellInput[candIndex].P;
-    CS_OutputBuffer[candIndex].N = N;
-    CS_OutputBuffer[candIndex].r = r;
+    float B = Cells[cellIndex].B;
+    float P = Cells[cellIndex].P;
+   
   
-    CS_OutputBuffer[candIndex].phi = (1.0f / B) * (1.0f / N) * P;
+    CS_OutputBuffer[cellIndex].phi = (1.0f / B) * (1.0f / N) * P;
 	
     //CS_OutputBuffer[index].phi = (1.0f / 0.5) * (1.0f / CS_OutputBuffer[index].N) * 0.5;
     //if (CS_OutputBuffer[index].phi == 0)
@@ -115,7 +110,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //    CS_OutputBuffer[index].phi = 0.5;
 
     //}
-    //CS_OutputBuffer[candIndex].phi = max(CS_OutputBuffer[candIndex].phi, 0.5f);
+    CS_OutputBuffer[cellIndex].phi = max(CS_OutputBuffer[cellIndex].phi, 0.5f);
     //CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f);
 
     //CS_OutputBuffer[candIndex].phi = 
