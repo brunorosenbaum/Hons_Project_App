@@ -449,41 +449,52 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		return;
 	}
 
-	std::vector<vector<GPUCellData>> gpu_allCells; //Make 128x128 gpu cell vector & fill it
-	for (int i = 0; i < gridSize_; ++i)
+	//GPUCellData gpuCellsArray[gridSize_][gridSize_]; //2D array
+	GPUCellData gpuCellsArray[128][128]; //2D array
+
+	for(int i = 0; i < gridSize_; ++i)
 	{
-		std::vector<GPUCellData> temp_rows;
-		GPUCellData temp_columnCell;
-
-		for (int j = 0; j < gridSize_; ++j)
+		for(int j = 0; j < gridSize_; ++j)
 		{
-			temp_columnCell.N = all_Cells[j]->N_;
-			temp_columnCell.P = all_Cells[j]->P_;
-			temp_columnCell.B = all_Cells[j]->B_;
-			temp_columnCell.phi = all_Cells[j]->potential;
+			gpuCellsArray[i][j].N = all_Cells[i * gridSize_ + j]->N_;
+			gpuCellsArray[i][j].P = all_Cells[i * gridSize_ + j]->P_;
+			gpuCellsArray[i][j].B = all_Cells[i * gridSize_ + j]->B_;
+			gpuCellsArray[i][j].phi = all_Cells[i * gridSize_ + j]->potential;
+			gpuCellsArray[i][j].isCandidate = 0;
 
-			if(candidateMap_DS.empty())
-			{
-				temp_columnCell.isCandidate = 0;
-
-			}
-			else
-			{
-				auto mapItr = candidateMap_DS.begin();
-				while (mapItr != candidateMap_DS.end())
-				{
-					if (mapItr->second->y == j)
-						temp_columnCell.isCandidate = 1;
-					else
-						temp_columnCell.isCandidate = 0;
-					++mapItr; 
-				}
-				temp_rows.push_back(temp_columnCell);
-			}
-			
 		}
-		gpu_allCells.push_back(temp_rows); 
 	}
+
+	//std::vector<vector<GPUCellData>> gpu_allCells; //Make 128x128 gpu cell vector & fill it
+	//for (int i = 0; i < gridSize_; ++i)
+	//{
+	//	std::vector<GPUCellData> temp_rows;
+	//	GPUCellData temp_columnCell;
+	//	for (int j = 0; j < gridSize_; ++j)
+	//	{
+	//		temp_columnCell.N = all_Cells[j]->N_;
+	//		temp_columnCell.P = all_Cells[j]->P_;
+	//		temp_columnCell.B = all_Cells[j]->B_;
+	//		temp_columnCell.phi = all_Cells[j]->potential;
+
+	//		if(candidateMap_DS.empty())
+	//			temp_columnCell.isCandidate = 0;
+	//		else
+	//		{
+	//			auto mapItr = candidateMap_DS.begin();
+	//			while (mapItr != candidateMap_DS.end())
+	//			{
+	//				if (mapItr->second->y == j)
+	//					temp_columnCell.isCandidate = 1;
+	//				else
+	//					temp_columnCell.isCandidate = 0;
+	//				++mapItr; 
+	//			}
+	//			temp_rows.push_back(temp_columnCell);
+	//		}
+	//	}
+	//	gpu_allCells.push_back(temp_rows); 
+	//}
 
 	// calculate electric potential (Phi) for only candidate cells
 	float phi;
@@ -534,11 +545,11 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			//Update cell info in gpu cells struct
 			int cx = current_Cell->x;
 			int cy = current_Cell->y; 
-			gpu_allCells[cx][cy].N = N; 
-			gpu_allCells[cx][cy].P = P; 
-			gpu_allCells[cx][cy].B = B; 
-			gpu_allCells[cx][cy].isCandidate = true;
-			gpu_allCells[cx][cy].phi = current_Cell->potential;
+			gpuCellsArray[cx][cy].N = N;
+			gpuCellsArray[cx][cy].P = P;
+			gpuCellsArray[cx][cy].B = B;
+			gpuCellsArray[cx][cy].isCandidate = true;
+			gpuCellsArray[cx][cy].phi = current_Cell->potential;
 
 		
 		/*	std::vector<GPUClusterData> gpu_cluster;
@@ -563,46 +574,78 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 				gpu_cluster.push_back(temp); 
 			}*/ 
 
-			//Use compute shader
-			//Write candidate cell data to structured buffer
-			compute_shader->createStructuredBuffer(device, sizeof(gpu_allCells[0][0]), gpu_allCells[0].size(), &gpu_allCells[0][0], &cellBuffer);
-			compute_shader->createStructuredBuffer(device, sizeof(gpu_allCells[0][0]), gpu_allCells[0].size(), nullptr, &bufferResult);
-			//Write that structured buffer data to an srv buffer
-			//compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
-			compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
-			compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
-			//ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
-			compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1); 
-			
-			ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult);
-			D3D11_MAPPED_SUBRESOURCE MappedResource;
-			DataBufferType* ptr_;
-			deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource); 
-			ptr_ = (DataBufferType*)MappedResource.pData;
 
-			if(ptr_->phi_ == 0)
-			{
-				phi = 0.5;
-				N = 0.5;
-
-				phi = max(ptr_->phi_, 0.00001f);
-				N = max(ptr_->N_, 0.00001f);
-			}else
-			{
-				phi = ptr_->phi_;
-				N = ptr_->N_; 
-			}
-			deviceContext->Unmap(cpuBuf, 0);
-
-			//Because we divide positive potentials with those of negative ones,
-			////we can generate stronger negative potentials among nearby negative charges.
-			current_Cell->N_ = N;
-			current_Cell->P_ = P;
-			current_Cell->B_ = B;
-			current_Cell->potential = phi;
 		}
 		++mapItr;
 	}
+
+	//Use compute shader
+			//Write candidate cell data to structured buffer
+	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, &gpuCellsArray[0][0], &cellBuffer);
+	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, nullptr, &bufferResult);
+	//Write that structured buffer data to an srv buffer
+	//compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
+	compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
+	compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
+	//ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
+	compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
+
+	ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult);
+	D3D11_MAPPED_SUBRESOURCE MappedResource;
+	DataBufferType* ptr_;
+	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
+	ptr_ = (DataBufferType*)MappedResource.pData;
+
+	int temp = 0; 
+	for (int i = 0; i < gridSize_; ++i)
+	{
+		for (int j = 0; j < gridSize_; ++j)
+		{
+			int cellIndex = i + gridSize_ * j; 
+			if(gpuCellsArray[i][j].isCandidate)
+			{
+				gpuCellsArray[i][j].phi = ptr_->phi_[cellIndex];
+				gpuCellsArray[i][j].N = ptr_->N_[cellIndex];
+
+				
+				candidateMap_DS[cellIndex]->potential = ptr_->phi_[cellIndex];
+				candidateMap_DS[cellIndex]->B_ = gpuCellsArray[i][j].B;
+				candidateMap_DS[cellIndex]->P_ = gpuCellsArray[i][j].P;
+				candidateMap_DS[cellIndex]->N_ = ptr_->N_[cellIndex];
+				temp++; 
+			}
+		}
+	}
+
+	//auto it = candidateMap_DS.begin();
+	//while (it != candidateMap_DS.end())
+	//{
+	//	//Assign to map values
+	//	mapKey = it->first;
+	//	current_Cell = it->second;
+
+	//	if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
+	//	{
+	//		phi = 0.5;
+	//		N = 0.5;
+
+	//		phi = max(ptr_->phi_, 0.00001f);
+	//		N = max(ptr_->N_, 0.00001f);
+	//	}
+	//	else
+	//	{
+	//		phi = ptr_->phi_;
+	//		N = ptr_->N_;
+	//	}
+	//	//Because we divide positive potentials with those of negative ones,
+	//		////we can generate stronger negative potentials among nearby negative charges.
+	//	current_Cell->N_ = N;
+	//	current_Cell->P_ = P;
+	//	current_Cell->B_ = B;
+	//	current_Cell->potential = phi;
+	//	++it; 
+	//}
+	deviceContext->Unmap(cpuBuf, 0);
 
 }
 

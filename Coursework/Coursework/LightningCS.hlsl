@@ -29,6 +29,12 @@ struct OutputDataType //This one is for read & write data that we need to pass a
     float phi; 
 };
 
+struct OutputArray
+{
+    float N[128][128];
+    float phi[128][128];
+
+};
 StructuredBuffer<Cell> Cells : register(t0); //Why do we register it as t tho? This is the reading one
 //StructuredBuffer<Cell> CellInput : register(t1);
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
@@ -56,14 +62,13 @@ void main( uint3 DTid : SV_DispatchThreadID,
     uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
     uint cellIndex = DTid.y * 128 + DTid.x;
     //uint clustIndex = 0;
-    float N = CS_OutputBuffer[cellIndex].N;
+    float B = Cells[cellIndex].B;
+    float P = Cells[cellIndex].P;
+    float N = Cells[cellIndex].N;
     float r = CS_OutputBuffer[cellIndex].r;
     //groupshared Cell gCache[CacheSize];
 
-    //Get rid of loops 
-    //if (clustIndex != cellIndex) //Negative charge cells NOT in same cluster
-    //{
-
+  
     if(Cells[cellIndex].isCandidate)
     {
 	      r = CalcDistance(DTid.x + 1, DTid.y + 1,
@@ -75,10 +80,9 @@ void main( uint3 DTid : SV_DispatchThreadID,
         N += clusterSize / r;
         CS_OutputBuffer[cellIndex].N = N;
         CS_OutputBuffer[cellIndex].r = r;
+        CS_OutputBuffer[cellIndex].phi = (1.0f / B) * (1.0f / N) * P;
     }
-      
-    //}
-    else //Negative cells in same cluster
+    else //No changes
     {
         //for (int i = 0; i < clusterSize; ++i) //This for loop should be only the dynamic size of the cells cluster
         //{
@@ -90,19 +94,19 @@ void main( uint3 DTid : SV_DispatchThreadID,
         //    }
         //    N += 1.0f / r;
         //}
-        N = Cells[cellIndex].N; 
-        r = 0; 
+        CS_OutputBuffer[cellIndex].N = N;
+        CS_OutputBuffer[cellIndex].r = 0;
+        CS_OutputBuffer[cellIndex].phi = Cells[cellIndex].phi;
     }
            
 
 
 	GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
 
-    float B = Cells[cellIndex].B;
-    float P = Cells[cellIndex].P;
+    
    
   
-    CS_OutputBuffer[cellIndex].phi = (1.0f / B) * (1.0f / N) * P;
+    
 	
     //CS_OutputBuffer[index].phi = (1.0f / 0.5) * (1.0f / CS_OutputBuffer[index].N) * 0.5;
     //if (CS_OutputBuffer[index].phi == 0)
@@ -110,7 +114,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //    CS_OutputBuffer[index].phi = 0.5;
 
     //}
-    CS_OutputBuffer[cellIndex].phi = max(CS_OutputBuffer[cellIndex].phi, 0.5f);
+    //CS_OutputBuffer[cellIndex].phi = max(CS_OutputBuffer[cellIndex].phi, 0.5f);
     //CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f);
 
     //CS_OutputBuffer[candIndex].phi = 

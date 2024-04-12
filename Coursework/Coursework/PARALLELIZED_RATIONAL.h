@@ -112,7 +112,7 @@ private: //---------Lightning tree and cs
 
 	struct DataBufferType
 	{
-		float r_, N_, phi_; 
+		float r_[128*128], N_[128*128], phi_[128*128];
 	};
 
 	struct GPUCellData
