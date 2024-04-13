@@ -456,10 +456,11 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	{
 		for(int j = 0; j < gridSize_; ++j)
 		{
-			gpuCellsArray[i][j].N = all_Cells[i * gridSize_ + j]->N_;
-			gpuCellsArray[i][j].P = all_Cells[i * gridSize_ + j]->P_;
-			gpuCellsArray[i][j].B = all_Cells[i * gridSize_ + j]->B_;
-			gpuCellsArray[i][j].phi = all_Cells[i * gridSize_ + j]->potential;
+			int cellIndex = i + gridSize_ * j;
+			gpuCellsArray[i][j].N = all_Cells[cellIndex]->N_;
+			gpuCellsArray[i][j].P = all_Cells[cellIndex]->P_;
+			gpuCellsArray[i][j].B = all_Cells[cellIndex]->B_;
+			gpuCellsArray[i][j].phi = all_Cells[cellIndex]->potential;
 			gpuCellsArray[i][j].isCandidate = 0;
 
 		}
@@ -534,10 +535,10 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			P = positivePotentials_[mapKey];
 			// -----------------------------------------------------------
 			// for negative charge cells 
-			iCandidateClusterX = current_Cell->x / regionSize; //X
-			iCandidateClusterY = current_Cell->y / regionSize; //Y
-			iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX;
-			iClusterIndex = 0;
+			//iCandidateClusterX = current_Cell->x / regionSize; //X
+			//iCandidateClusterY = current_Cell->y / regionSize; //Y
+			//iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX;
+			//iClusterIndex = 0;
 
 			N = 0; 
 
@@ -582,7 +583,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	//Use compute shader
 			//Write candidate cell data to structured buffer
 	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, &gpuCellsArray[0][0], &cellBuffer);
-	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, nullptr, &bufferResult);
+	compute_shader->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
 	//Write that structured buffer data to an srv buffer
 	//compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
 	compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
@@ -590,13 +591,13 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	//ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
 	compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
 
-	ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult);
+	ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult, 
+		sizeof(DataBufferType), gridSize_ * gridSize_);
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
 	DataBufferType* ptr_;
 	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
 	ptr_ = (DataBufferType*)MappedResource.pData;
 
-	int temp = 0; 
 	for (int i = 0; i < gridSize_; ++i)
 	{
 		for (int j = 0; j < gridSize_; ++j)
@@ -604,15 +605,24 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			int cellIndex = i + gridSize_ * j; 
 			if(gpuCellsArray[i][j].isCandidate)
 			{
-				gpuCellsArray[i][j].phi = ptr_->phi_[cellIndex];
-				gpuCellsArray[i][j].N = ptr_->N_[cellIndex];
+				gpuCellsArray[i][j].phi = ptr_[cellIndex].phi_;
+				gpuCellsArray[i][j].N = ptr_[cellIndex].N_;
 
-				
-				candidateMap_DS[cellIndex]->potential = ptr_->phi_[cellIndex];
+				if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
+				{
+					candidateMap_DS[cellIndex]->potential = max(ptr_->phi_, 0.00001f);
+					candidateMap_DS[cellIndex]->N_ = max(ptr_->N_, 0.00001f);
+				}
+				else
+				{
+					candidateMap_DS[cellIndex]->N_ = ptr_[cellIndex].N_;
+					candidateMap_DS[cellIndex]->potential = ptr_[cellIndex].phi_;
+				}
+
+
 				candidateMap_DS[cellIndex]->B_ = gpuCellsArray[i][j].B;
 				candidateMap_DS[cellIndex]->P_ = gpuCellsArray[i][j].P;
-				candidateMap_DS[cellIndex]->N_ = ptr_->N_[cellIndex];
-				temp++; 
+				candidateMap_DS[cellIndex]->N_ = ptr_->N_;
 			}
 		}
 	}
@@ -623,20 +633,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	//	//Assign to map values
 	//	mapKey = it->first;
 	//	current_Cell = it->second;
-
-	//	if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
-	//	{
-	//		phi = 0.5;
-	//		N = 0.5;
-
-	//		phi = max(ptr_->phi_, 0.00001f);
-	//		N = max(ptr_->N_, 0.00001f);
-	//	}
-	//	else
-	//	{
-	//		phi = ptr_->phi_;
-	//		N = ptr_->N_;
-	//	}
 	//	//Because we divide positive potentials with those of negative ones,
 	//		////we can generate stronger negative potentials among nearby negative charges.
 	//	current_Cell->N_ = N;

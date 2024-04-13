@@ -29,7 +29,8 @@ public:
 	HRESULT createBufferUAV(ID3D11Device* device, ID3D11Buffer* inputBuffer, ID3D11UnorderedAccessView** UAVOutPtr);
 
 	//Create a CPU accessible buffer and copies the content of a GPU buffer into it
-	ID3D11Buffer* createCPUReadBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11Buffer* bufferPtr);
+	ID3D11Buffer* createCPUReadBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11Buffer* bufferPtr, 
+		int elementSize, int elementCount);
 
 	//Unbinds buffers
 	void unbind(ID3D11DeviceContext* device);

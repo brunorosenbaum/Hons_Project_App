@@ -173,7 +173,8 @@ HRESULT CSBuffer::createBufferUAV(ID3D11Device* device, ID3D11Buffer* inputBuffe
 	return device->CreateUnorderedAccessView(inputBuffer, &uavDesc, UAVOutPtr); 
 }
 
-ID3D11Buffer* CSBuffer::createCPUReadBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11Buffer* bufferPtr)
+ID3D11Buffer* CSBuffer::createCPUReadBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, ID3D11Buffer* bufferPtr, 
+	int elementSize, int elementCount)
 {
 	ID3D11Buffer* cpuBuffer = nullptr;
 	D3D11_BUFFER_DESC bufferDesc = {};
@@ -182,6 +183,8 @@ ID3D11Buffer* CSBuffer::createCPUReadBuffer(ID3D11Device* device, ID3D11DeviceCo
 	bufferDesc.Usage = D3D11_USAGE_STAGING; //usage directly reflects whether a resource is accessible by the CPU and/or GPU
 	//Staging -> A resource that supports data transfer (copy) from the GPU to the CPU.
 	bufferDesc.BindFlags = 0; bufferDesc.MiscFlags = 0;
+	bufferDesc.ByteWidth = elementSize * elementCount;
+	bufferDesc.StructureByteStride = elementSize; 
 	device->CreateBuffer(&bufferDesc, nullptr, &cpuBuffer);
 	deviceContext->CopyResource(cpuBuffer, bufferPtr);
 
