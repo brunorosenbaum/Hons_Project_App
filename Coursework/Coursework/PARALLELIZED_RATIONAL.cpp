@@ -549,7 +549,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			gpuCellsArray[cx][cy].N = N;
 			gpuCellsArray[cx][cy].P = P;
 			gpuCellsArray[cx][cy].B = B;
-			gpuCellsArray[cx][cy].isCandidate = true;
+			gpuCellsArray[cx][cy].isCandidate = true; //THE PROBLEM IS HERE
 			gpuCellsArray[cx][cy].phi = current_Cell->potential;
 
 		
@@ -598,11 +598,16 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
 	ptr_ = (DataBufferType*)MappedResource.pData;
 
+	DataBufferType copyData[128 * 128];
+	memcpy(copyData, ptr_, gridSize_ * gridSize_ * sizeof(DataBufferType));
+	deviceContext->Unmap(cpuBuf, 0);
+
+
 	for (int i = 0; i < gridSize_; ++i)
 	{
 		for (int j = 0; j < gridSize_; ++j)
 		{
-			int cellIndex = i + gridSize_ * j; 
+			int cellIndex = i * gridSize_ + j; 
 			if(gpuCellsArray[i][j].isCandidate)
 			{
 				gpuCellsArray[i][j].phi = ptr_[cellIndex].phi_;
@@ -641,7 +646,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	//	current_Cell->potential = phi;
 	//	++it; 
 	//}
-	deviceContext->Unmap(cpuBuf, 0);
 
 }
 
