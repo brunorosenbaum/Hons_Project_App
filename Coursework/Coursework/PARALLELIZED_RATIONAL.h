@@ -110,6 +110,7 @@ private: //---------Lightning tree and cs
 	/*ID3D11ShaderResourceView* srvBuffer1 = nullptr;*/
 	ID3D11UnorderedAccessView* resultUAV = nullptr;
 
+
 	//struct DataBufferType
 	//{
 	//	float r_[128*128], N_[128*128], phi_[128*128];
@@ -134,6 +135,6 @@ private: //---------Lightning tree and cs
 		GPUCellData clusterCells[16];
 	};
 	
-
+	GPUCellData gpuCellsArray[128][128];
 };
 

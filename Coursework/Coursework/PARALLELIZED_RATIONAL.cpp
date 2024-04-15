@@ -450,7 +450,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	}
 
 	//GPUCellData gpuCellsArray[gridSize_][gridSize_]; //2D array
-	GPUCellData gpuCellsArray[128][128]; //2D array
 
 	for(int i = 0; i < gridSize_; ++i)
 	{
@@ -549,7 +548,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			gpuCellsArray[cx][cy].N = N;
 			gpuCellsArray[cx][cy].P = P;
 			gpuCellsArray[cx][cy].B = B;
-			gpuCellsArray[cx][cy].isCandidate = true; //THE PROBLEM IS HERE
+			gpuCellsArray[cx][cy].isCandidate = true; 
 			gpuCellsArray[cx][cy].phi = current_Cell->potential;
 
 		
@@ -607,27 +606,26 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	{
 		for (int j = 0; j < gridSize_; ++j)
 		{
-			int cellIndex = i * gridSize_ + j; 
+			int cellIndex = i * gridSize_ + j;
+			int mapIndex = i + gridSize_ * j; 
 			if(gpuCellsArray[i][j].isCandidate)
 			{
 				gpuCellsArray[i][j].phi = ptr_[cellIndex].phi_;
 				gpuCellsArray[i][j].N = ptr_[cellIndex].N_;
 
-				if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
+				/*if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
 				{
-					candidateMap_DS[cellIndex]->potential = max(ptr_->phi_, 0.00001f);
-					candidateMap_DS[cellIndex]->N_ = max(ptr_->N_, 0.00001f);
+					candidateMap_DS[mapIndex]->potential = max(ptr_->phi_, 0.00001f);
+					candidateMap_DS[mapIndex]->N_ = max(ptr_->N_, 0.00001f);
 				}
 				else
-				{
-					candidateMap_DS[cellIndex]->N_ = ptr_[cellIndex].N_;
-					candidateMap_DS[cellIndex]->potential = ptr_[cellIndex].phi_;
-				}
-
-
-				candidateMap_DS[cellIndex]->B_ = gpuCellsArray[i][j].B;
-				candidateMap_DS[cellIndex]->P_ = gpuCellsArray[i][j].P;
-				candidateMap_DS[cellIndex]->N_ = ptr_->N_;
+				{*/
+				candidateMap_DS[mapIndex]->N_ = ptr_[cellIndex].N_;
+				candidateMap_DS[mapIndex]->potential = ptr_[cellIndex].phi_;
+				//}
+				candidateMap_DS[mapIndex]->B_ = gpuCellsArray[i][j].B;
+				candidateMap_DS[mapIndex]->P_ = gpuCellsArray[i][j].P;
+				
 			}
 		}
 	}
@@ -652,83 +650,58 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_cell)
 {
 	// calculate electric potential (Phi) for only candidate cells
-	float phi;
-	float r; //Distance of cells between each other
-	float B, N, P; //Boundary, negative, positive phi. These are the ones from the formula.
+	int iKey = candidate_cell->y * gridSize_ + candidate_cell->x;
+	int cx = candidate_cell->x;
+	int cy = candidate_cell->y;
 
-	int regionSize = gridSize_ / clusterSize_;
-	int iClusterIndex;
-	int iCandidateClusterX, iCandidateClusterY, iCandidateClusterIndex;
+	float B, N, P; //Boundary, negative, positive phi. These are the ones from the formula.
 
 
 	if (candidate_cell && candidate_cell->type_ == EMPTY_R) //If current cell is empty
 	{
-		int iKey = candidate_cell->y * gridSize_ + candidate_cell->x;
-
 		// -----------------------------------------------------------
-		// for boundaries, use pre-computed values
+			// for boundaries, use pre-computed values
 		B = boundaryPotentials_[iKey];
 		// -----------------------------------------------------------
 		// for positive charges, use pre-computed value
 		P = positivePotentials_[iKey];
 		// -----------------------------------------------------------
-		// for negative charge cells 
-		iCandidateClusterX = candidate_cell->x / regionSize; //X
-		iCandidateClusterY = candidate_cell->y / regionSize; //Y
-		iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX;
-		iClusterIndex = 0;
-
-		N = 0; //(phi = 0)
-
-		for (int cy = 0; cy < clusterSize_; cy++) //Cluster columns
-		{
-			for (int cx = 0; cx < clusterSize_; cx++) //Cluster rows
-			{
-				if (!clusters_[iClusterIndex].cluster_Cells.empty()) //If there's cells in the cluster
-				{
-					if (iClusterIndex != iCandidateClusterIndex) //If negative charge cells are NOT in the same cluster
-					{
-						r = CalcDistance(clusters_[iClusterIndex].c_xAvg, //Distance is the magnitude between
-							clusters_[iClusterIndex].c_yAvg,//current cluster's average xy
-							candidate_cell->x, //and current cell's xy
-							candidate_cell->y);
-						if (power_of_Rho_ > 1) //r = r^p
-						{
-							r = pow(r, power_of_Rho_);
-						}
-						N += clusters_[iClusterIndex].cluster_Cells.size() / r;
-					}
-					else //For negative cells in the same cluster
-					{
-						auto nItr = clusters_[iClusterIndex].cluster_Cells.begin();
-						while (nItr != clusters_[iClusterIndex].cluster_Cells.end())
-						{
-							r = CalcDistance(nItr->x, nItr->y, //Distance is magnitude between
-								candidate_cell->x, candidate_cell->y); //Cluster's xy coords and current cell's
-							if (power_of_Rho_ > 1)
-							{
-								r = pow(r, power_of_Rho_);
-							}
-							N += 1.0f / r; //Eq. 4 relationship.
-							++nItr;
-						}
-
-					}
-				}
-				++iClusterIndex;
-			}
-		}
-
-		//Use equation 5: PHI = P / (N X B)
-		phi = (1.0f / B) * (1.0f / N) * P;
-
-		//Because we divide positive potentials with those of negative ones,
-		////we can generate stronger negative potentials among nearby negative charges.
-		candidate_cell->N_ = N;
-		candidate_cell->P_ = P;
-		candidate_cell->B_ = B;
-		candidate_cell->potential = phi;
+		N = 0;
+		//----------------------------------
+		//Update cell info in gpu cells struct
+		
+		gpuCellsArray[cx][cy].N = N;
+		gpuCellsArray[cx][cy].P = P;
+		gpuCellsArray[cx][cy].B = B;
+		gpuCellsArray[cx][cy].isCandidate = true; 
+		gpuCellsArray[cx][cy].phi = candidate_cell->potential;
 	}
+	else
+		return;
+
+	//Use compute shader
+			//Write candidate cell data to structured buffer
+	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, &gpuCellsArray[0][0], &cellBuffer);
+	compute_shader->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
+	//Write that structured buffer data to an srv buffer
+	compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
+	compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
+
+	compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
+
+	ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult,
+		sizeof(DataBufferType), gridSize_ * gridSize_);
+	D3D11_MAPPED_SUBRESOURCE MappedResource;
+	DataBufferType* ptr_;
+	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
+	ptr_ = (DataBufferType*)MappedResource.pData;
+
+	int cellIndex = candidate_cell->x * gridSize_ + candidate_cell->y; 
+
+	candidate_cell->N_ = ptr_[cellIndex].N_;
+	candidate_cell->potential = ptr_[cellIndex].phi_;
+	candidate_cell->B_ = gpuCellsArray[cx][cy].B;
+	candidate_cell->P_ = gpuCellsArray[cx][cy].P;
 
 }
 

@@ -29,8 +29,8 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	grid_bounds_mesh = new CellBoundsMesh(renderer->getDevice(), renderer->getDeviceContext());
 	lightning_mesh_ = new LightningMesh_JY(renderer->getDevice(), renderer->getDeviceContext());
 
-	/*lightning_Generator = new RATIONAL_SOLVER();
-	lightning_Generator->InitializeGrid("res/lightning_128.map");*/
+	//lightning_Generator = new RATIONAL_SOLVER();
+	//lightning_Generator->InitializeGrid("res/lightning_128.map");
 
 	parallelized_lightning_Generator = new PARALLELIZED_RATIONAL(renderer->getDevice(), renderer->getDeviceContext(), hwnd);
 	parallelized_lightning_Generator->InitializeGrid("res/lightning_128.map");
@@ -185,7 +185,7 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 
 bool LightningAppJY::render()
 {
-	renderer->beginScene(0.19f, 0.03f, 0.36f, 1.0f);
+	renderer->beginScene(0.0f, 0.0f, 0.0f, 1.0f);
 	camera->update();
 	// Get the world, view, projection, and ortho matrices from the camera and Direct3D objects.
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
