@@ -1,9 +1,22 @@
+#define gridSize 128
 #define groupthreads 16
+#define clusterHalf 4
 #define pow_rho 3
 
 float CalcDistance(float x1, float y1, float x2, float y2)
 {
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
+float CalcAverage(int elements[(clusterHalf * 2) + 1])
+{
+    float sum; 
+    for (int i = 0; i < clusterHalf * 2 + 1; ++i)
+    {
+        [unroll]
+        sum += elements[i];
+    }
+    return sum; 
 }
 
 struct Cell
@@ -14,14 +27,6 @@ struct Cell
     int isCandidate; 
 };
 
-//struct Cluster
-//{
-//    int x, y;
-//    int xSum, ySum;
-//    int xAvg, yAvg;
-//};
-
-
 struct OutputDataType //This one is for read & write data that we need to pass around
 {
     float r;
@@ -29,23 +34,17 @@ struct OutputDataType //This one is for read & write data that we need to pass a
     float phi; 
 };
 
-struct OutputArray
-{
-    float N[128][128];
-    float phi[128][128];
 
-};
-StructuredBuffer<Cell> Cells : register(t0); //Why do we register it as t tho? This is the reading one
-//StructuredBuffer<Cell> CellInput : register(t1);
+StructuredBuffer<Cell> Cells : register(t0); //srv
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
 
-[numthreads(16, 16, 1)]
+groupshared Cell gsCache[groupthreads]; //Declare group shared memory. Size 16
+
+[numthreads(groupthreads, groupthreads, 1)]
 void main( uint3 DTid : SV_DispatchThreadID, 
     uint3 Gid : SV_GroupID, 
     uint GI : SV_GroupIndex)
 {
-    //numthreads -> 1x1x1
-
     //Gid -> group offset in the dispatch call 3d array (posicion de la celda en el grupo de dispatch -
     ////en este caso en la grid de 64x64)
     
@@ -57,21 +56,48 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //SV_GroupIndex (GI) --> flattened array index version of the SV_GroupThreadID.
     //GI = SV_GroupThreadID.z * NumThreadsPerGroup.y *NumThreadsPerGroup.x + SV_GroupThreadID.y*NumThreadsPerGroup.x + SV_GroupThreadID.x
 
-    //ASK ABOUT GROUPSHARED
     //-------------------------------------------------------------------------------------------------------------
-    uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
+
+    //Cluster offset in the y axis.
+    //For GTid = (1, 1, 0) it'd be 32 - 4 + (128 - 4*2) * 1 = 120
+	int clusterOffsetY = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y; 
+    clusterOffsetY = clamp(clusterOffsetY, 0, gridSize - 1);
+    int arrayOffset = Gid.x + clusterOffsetY * gridSize;
+    //Make group shared cache memory - ask what exactly we're doing here
+    gsCache[GI] = Cells[arrayOffset]; //Are we sharing the memory of 8 contiguous cells? (since 128-120 = 8) 
+    //isnt this gonna throw an error bc its out of bounds, since groupthreads is 16 and GI can be larger?
+
+    GroupMemoryBarrierWithGroupSync(); //Sync all threads
+
+	uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
     uint cellIndex = DTid.y * 128 + DTid.x;
-    //uint clustIndex = 0;
     float B = Cells[cellIndex].B;
     float P = Cells[cellIndex].P;
     float N = Cells[cellIndex].N;
     float r = CS_OutputBuffer[cellIndex].r;
-    //groupshared Cell gCache[CacheSize];
+    float avgY = 0;
+    float avgX = 0;
 
-  
+    if(GI >= clusterHalf && 
+        GI < (groupthreads - clusterHalf) &&
+        ((GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y) < gridSize))
+    {
+        int clusterY[clusterHalf * 2 + 1]; //Size = 8
+        int tempIndex = 0;
+
+        [unroll]
+    	for (int i = -clusterHalf; i <= clusterHalf; ++i) //Will go from -4 to 4
+        {
+            clusterY[tempIndex] = DTid.y + i; //Tempindex from 0 to 7, will hold positions of cell.y +- 4
+            ++tempIndex; 
+        }
+        avgY = CalcAverage(clusterY); //Calc average y position of the neighboring cells
+
+    }
+
     if(Cells[cellIndex].isCandidate)
     {
-	      r = CalcDistance(DTid.x + 1, DTid.y + 1,
+	      r = CalcDistance(DTid.x + 1, avgY,
 											 DTid.x, DTid.y);
         if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
         {
@@ -84,16 +110,6 @@ void main( uint3 DTid : SV_DispatchThreadID,
     }
     else //No changes
     {
-        //for (int i = 0; i < clusterSize; ++i) //This for loop should be only the dynamic size of the cells cluster
-        //{
-        //    r = CalcDistance(DTid.x + 1, DTid.x + 1,
-								//		 DTid.x, DTid.y);
-        //    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
-        //    {
-        //        r = pow(r, pow_rho);
-        //    }
-        //    N += 1.0f / r;
-        //}
         CS_OutputBuffer[cellIndex].N = N;
         CS_OutputBuffer[cellIndex].r = 0;
         CS_OutputBuffer[cellIndex].phi = Cells[cellIndex].phi;
@@ -102,21 +118,4 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
 
 	GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
-
-    
-   
-  
-    
-	
-    //CS_OutputBuffer[index].phi = (1.0f / 0.5) * (1.0f / CS_OutputBuffer[index].N) * 0.5;
-    //if (CS_OutputBuffer[index].phi == 0)
-    //{
-    //    CS_OutputBuffer[index].phi = 0.5;
-
-    //}
-    //CS_OutputBuffer[cellIndex].phi = max(CS_OutputBuffer[cellIndex].phi, 0.5f);
-    //CS_OutputBuffer[index].N = max(CS_OutputBuffer[index].N, 0.5f);
-
-    //CS_OutputBuffer[candIndex].phi = 
-
 }
