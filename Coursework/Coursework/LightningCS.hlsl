@@ -16,7 +16,7 @@ float CalcAverage(int elements[(clusterHalf * 2) + 1])
         [unroll]
         sum += elements[i];
     }
-    return sum; 
+    return sum / (clusterHalf * 2) + 1; 
 }
 
 struct Cell
@@ -60,9 +60,17 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
     //Cluster offset in the y axis.
     //For GTid = (1, 1, 0) it'd be 32 - 4 + (128 - 4*2) * 1 = 120
-	int clusterOffsetY = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y; 
+	int clusterOffsetY = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y;
+    //Cluster offset in the x axis.
+    int clusterOffsetX = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.x;
+
+    //Clamp their values from 0-127
     clusterOffsetY = clamp(clusterOffsetY, 0, gridSize - 1);
+    clusterOffsetX = clamp(clusterOffsetX, 0, gridSize - 1);
+
+    //Whole array offset
     int arrayOffset = Gid.x + clusterOffsetY * gridSize;
+
     //Make group shared cache memory - ask what exactly we're doing here
     gsCache[GI] = Cells[arrayOffset]; //Are we sharing the memory of 8 contiguous cells? (since 128-120 = 8) 
     //isnt this gonna throw an error bc its out of bounds, since groupthreads is 16 and GI can be larger?
@@ -75,47 +83,110 @@ void main( uint3 DTid : SV_DispatchThreadID,
     float P = Cells[cellIndex].P;
     float N = Cells[cellIndex].N;
     float r = CS_OutputBuffer[cellIndex].r;
+    float phi; 
     float avgY = 0;
     float avgX = 0;
 
-    if(GI >= clusterHalf && 
-        GI < (groupthreads - clusterHalf) &&
-        ((GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y) < gridSize))
-    {
-        int clusterY[clusterHalf * 2 + 1]; //Size = 8
-        int tempIndex = 0;
+    //GAUSSIAN BLUR LOGIC???
+    //if(GI >= clusterHalf && 
+    //    GI < (groupthreads - clusterHalf))
+    //{
+    //    if ((GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y) < gridSize) //Y threads?
+    //    {
+	   //     int clusterY[clusterHalf * 2 + 1]; //Size = 8
+	   //     int tempIndex = 0;
+	   //     [unroll]
+    //		for (int i = -clusterHalf; i <= clusterHalf; ++i) //Will go from -4 to 4
+	   //     {
+	   //         clusterY[tempIndex] = DTid.y + i; //Tempindex from 0 to 7, will hold positions of cell.y +- 4
+	   //         ++tempIndex; 
+	   //     }
+	   //     avgY = CalcAverage(clusterY); //Calc average y position of the neighboring cells
+    //    }
+    //    if ((GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.x) < gridSize) //X threads
+    //    {
+    //        int clusterX[clusterHalf * 2 + 1];
+    //        int tempIndex = 0;
+	   //     [unroll]
+    //        for (int i = -clusterHalf; i <= clusterHalf; ++i) //Will go from -4 to 4
+    //        {
+    //            clusterX[tempIndex] = DTid.x + i; //Tempindex from 0 to 7, will hold positions of cell.y +- 4
+    //            ++tempIndex;
+    //        }
+    //        avgX = CalcAverage(clusterX); //Calc average y position of the neighboring cells
+    //    }
 
-        [unroll]
-    	for (int i = -clusterHalf; i <= clusterHalf; ++i) //Will go from -4 to 4
+    //}
+
+    //MY LOGIC?
+    //if (GI >= clusterHalf &&
+    //   GI < (groupthreads - clusterHalf))
+    //{
+
+        int clusterY[clusterHalf * 2 + 1]; //Size = 8
+        int clusterX[clusterHalf * 2 + 1]; //Size = 8
+		int tempIndex = 0;
+
+
+        for (int i = -clusterHalf; i <= clusterHalf; ++i)
         {
-            clusterY[tempIndex] = DTid.y + i; //Tempindex from 0 to 7, will hold positions of cell.y +- 4
+            clusterY[tempIndex] = DTid.y + i;
+            clusterX[tempIndex] = DTid.x + i;
             ++tempIndex; 
         }
-        avgY = CalcAverage(clusterY); //Calc average y position of the neighboring cells
+	  avgY = CalcAverage(clusterY); //Calc average y position of the neighboring cells
+	  avgX = CalcAverage(clusterX); //Calc average x position of the neighboring cells
 
-    }
+    //}
 
-    if(Cells[cellIndex].isCandidate)
+    GroupMemoryBarrierWithGroupSync();
+
+    //if(Cells[cellIndex].isCandidate)
+    //{
+	   //   r = CalcDistance(avgX, avgY,
+				//							 DTid.x, DTid.y);
+    //    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
+    //    {
+    //        r = pow(r, pow_rho);
+    //    }
+    //    N += clusterSize / r;
+    //    phi = (1.0f / B) * (1.0f / N) * P;
+        
+    //}
+    if (Cells[cellIndex].isCandidate)
     {
-	      r = CalcDistance(DTid.x + 1, avgY,
-											 DTid.x, DTid.y);
-        if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
+        int indx = 0;
+
+        [unroll]
+        for (int i = -clusterHalf; i <= clusterHalf; ++i)
         {
+            r = CalcDistance(clusterX[indx].x, clusterX[indx].x,
+											 DTid.x, DTid.y);
             r = pow(r, pow_rho);
+            N += clusterSize / r;
+
+            ++indx;
         }
-        N += clusterSize / r;
+
+        phi = (1.0f / B) * (1.0f / N) * P;
+
         CS_OutputBuffer[cellIndex].N = N;
         CS_OutputBuffer[cellIndex].r = r;
-        CS_OutputBuffer[cellIndex].phi = (1.0f / B) * (1.0f / N) * P;
+        CS_OutputBuffer[cellIndex].phi = phi;
+        
     }
     else //No changes
     {
+        r = 0; 
+        phi = Cells[cellIndex].phi;
+
         CS_OutputBuffer[cellIndex].N = N;
-        CS_OutputBuffer[cellIndex].r = 0;
-        CS_OutputBuffer[cellIndex].phi = Cells[cellIndex].phi;
+        CS_OutputBuffer[cellIndex].r = r;
+        CS_OutputBuffer[cellIndex].phi = phi;
     }
            
 
 
-	GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
+	//GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
+  
 }
