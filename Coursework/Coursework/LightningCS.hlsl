@@ -80,7 +80,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     GroupMemoryBarrierWithGroupSync(); //Sync all threads
 
 	uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
-    uint cellIndex = DTid.y + 128 * DTid.x;
+    uint cellIndex = DTid.y + gridSizeXY * DTid.x;
     float B = Cells[cellIndex].B;
     float P = Cells[cellIndex].P;
     float N = Cells[cellIndex].N;
@@ -184,11 +184,13 @@ void main( uint3 DTid : SV_DispatchThreadID,
             //-1, 0, 1 <- These loops will go through these values
             int new_xPos = x_Pos + xOffset;
             new_xPos = new_xPos < 0 ? 0 : new_xPos; //If new x pos is less than 0, cannot be in the grid, therefore 0
-           
+            new_xPos = new_xPos >= gridSizeXY - 1 ? gridSizeXY - 1 : new_xPos;
+
             for (int yOffset = -1; yOffset < 2; ++yOffset)
             {
                 int new_YPos = y_Pos + yOffset;
                 new_YPos = new_YPos < 0 ? 0 : new_YPos;
+                new_YPos = new_YPos >= gridSizeXY - 1 ? gridSizeXY - 1 : new_YPos;
 
                 //Calcs
                 r = CalcDistance(new_xPos, new_YPos,
@@ -223,6 +225,22 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //    const int CELL_R::
     //    NEIGHBORS_Y_DIFFERENCE[8] = {
     //        -1, -1, 0, 1, 1, 1, 0, -1};
+
+    //Instead of using a for loop, go through the neighbors x and y difference arrays
+    //The offset will be neighbors[index] * offset?
+    //And the offset will be groupThreadID + clusterRadius * 2?
+    //GROUPTHREAD ID!! NOT DISPATCH THREAD ID!! THERES A DIFFERENCE!!
+    //GTid is the x and y within the group!! which is a 16x16 grid!
+    //-1 * (0 + 4*2) = -8
+    //-1 * (1 + 4*2) = -9
+    //Going through the values of the x neighbors with GTid = 0 is:
+    //0, 8, 8, 8, 0, -8, -8, -8 <- Is this anything
+
+
+    //What i know is the offset has to be clamped for out of bound samples so
+    //If (GTid.x < clusterRadius) clamp to 0
+    //If (GTid.x >= groupthreads - clusterRadius) //So if GTid >= 12 (16-4)
+    //Clamp x to min(DTid.x + clusterRadius, 128-1); <-Makes sense
 
 	//GroupMemoryBarrierWithGroupSync(); //Waits until all threads are done
   
