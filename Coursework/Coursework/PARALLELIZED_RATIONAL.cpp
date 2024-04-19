@@ -993,7 +993,7 @@ bool PARALLELIZED_RATIONAL::ProcessLightning()
 			{
 
 				AddNewLightningPath(*&next_Cell);
-				UpdateClusterMap(*&next_Cell);
+				//UpdateClusterMap(*&next_Cell);
 				UpdateCandidateMap(*&next_Cell);
 
 			}
