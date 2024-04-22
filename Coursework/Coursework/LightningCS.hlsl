@@ -1,5 +1,6 @@
 #define gridSizeXY 128
 #define groupthreads 16
+#define gsmThreads 20
 #define clusterHalf 4
 #define pow_rho 3
 
@@ -40,11 +41,16 @@ struct OutputDataType //This one is for read & write data that we need to pass a
 StructuredBuffer<Cell> Cells : register(t0); //srv
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
 
-//groupshared Cell gsCache[groupthreads]; //Declare group shared memory. WHEN WE DO THIS ITS GONNA HAVE TO BE MORE THAN 16!!
+groupshared Cell GSM[gsmThreads]; //Declare group shared memory. WHEN WE DO THIS ITS GONNA HAVE TO BE MORE THAN 16!!
+//It'll be 20 threads sharing the same memory so 16 do work.
+//16x16 = 256 & 20x20 = 400
+//If we have 400 groups of threads sharing memory then we can select the 256 ones that we're processing data with
+//And only work with those
 
 [numthreads(groupthreads, groupthreads, 1)]
 void main( uint3 DTid : SV_DispatchThreadID, 
-    uint3 Gid : SV_GroupID, 
+    uint3 Gid : SV_GroupID,
+	uint3 GTid : SV_GroupThreadID,
     uint GI : SV_GroupIndex)
 {
     //Gid -> group offset in the dispatch call 3d array (posicion de la celda en el grupo de dispatch -
@@ -62,22 +68,81 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
     //Cluster offset in the y axis.
     //For GTid = (1, 1, 0) it'd be 32 - 4 + (128 - 4*2) * 1 = 120
-	int clusterOffsetY = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y;
+	int groupOffsetY = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y;
     //Cluster offset in the x axis.
     int clusterOffsetX = GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.x;
 
     //Clamp their values from 0-127
-    clusterOffsetY = clamp(clusterOffsetY, 0, gridSizeXY - 1);
+    groupOffsetY = clamp(groupOffsetY, 0, gridSizeXY - 1);
     clusterOffsetX = clamp(clusterOffsetX, 0, gridSizeXY - 1);
 
+    //-------------------------------------
+    //For Leftmost & upper bound
+    if(GTid.x < clusterHalf) //If group thread id is < 4 -- would it have to be GTid.x == 0?
+    {
+        int x_min = max(DTid.x - clusterHalf, 0);
+        GSM[GTid.x] = Cells[x_min - 2, DTid.y]; //GSM[x = 0, y = 0] is 0, 0 for 20x20 gsm cells
+        GSM[GTid.x].isCandidate = false;
+        //It's (x_min - 2) bc we need to subtract 2x2 to find (0, 0) of 20x20 'grid'
+
+        if (GTid.y < clusterHalf) //Covers corners bc it includes Y
+        {
+			int y_min = max(DTid.y - clusterHalf, 0);
+            //Index would be GTid.x + 20 * GTid.y ?
+            GSM[GTid.y /*+ clusterHalf * GTid.y*/] = Cells[x_min - 2, y_min - 2]; //Corner case
+            GSM[GTid.y /*+ clusterHalf * GTid.y*/].isCandidate = false;
+	        
+        }
+        
+    }
+    else if (GTid.y < clusterHalf) //Upper y axis only 
+    {
+        int y_min = max(DTid.y - clusterHalf, 0);
+        GSM[/*GTid.x + clusterHalf * */GTid.y] = Cells[DTid.x, y_min - 2]; //Corner case
+        GSM[/*GTid.x + clusterHalf **/ GTid.y].isCandidate = false;
+
+    }
+
+    //For rightmost & lower bound
+    if(GTid.x >= groupthreads - clusterHalf)
+    {
+        int x_max = min(DTid.x + clusterHalf, gridSizeXY - 1);
+        GSM[GTid.x] = Cells[x_max + 2, DTid.y];
+        GSM[GTid.x].isCandidate = false; 
+
+        if (GTid.y >= groupthreads - clusterHalf) //Covers corners bc it includes Y
+        {
+            int y_max = min(DTid.y + clusterHalf, gridSizeXY - 1);
+            GSM[/*GTid.x + clusterHalf **/ GTid.y] = Cells[x_max + 2, y_max + 2]; //Corner case
+            GSM[/*GTid.x + clusterHalf **/ GTid.y].isCandidate = false; 
+	        
+        }
+    }
+    else if(GTid.y >= groupthreads - clusterHalf) //Lower y bound only
+    {
+        int y_max = min(DTid.y + clusterHalf, gridSizeXY - 1);
+        GSM[/*GTid.x + clusterHalf **/ GTid.y] = Cells[GTid.x, y_max + 2]; //Corner case
+        GSM[/*GTid.x + clusterHalf **/ GTid.y].isCandidate = false; 
+    }
+
+    //if (gsm > groupthreads)//If it's bigger than 256?
+    //{
+    //    //Have two threads
+    //}
+    //else
+    //{
+	   // //Have one thread
+    //}
+    GroupMemoryBarrierWithGroupSync(); //Sync all threads
+
     //Whole array offset
-    //int arrayOffset = Gid.x + clusterOffsetY * gridSizeXY;
+    //int groupOffsetY = Gid.x + clusterOffsetY * gridSizeXY;
 
     //Make group shared cache memory - ask what exactly we're doing here
     //gsCache[GI] = Cells[arrayOffset]; //Are we sharing the memory of 8 contiguous cells? (since 128-120 = 8) 
     //isnt this gonna throw an error bc its out of bounds, since groupthreads is 16 and GI can be larger?
 
-    GroupMemoryBarrierWithGroupSync(); //Sync all threads
+  
 
 	uint clusterSize = 16; //They're the same, x or y since it's a square grid. 64x64
     uint cellIndex = DTid.y + gridSizeXY * DTid.x;
@@ -86,107 +151,25 @@ void main( uint3 DTid : SV_DispatchThreadID,
     float N = Cells[cellIndex].N;
     float r = CS_OutputBuffer[cellIndex].r;
     float phi; 
-    float avgY = 0;
-    float avgX = 0;
 
-    //GAUSSIAN BLUR LOGIC???
-    //if(GI >= clusterHalf && 
-    //    GI < (groupthreads - clusterHalf))
-    //{
-    //    if ((GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.y) < gridSize) //Y threads?
-    //    {
-	   //     int clusterY[clusterHalf * 2 + 1]; //Size = 8
-	   //     int tempIndex = 0;
-	   //     [unroll]
-    //		for (int i = -clusterHalf; i <= clusterHalf; ++i) //Will go from -4 to 4
-	   //     {
-	   //         clusterY[tempIndex] = DTid.y + i; //Tempindex from 0 to 7, will hold positions of cell.y +- 4
-	   //         ++tempIndex; 
-	   //     }
-	   //     avgY = CalcAverage(clusterY); //Calc average y position of the neighboring cells
-    //    }
-    //    if ((GI - clusterHalf + (groupthreads - clusterHalf * 2) * Gid.x) < gridSize) //X threads
-    //    {
-    //        int clusterX[clusterHalf * 2 + 1];
-    //        int tempIndex = 0;
-	   //     [unroll]
-    //        for (int i = -clusterHalf; i <= clusterHalf; ++i) //Will go from -4 to 4
-    //        {
-    //            clusterX[tempIndex] = DTid.x + i; //Tempindex from 0 to 7, will hold positions of cell.y +- 4
-    //            ++tempIndex;
-    //        }
-    //        avgX = CalcAverage(clusterX); //Calc average y position of the neighboring cells
-    //    }
-
-    //}
-
-    //MY LOGIC?
-    //if (GI >= clusterHalf &&
-    //   GI < (groupthreads - clusterHalf))
-    //{
-
-  //      int clusterY[clusterHalf * 2 + 1]; //Size = 8
-  //      int clusterX[clusterHalf * 2 + 1]; //Size = 8
-		//int tempIndex = 0;
-
-
-  //      for (int i = -clusterHalf; i <= clusterHalf; ++i)
-  //      { //So for example for DTid = (63, 0); 
-  //          clusterY[tempIndex] = DTid.y + i; //-4, -3, -2, -1, 0, 1, 2, 3 -> This doesn't cover all
-  //          clusterX[tempIndex] = DTid.x + i; //59, 60... 66 -> Same thing
-  //          ++tempIndex;
-  //          //There's also the issue where the 1st candidates coords are (63, 0)
-  //          ////but this code only runs when DTid.y = 63, DTid.x = 0 (the opposite)
-  //          ///But I can't find where I'm flattening the array wrongly
-  //      }
-	 // avgY = CalcAverage(clusterY); //Calc average y position of the neighboring cells
-	 // avgX = CalcAverage(clusterX); //Calc average x position of the neighboring cells
-
-    //}
 
     GroupMemoryBarrierWithGroupSync();
 
-    //if(Cells[cellIndex].isCandidate)
-    //{
-	   //   r = CalcDistance(avgX, avgY,
-				//							 DTid.x, DTid.y);
-    //    if (pow_rho > 1) //Isn't this kind of an unnecessary check if we're not dynamically changing this constant
-    //    {
-    //        r = pow(r, pow_rho);
-    //    }
-    //    N += clusterSize / r;
-    //    phi = (1.0f / B) * (1.0f / N) * P;
-        
-    //}
     if (Cells[cellIndex].isCandidate)
     {
         int indx = 0;
 
-        //[unroll]
-        //for (int i = -clusterHalf; i <= clusterHalf; ++i)
-        //{
-        //    //In DTid = (0, 63) (appears as candidate) we would have:
-        //    //CalcDistance = (-4, 59, 0, 63) = sqrt(32) = 5.65
-        //    r = CalcDistance(clusterX[indx], clusterY[indx],
-								//			 DTid.x, DTid.y);
-        //    //r = 5.65
-        //    r = pow(r, pow_rho); //r = 5.65^3 = 181.01
-        //    N += clusterSize / r; // N += 16/181 = 0.0883; 
-        //    //Problem here: I don't know if N is being summed correctly (+=). 
-
-        //    ++indx;
-        //}
         int x_Pos = DTid.x;
         int y_Pos = DTid.y;
 
-        for (int xOffset = -1; xOffset < 2; ++xOffset) //Go through neighbors
+        for (int xOffset = -16; xOffset < 17; ++xOffset) //Go through neighbors
         {
             //-1, 0, 1 <- These loops will go through these values
             int new_xPos = x_Pos + xOffset;
             new_xPos = new_xPos < 0 ? 0 : new_xPos; //If new x pos is less than 0, cannot be in the grid, therefore 0
             new_xPos = new_xPos >= gridSizeXY - 1 ? gridSizeXY - 1 : new_xPos;
 
-            for (int yOffset = -1; yOffset < 2; ++yOffset)
+            for (int yOffset = -16; yOffset < 17; ++yOffset)
             {
                 int new_YPos = y_Pos + yOffset;
                 new_YPos = new_YPos < 0 ? 0 : new_YPos;
@@ -196,8 +179,12 @@ void main( uint3 DTid : SV_DispatchThreadID,
                 r = CalcDistance(new_xPos, new_YPos,
 										 DTid.x, DTid.y);
 
-                r = pow(r, pow_rho); 
-            	N += 1.0f / r; 
+                r = pow(r, pow_rho);
+                if(r == 0)
+                    N += 0;
+                else
+            		N += 1.0f / r; 
+                
             }
         }
 
