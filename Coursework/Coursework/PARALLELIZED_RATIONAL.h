@@ -125,7 +125,8 @@ private: //---------Lightning tree and cs
 		//int x, y;
 		float phi;
 		float N, P, B;
-		int isCandidate = false; 
+		int isCandidate = false;
+		int isCluster = true; 
 	};
 	struct GPUClusterData
 	{

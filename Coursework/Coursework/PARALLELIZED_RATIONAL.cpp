@@ -674,6 +674,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 		gpuCellsArray[cx][cy].P = P;
 		gpuCellsArray[cx][cy].B = B;
 		gpuCellsArray[cx][cy].isCandidate = true; 
+		gpuCellsArray[cx][cy].isCluster = true; 
 		gpuCellsArray[cx][cy].phi = candidate_cell->potential;
 	}
 	else

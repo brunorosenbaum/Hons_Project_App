@@ -27,7 +27,8 @@ struct Cell
     //int x, y; //We eont need this bc our threads are gonna figure this out (thread ID) 
     float phi;
     float N, P, B;
-    int isCandidate; 
+    int isCandidate;
+    int isCluster; 
 };
 
 struct OutputDataType //This one is for read & write data that we need to pass around
@@ -41,12 +42,12 @@ struct OutputDataType //This one is for read & write data that we need to pass a
 StructuredBuffer<Cell> Cells : register(t0); //srv
 RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u for unordered (UAV). Read & write. Output buffer 
 
-groupshared Cell GSMCells[gsmThreads][gsmThreads]; //Declare group shared memory. WHEN WE DO THIS ITS GONNA HAVE TO BE MORE THAN 16!!
+//groupshared Cell GSMCells[gsmThreads][gsmThreads]; //Declare group shared memory. WHEN WE DO THIS ITS GONNA HAVE TO BE MORE THAN 16!!
 //It'll be 20 threads sharing the same memory so 16 do work.
 //16x16 = 256 & 20x20 = 400
 //If we have 400 groups of threads sharing memory then we can select the 256 ones that we're processing data with
 //And only work with those
-
+groupshared Cell GSMCells[gsmThreads * gsmThreads];
 [numthreads(groupthreads, groupthreads, 1)]
 void main( uint3 DTid : SV_DispatchThreadID, 
     uint3 Gid : SV_GroupID,
@@ -68,7 +69,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
     uint cellIndex = DTid.y + gridSizeXY * DTid.x;
 
-    GSMCells[GTid.x][GTid.y] = Cells[DTid.y + gridSizeXY * DTid.x];
+    GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[DTid.y + gridSizeXY * DTid.x];
 
     //-------------------------------------
     //For Leftmost & upper bound
@@ -77,8 +78,8 @@ void main( uint3 DTid : SV_DispatchThreadID,
         //int x_min = max(DTid.x - clusterHalf, 0);
         int tmp = DTid.x - clusterHalf;
         int x_min = tmp > 0 ? tmp : 0;
-        GSMCells[GTid.x][GTid.y] = Cells[DTid.y + gridSizeXY * (x_min + 2)]; //GSMCells[x = 0, y = 0] is 0, 0 for 20x20 gsm cells
-        GSMCells[GTid.x + x_min][GTid.y].isCandidate = false;
+        GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[DTid.y + gridSizeXY * (x_min + 2)]; //GSMCells[x = 0, y = 0] is 0, 0 for 20x20 gsm cells
+        GSMCells[(GTid.x + x_min) + gsmThreads * GTid.y].isCluster = false;
         //It's (x_min - 2) bc we need to subtract 2x2 to find (0, 0) of 20x20 'grid'
 
         if (GTid.y < clusterHalf) //Covers corners bc it includes Y
@@ -87,8 +88,8 @@ void main( uint3 DTid : SV_DispatchThreadID,
             int tmp2 = DTid.y - clusterHalf;
             int y_min = tmp2 > 0 ? tmp2 : 0;
             //Index would be GTid.x + 20 * GTid.y ?
-            GSMCells[GTid.x][GTid.y] = Cells[(y_min + 2) + gridSizeXY * (x_min + 2)]; //Corner case
-            GSMCells[GTid.x + x_min][GTid.y + y_min].isCandidate = false;
+            GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[(y_min + 2) + gridSizeXY * (x_min + 2)]; //Corner case
+            GSMCells[(GTid.x + x_min) + gsmThreads * (GTid.y + y_min)].isCluster = false;
 	        
         }
         
@@ -98,8 +99,9 @@ void main( uint3 DTid : SV_DispatchThreadID,
         //int y_min = max(DTid.y - clusterHalf, 0);
         int tmp = DTid.y - clusterHalf; 
         int y_min = tmp > 0 ? tmp : 0; 
-        GSMCells[GTid.x][GTid.y] = Cells[(y_min + 2)+gridSizeXY * DTid.x]; //Corner case
-        GSMCells[GTid.x][GTid.y + y_min].isCandidate = false;
+        GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[(y_min + 2) + gridSizeXY * DTid.x]; //Corner case
+        int testVar = GTid.x + gsmThreads * GTid.y; 
+        GSMCells[GTid.x + gsmThreads * (GTid.y + y_min)].isCluster = false;
 
     }
 
@@ -109,16 +111,16 @@ void main( uint3 DTid : SV_DispatchThreadID,
         //int x_max = min(, gridSizeXY - 1);
         int tmp = DTid.x + clusterHalf;
         int x_max = tmp > gridSizeXY - 1 ? gridSizeXY - 1 : tmp; 
-        GSMCells[GTid.x][GTid.y] = Cells[DTid.y + gridSizeXY * (x_max - 2)];
-        GSMCells[GTid.x + x_max][GTid.y].isCandidate = false;
+        GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[DTid.y + gridSizeXY * (x_max - 2)];
+        GSMCells[(GTid.x + x_max) + gsmThreads * GTid.y].isCluster = false;
 
         if (GTid.y >= groupthreads - clusterHalf) //Covers corners bc it includes Y
         {
             //int y_max = min(DTid.y + clusterHalf, gridSizeXY - 1);
             int tmp2 = DTid.y + clusterHalf;
             int y_max = tmp2 > gridSizeXY - 1 ? gridSizeXY - 1 : tmp2;
-            GSMCells[GTid.x][GTid.y] = Cells[(y_max - 2) + gridSizeXY * (x_max - 2)]; //Corner case
-            GSMCells[GTid.x + x_max][GTid.y + y_max].isCandidate = false;
+            GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[(y_max - 2) + gridSizeXY * (x_max - 2)]; //Corner case
+            GSMCells[(GTid.x + x_max) + gsmThreads * (GTid.y + y_max)].isCluster = false;
 	        
         }
     }
@@ -127,18 +129,21 @@ void main( uint3 DTid : SV_DispatchThreadID,
         //int y_max = min(DTid.y + clusterHalf, gridSizeXY - 1);
         int tmp2 = DTid.y + clusterHalf;
         int y_max = tmp2 > gridSizeXY - 1 ? gridSizeXY - 1 : tmp2;
-        GSMCells[GTid.x][GTid.y] = Cells[(y_max - 2) + gridSizeXY * DTid.x]; //Corner case
-        GSMCells[GTid.x][GTid.y + y_max].isCandidate = false;
+        GSMCells[GTid.x + gsmThreads * GTid.y] = Cells[(y_max - 2) + gridSizeXY * DTid.x]; //Corner case
+        GSMCells[GTid.x + gsmThreads * (GTid.y + y_max)].isCluster = false;
     }
 
     //Clamping out of bounds - I'm probably doing this wrong
     int temp_x = min(DTid.x, gridSizeXY - 1); 
     int temp_y = min(DTid.y, gridSizeXY - 1); 
-    GSMCells[GTid.x + clusterHalf][GTid.y] = Cells[DTid.y + gridSizeXY * temp_x];
+    GSMCells[(GTid.x + clusterHalf) + gsmThreads * GTid.y] = Cells[DTid.y + gridSizeXY * temp_x];
+    //GSMCells[(GTid.x + clusterHalf) + gsmThreads * GTid.y].isCluster = false; 
 
-    GSMCells[GTid.x][GTid.y + clusterHalf] = Cells[temp_y + gridSizeXY * DTid.x];
+    GSMCells[GTid.x + gsmThreads * (GTid.y + clusterHalf)] = Cells[temp_y + gridSizeXY * DTid.x];
+    //GSMCells[GTid.x + gsmThreads * (GTid.y + clusterHalf)].isCluster = false;
 
-    GSMCells[GTid.x + clusterHalf][GTid.y + clusterHalf] = Cells[temp_y + gridSizeXY * temp_x];
+    GSMCells[(GTid.x + clusterHalf) + gsmThreads * (GTid.y + clusterHalf)] = Cells[temp_y + gridSizeXY * temp_x];
+    //GSMCells[(GTid.x + clusterHalf) + gsmThreads * (GTid.y + clusterHalf)].isCluster = false;
 
 
     //------------------------------------------
@@ -188,36 +193,59 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //}
 
 
-    for (int k = 2; k < gsmThreads - 2; ++k) //Only accesses 16 of the 20. 
+    //for (int k = 2; k < gsmThreads - 2; ++k) //Only accesses 16 of the 20. 
+    //{
+    //Shouls I be using this??
+    //const int CELL_R::
+    int NEIGHBORS_X_DIFFERENCE[8] = {
+        0, 1, 1, 1, 0, -1, -1, -1};
+    //    const int CELL_R::
+    int    NEIGHBORS_Y_DIFFERENCE[8] = {
+            -1, -1, 0, 1, 1, 1, 0, -1};
+
+    if (/*Cells[cellIndex].isCandidate*/
+        GSMCells[GTid.x + gsmThreads * GTid.y].isCandidate)
     {
-        if (/*Cells[cellIndex].isCandidate*/
-            GSMCells[GTid.x][GTid.y].isCandidate)
+        for (int k = 2; k < 18; ++k) //Only accesses 16 of the 20. 
         {
-            int clusterX = GTid.x + k; //k only??
-            int clusterY = GTid.y + k;
-            r = CalcDistance(clusterX, clusterY,
-									 GTid.x, GTid.y);
-            r = pow(r, pow_rho);
-            if (r == 0)
-                N += 0;
-            else
-                N += 1.0f / r;
-            phi = (1.0f / B) * (1.0f / N) * P;
+            int indx = GTid.x + gsmThreads * GTid.y;
+            //int indy = GTid.x + gsmThreads * k; 
+            int gsmX = indx % 20;
+            int gsmY = indx / 20;
+            //gsmX += NEIGHBORS_X_DIFFERENCE[k]; 
 
-            CS_OutputBuffer[cellIndex].N = N;
-            CS_OutputBuffer[cellIndex].r = r;
-            CS_OutputBuffer[cellIndex].phi = phi;
-        }
-        else
-        {
-            r = 0;
-            phi = Cells[cellIndex].phi;
 
-            CS_OutputBuffer[cellIndex].N = N;
-            CS_OutputBuffer[cellIndex].r = r;
-            CS_OutputBuffer[cellIndex].phi = phi;
+            if (GSMCells[GTid.x + gsmThreads * GTid.y].isCluster)
+			{
+				r = CalcDistance(gsmX, gsmY,
+										 GTid.x, GTid.y);
+				r = pow(r, pow_rho);
+				if (r == 0)
+					N += 0;
+				else
+					N += 1.0f / r;
+				phi = (1.0f / B) * (1.0f / N) * P;
+
+				CS_OutputBuffer[cellIndex].N = N;
+				CS_OutputBuffer[cellIndex].r = r;
+				CS_OutputBuffer[cellIndex].phi = phi;
+				
+				
+	          //no measure
+			}
+	              
         }
     }
+    else
+    {
+        r = 0;
+        phi = Cells[cellIndex].phi;
+
+        CS_OutputBuffer[cellIndex].N = N;
+        CS_OutputBuffer[cellIndex].r = r;
+        CS_OutputBuffer[cellIndex].phi = phi;
+    }
+    //}
             
     
 
