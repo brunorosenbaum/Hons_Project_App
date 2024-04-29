@@ -47,7 +47,7 @@ RWStructuredBuffer<OutputDataType> CS_OutputBuffer : register(u0); //We use u fo
 //16x16 = 256 & 20x20 = 400
 //If we have 400 groups of threads sharing memory then we can select the 256 ones that we're processing data with
 //And only work with those
-groupshared Cell GSMCells[gsmThreads][gsmThreads];
+//groupshared Cell GSMCells[gsmThreads][gsmThreads];
 groupshared Cell GSM_Cells[gsmThreads * gsmThreads]; 
 [numthreads(groupthreads, groupthreads, 1)]
 void main( uint3 DTid : SV_DispatchThreadID, 
@@ -74,7 +74,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     int x = DTid.x - 2;
     int y = DTid.y - 2;
     uint startIndex = y + gridSizeXY * x;
-    uint gsmIndex = GTid.x + GTid.y * 20; //I have my doubts, won't it be 20 instead of 16?
+    uint gsmIndex = GTid.y + GTid.x * 20; //I have my doubts, won't it be 20 instead of 16?
     //Now, in our 16x16, we have [0~255] cells we have to sample with one or two threads
     //And a remaining 144, since (20x20 = 400) - 256 = 144.
     int gsmx = gsmIndex % 20; //Getting x and y pos in the 20x20 grid
@@ -82,7 +82,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     int x_GridIndex = x + gsmx; //Index of the cell we want to sample in the 400 grid
     int y_GridIndex = y + gsmy;
     //Get the cell
-    GSM_Cells[y_GridIndex + 20 * x_GridIndex] = Cells[startIndex];
+    GSM_Cells[gsmIndex] = Cells[y_GridIndex + gridSizeXY * x_GridIndex];
 
     gsmIndex += 256;
     if (gsmIndex < 400) //We sample again
@@ -91,7 +91,8 @@ void main( uint3 DTid : SV_DispatchThreadID,
         gsmy = gsmIndex / 20;
         y_GridIndex = y + gsmy;
         x_GridIndex = x + gsmx;
-        GSM_Cells[y_GridIndex + 20 * x_GridIndex] = Cells[startIndex];
+        GSM_Cells[gsmIndex] = Cells[y_GridIndex + gridSizeXY * x_GridIndex];
+        GSM_Cells[gsmIndex].isCluster = false; 
 
     }
     GroupMemoryBarrierWithGroupSync();
@@ -216,14 +217,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     ////------------------------------------------
     ////Sync all threads
     //GroupMemoryBarrierWithGroupSync(); 
-  //---------------------------------------------
-    //Actual code, now with GSM
 
-    float B = Cells[cellIndex].B;
-    float P = Cells[cellIndex].P;
-    float N = Cells[cellIndex].N;
-    float r = CS_OutputBuffer[cellIndex].r;
-    float phi;
 
     //for (int x_i = 2; x_i < gsmThreads - 2; ++x_i) //gsmThreads = 20 -> 20 - 2? Is this right
     //{
@@ -258,33 +252,81 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //    }
             
     //}
-    if (/*GSM_Cells[startIndex].isCandidate*/
+
+      //---------------------------------------------
+    //Actual code, now with GSM
+
+    float B = Cells[cellIndex].B;
+    float P = Cells[cellIndex].P;
+    float N = Cells[cellIndex].N;
+    float r = CS_OutputBuffer[cellIndex].r;
+    float phi;
+
+    int gx = GTid.x + 2;
+    int gy = GTid.y + 2;
+    
+    uint2 minIndex = uint2(gx, gy);
+    uint2 maxIndex = uint2(gx + 4, gy + 4);
+    if (/*GSM_Cells[gy + 20 * gx].isCandidate*/
+
         Cells[cellIndex].isCandidate)
     {
-        for (int i = 0; i < 16; ++i)
+        for (uint yi = minIndex.y; yi <= maxIndex.y; ++yi)
         {
+            for (uint xi = minIndex.x; xi <= maxIndex.x; ++xi)
+            {
+                //if (GSM_Cells[gy + 20 * gx].isCluster)
+                //{
+                	r = CalcDistance(xi, yi,
+										 gx, gy);
+	                r = pow(r, pow_rho);
+	                if (r == 0)
+	                {
+	                    N += 0;
+	                    phi += 0;
+	                }
+	                else
+	                {
+	                    N += 1.0f / r;
+	                    phi = (1.0f / B) * (1.0f / N) * P;
+	                }
+	                        
+
+	                
+                //}
+               
+            }
+
+        }
+
+        CS_OutputBuffer[cellIndex].N = N;
+        CS_OutputBuffer[cellIndex].r = r;
+        CS_OutputBuffer[cellIndex].phi = phi;
+
+        //for (int i = 0; i < 400; ++i)
+        //{
 	    
-            int x_i = (i % 16) + gsmx;
-            int y_i = (i / 16) + gsmy;
-            r = CalcDistance(x_i, y_i,
-									 gsmx, gsmy);
-            r = pow(r, pow_rho);
-            if (r == 0)
-            {
-                N += 0;
-                phi += 0;
-            }
-            else
-            {
-                N += 1.0f / r;
-                phi = (1.0f / B) * (1.0f / N) * P;
-            }
+        //    int x_i = (i % 20)/* + gsmx*/;
+        //    int y_i = (i / 20) /*+ gsmy*/;
+        //    r = CalcDistance(x_i, y_i,
+								//	 gx, gy);
+        //    r = pow(r, pow_rho);
+        //    if (r == 0)
+        //    {
+        //        N += 0;
+        //        phi += 0;
+        //    }
+        //    else
+        //    {
+        //        N += 1.0f / r;
+        //        phi = (1.0f / B) * (1.0f / N) * P;
+        //    }
                         
 
-            CS_OutputBuffer[cellIndex].N = N;
-            CS_OutputBuffer[cellIndex].r = r;
-            CS_OutputBuffer[cellIndex].phi = phi;
-        }
+        //    CS_OutputBuffer[cellIndex].N = N;
+        //    CS_OutputBuffer[cellIndex].r = r;
+        //    CS_OutputBuffer[cellIndex].phi = phi;
+        //}
         
     }
     else
