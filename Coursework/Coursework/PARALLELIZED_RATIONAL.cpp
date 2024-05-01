@@ -451,11 +451,11 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 	//GPUCellData gpuCellsArray[gridSize_][gridSize_]; //2D array
 
-	for(int i = 0; i < gridSize_; ++i)
+	for(int j = 0; j < gridSize_; ++j)
 	{
-		for(int j = 0; j < gridSize_; ++j)
+		for(int i = 0; i < gridSize_; ++i)
 		{
-			int cellIndex = i + gridSize_ * j;
+			int cellIndex = j * gridSize_ + i; //CHANGED
 			gpuCellsArray[i][j].N = all_Cells[cellIndex]->N_;
 			gpuCellsArray[i][j].P = all_Cells[cellIndex]->P_;
 			gpuCellsArray[i][j].B = all_Cells[cellIndex]->B_;
@@ -465,36 +465,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		}
 	}
 
-	//std::vector<vector<GPUCellData>> gpu_allCells; //Make 128x128 gpu cell vector & fill it
-	//for (int i = 0; i < gridSize_; ++i)
-	//{
-	//	std::vector<GPUCellData> temp_rows;
-	//	GPUCellData temp_columnCell;
-	//	for (int j = 0; j < gridSize_; ++j)
-	//	{
-	//		temp_columnCell.N = all_Cells[j]->N_;
-	//		temp_columnCell.P = all_Cells[j]->P_;
-	//		temp_columnCell.B = all_Cells[j]->B_;
-	//		temp_columnCell.phi = all_Cells[j]->potential;
-
-	//		if(candidateMap_DS.empty())
-	//			temp_columnCell.isCandidate = 0;
-	//		else
-	//		{
-	//			auto mapItr = candidateMap_DS.begin();
-	//			while (mapItr != candidateMap_DS.end())
-	//			{
-	//				if (mapItr->second->y == j)
-	//					temp_columnCell.isCandidate = 1;
-	//				else
-	//					temp_columnCell.isCandidate = 0;
-	//				++mapItr; 
-	//			}
-	//			temp_rows.push_back(temp_columnCell);
-	//		}
-	//	}
-	//	gpu_allCells.push_back(temp_rows); 
-	//}
 
 	// calculate electric potential (Phi) for only candidate cells
 	float phi;
@@ -532,12 +502,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			// -----------------------------------------------------------
 			// for positive charges, use pre-computed value
 			P = positivePotentials_[mapKey];
-			// -----------------------------------------------------------
-			// for negative charge cells 
-			//iCandidateClusterX = current_Cell->x / regionSize; //X
-			//iCandidateClusterY = current_Cell->y / regionSize; //Y
-			//iCandidateClusterIndex = iCandidateClusterY * clusterSize_ + iCandidateClusterX;
-			//iClusterIndex = 0;
 
 			N = 0; 
 
@@ -550,29 +514,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			gpuCellsArray[cx][cy].B = B;
 			gpuCellsArray[cx][cy].isCandidate = true; 
 			gpuCellsArray[cx][cy].phi = current_Cell->potential;
-
-		
-		/*	std::vector<GPUClusterData> gpu_cluster;
-			for(int c = 0; c < clusters_.size(); ++c)
-			{
-				GPUClusterData temp; 
-				temp.x = clusters_[c].c_x; 
-				temp.y = clusters_[c].c_y;
-				temp.xAvg = clusters_[c].c_xAvg;
-				temp.yAvg = clusters_[c].c_yAvg;
-				temp.ySum = clusters_[c].c_ySum;
-				temp.xSum = clusters_[c].c_xSum;
-				for(int k = 0; k < clusters_[c].cluster_Cells.size(); ++k)
-				{
-					temp.clusterCells[k].phi = clusters_[c].cluster_Cells[k].potential;
-					temp.clusterCells[k].N = clusters_[c].cluster_Cells[k].N_;
-					temp.clusterCells[k].P = clusters_[c].cluster_Cells[k].P_;
-					temp.clusterCells[k].B = clusters_[c].cluster_Cells[k].B_;
-					temp.clusterCells[k].x = clusters_[c].cluster_Cells[k].x;
-					temp.clusterCells[k].y = clusters_[c].cluster_Cells[k].y;
-				}
-				gpu_cluster.push_back(temp); 
-			}*/ 
 
 
 		}
@@ -602,11 +543,11 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	deviceContext->Unmap(cpuBuf, 0);
 
 
-	for (int i = 0; i < gridSize_; ++i)
+	for (int j = 0; j < gridSize_; ++j)
 	{
-		for (int j = 0; j < gridSize_; ++j)
+		for (int i = 0; i < gridSize_; ++i)
 		{
-			int cellIndex = i * gridSize_ + j;
+			int cellIndex = i + gridSize_ * j;//CHANGED
 			int mapIndex = i + gridSize_ * j; 
 			if(gpuCellsArray[i][j].isCandidate)
 			{
@@ -697,7 +638,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
 	ptr_ = (DataBufferType*)MappedResource.pData;
 
-	int cellIndex = candidate_cell->x * gridSize_ + candidate_cell->y; 
+	int cellIndex = candidate_cell->x + gridSize_ * candidate_cell->y; //changed
 
 	candidate_cell->N_ = ptr_[cellIndex].N_;
 	candidate_cell->potential = ptr_[cellIndex].phi_;
@@ -772,7 +713,7 @@ void PARALLELIZED_RATIONAL::AllCellsToCandidates() //Turns all cells into candid
 	{
 		for (int j = 0; j < gridSize_; ++j) //Rows
 		{
-			iIndex = i * gridSize_ + j;
+			iIndex = i + gridSize_ * j;
 			if (all_Cells[iIndex] && all_Cells[iIndex]->type_ == EMPTY_R) //If cells exist and theyre empty
 			{//Map all cells to candidate map
 				candidateMap_DS.insert(std::map<int, CELL_R*>::value_type(iIndex, all_Cells[iIndex]));

@@ -11,15 +11,15 @@ float CalcDistance(float x1, float y1, float x2, float y2)
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
-float CalcAverage(int elements[(clusterHalf * 2) + 1])
+float CalcAverage(int elements[16])
 {
     float sum; 
-    for (int i = 0; i < clusterHalf * 2 + 1; ++i)
+    for (int i = 0; i < 16; ++i)
     {
         [unroll]
         sum += elements[i];
     }
-    return sum / (clusterHalf * 2) + 1; 
+    return sum / 16; 
 }
 
 struct Cell
@@ -68,31 +68,31 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
     //-------------------------------------------------------------------------------------------------------------
 
-    uint cellIndex = DTid.y + gridSizeXY * DTid.x;
+    int cellIndex = DTid.y * gridSizeXY + DTid.x;
 
     //Group offset
-    uint globalXOffset = Gid.x * 16;
-    uint globalYOffset = Gid.y * 16;
+    int globalXOffset = Gid.x * 16;
+    int globalYOffset = Gid.y * 16;
 
     //Subtract 2 from DTid to get the (0, 0) of the given 20x20 group in the greater grid (128x128)
-    globalXOffset = globalXOffset - 2;
-    globalYOffset = globalYOffset - 2; 
-    uint2 groupStartIndex = uint2(globalXOffset, globalYOffset); //Offset between the groups, PURPLE area
+    globalXOffset = globalXOffset - 2 < 0 ? 0 : (globalXOffset - 2);
+    globalYOffset = globalYOffset - 2 < 0 ? 0 : (globalYOffset - 2);
+    int2 groupStartIndex = int2(globalXOffset, globalYOffset); //Offset between the groups, PURPLE area
     //^^^^ This is not flattened
 
     //Flattened group shared memory index
-    uint gsmIndex = GTid.x + 16 * GTid.y; //For max value 256
+    int gsmIndex = GTid.y * 16 + GTid.x; //For max value 256
 
     //Now, in our 16x16, we have [0~255] cells we have to sample with one or two threads
     //And a remaining 144, since (20x20 = 400) - 256 = 144.
 
-    uint gsmx = gsmIndex % 20; //Getting x and y pos in the 20x20 grid
-    uint gsmy = gsmIndex / 20;
+    int gsmx = gsmIndex % 20; //Getting x and y pos in the 20x20 grid
+    int gsmy = gsmIndex / 20;
     
-    uint x_GridIndex = groupStartIndex.x + gsmx; //Index of the cell we want to sample in the global grid
-    uint y_GridIndex = groupStartIndex.y + gsmy;
+    int x_GridIndex = groupStartIndex.x + gsmx; //Index of the cell we want to sample in the global grid
+    int y_GridIndex = groupStartIndex.y + gsmy;
 
-    uint globalIndex = y_GridIndex + gridSizeXY * x_GridIndex;
+    int globalIndex = y_GridIndex * gridSizeXY + x_GridIndex;
 
     //Get the cell
     GSM_Cells[gsmIndex] = Cells[globalIndex];
@@ -117,25 +117,21 @@ void main( uint3 DTid : SV_DispatchThreadID,
 	//---------------------------------------------
     //Actual code, now with GSM
 
-   
+    
+
 
     uint gx = GTid.x + 2;
     uint gy = GTid.y + 2;
     uint localIndex = (gy * 20 + gx);
-
+    //uint localIndextemp = GTid.y * 20 + GTid.x;
     float B = GSM_Cells[localIndex].B;
     float P = GSM_Cells[localIndex].P;
     float N = GSM_Cells[localIndex].N;
-    float r = CS_OutputBuffer[globalIndex].r;
-    float phi;
+    float r = 0;
+    float phi = GSM_Cells[localIndex].phi;
     
-    int2 minIndex = int2(GTid.x, GTid.y);
-    int2 maxIndex = int2(GTid.x + 2, GTid.y + 2);
-
-    //minIndex.x = minIndex.x < 0 ? 0 : minIndex.x;
-    //minIndex.y = minIndex.y < 0 ? 0 : minIndex.y;
-    //maxIndex.x = maxIndex.x > 15 ? 15 : maxIndex.x;
-    //maxIndex.y = maxIndex.y > 15 ? 15 : maxIndex.y;
+    int2 minIndex = int2(gx - 4, gy - 4);
+    int2 maxIndex = int2(gx + 4, gy + 4);
 
     if (GSM_Cells[localIndex].isCandidate)
     {
@@ -143,10 +139,12 @@ void main( uint3 DTid : SV_DispatchThreadID,
         {
             for (int xi = minIndex.x; xi < maxIndex.x; ++xi)
             {
-                int tempx = xi > 15 ? 15 : xi;
-                int tempy = yi > 15 ? 15 : yi; 
+                int tempx = xi > 17 ? 17 : xi;
+                int tempy = yi > 17 ? 17 : yi;
+                tempx = tempx < 2 ? 2 : tempx;
+                tempy = tempy < 2 ? 2 : tempy;
                 r = CalcDistance(tempx, tempy,
-									 GTid.x, GTid.y);
+									 gx, gy);
                 r = pow(r, pow_rho);
                 if (r == 0)
                 {
@@ -161,21 +159,13 @@ void main( uint3 DTid : SV_DispatchThreadID,
             }
 
         }
-
-        CS_OutputBuffer[globalIndex].N = N;
-        CS_OutputBuffer[globalIndex].r = r;
-        CS_OutputBuffer[globalIndex].phi = phi;
         
     }
-    else
-    {
-        r = 0;
-        phi = Cells[globalIndex].phi;
+    GroupMemoryBarrierWithGroupSync();
 
-        CS_OutputBuffer[globalIndex].N = N;
-        CS_OutputBuffer[globalIndex].r = r;
-        CS_OutputBuffer[globalIndex].phi = phi;
-    }
+    CS_OutputBuffer[cellIndex].N = N;
+    CS_OutputBuffer[cellIndex].r = r;
+    CS_OutputBuffer[cellIndex].phi = phi;
 
 }
 

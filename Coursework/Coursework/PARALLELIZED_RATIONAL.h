@@ -123,7 +123,7 @@ private: //---------Lightning tree and cs
 	struct GPUCellData
 	{
 		//int x, y;
-		float phi;
+		float phi = 0.5;
 		float N, P, B;
 		int isCandidate = false;
 		int isCluster = true; 
