@@ -71,28 +71,32 @@ void main( uint3 DTid : SV_DispatchThreadID,
     uint cellIndex = DTid.y + gridSizeXY * DTid.x;
 
     //Subtract 2 from DTid to get the (0, 0) of the given 20x20 group in the greater grid (128x128)
-    int x = DTid.x - 2;
-    int y = DTid.y - 2;
-    uint startIndex = y + gridSizeXY * x;
-    uint gsmIndex = GTid.y + GTid.x * 20; //I have my doubts, won't it be 20 instead of 16?
+    uint globalXOffset = Gid.x * 16;
+    uint globalYOffset = Gid.y * 16;
+    globalXOffset -= 2;
+    globalYOffset -= 2; 
+    uint2 groupStartIndex = uint2(globalXOffset, globalYOffset); //Offset between the groups, PURPLE area
+    //^^^^ This is not flattened
+    //uint startIndex = y + gridSizeXY * x;
+    uint gsmIndex = GTid.x + GTid.y * 16; //For max value 256, flattened number
     //Now, in our 16x16, we have [0~255] cells we have to sample with one or two threads
     //And a remaining 144, since (20x20 = 400) - 256 = 144.
-    int gsmx = gsmIndex % 20; //Getting x and y pos in the 20x20 grid
-    int gsmy = gsmIndex / 20;
-    int x_GridIndex = x + gsmx; //Index of the cell we want to sample in the 400 grid
-    int y_GridIndex = y + gsmy;
+    uint gsmx = gsmIndex % 20; //Getting x and y pos in the 20x20 grid
+    uint gsmy = gsmIndex / 20;
+    
+    int x_GridIndex = groupStartIndex.x + gsmx; //Index of the cell we want to sample in the 400 grid
+    int y_GridIndex = groupStartIndex.y + gsmy;
     //Get the cell
     GSM_Cells[gsmIndex] = Cells[y_GridIndex + gridSizeXY * x_GridIndex];
 
     gsmIndex += 256;
     if (gsmIndex < 400) //We sample again
-    {
+    { //some threads grab 2 & read 2 but we only write to 1
         gsmx = gsmIndex % 20;
         gsmy = gsmIndex / 20;
-        y_GridIndex = y + gsmy;
-        x_GridIndex = x + gsmx;
+        y_GridIndex = groupStartIndex.x + gsmy;
+        x_GridIndex = groupStartIndex.y + gsmx;
         GSM_Cells[gsmIndex] = Cells[y_GridIndex + gridSizeXY * x_GridIndex];
-        GSM_Cells[gsmIndex].isCluster = false; 
 
     }
     GroupMemoryBarrierWithGroupSync();
@@ -265,15 +269,15 @@ void main( uint3 DTid : SV_DispatchThreadID,
     int gx = GTid.x + 2;
     int gy = GTid.y + 2;
     
-    uint2 minIndex = uint2(gx, gy);
-    uint2 maxIndex = uint2(gx + 4, gy + 4);
-    if (/*GSM_Cells[gy + 20 * gx].isCandidate*/
+    uint2 minIndex = uint2(GTid.x, GTid.y);
+    uint2 maxIndex = uint2(GTid.x + 4, GTid.y + 4);
+    if (GSM_Cells[gx + 20 * gy].isCandidate
 
-        Cells[cellIndex].isCandidate)
+        /*Cells[cellIndex].isCandidate*/)
     {
-        for (uint yi = minIndex.y; yi <= maxIndex.y; ++yi)
+        for (uint yi = minIndex.y; yi < maxIndex.y; ++yi)
         {
-            for (uint xi = minIndex.x; xi <= maxIndex.x; ++xi)
+            for (uint xi = minIndex.x; xi < maxIndex.x; ++xi)
             {
                 //if (GSM_Cells[gy + 20 * gx].isCluster)
                 //{
