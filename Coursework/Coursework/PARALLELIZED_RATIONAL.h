@@ -136,6 +136,6 @@ private: //---------Lightning tree and cs
 		GPUCellData clusterCells[16];
 	};
 	
-	GPUCellData gpuCellsArray[128][128];
+	GPUCellData gpuCellsArray[128 * 128];
 };
 

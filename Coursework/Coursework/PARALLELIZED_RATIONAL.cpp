@@ -451,19 +451,23 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 	//GPUCellData gpuCellsArray[gridSize_][gridSize_]; //2D array
 
-	for(int j = 0; j < gridSize_; ++j)
+	for(int cellIndex = 0; cellIndex < 128*128; ++cellIndex)
 	{
-		for(int i = 0; i < gridSize_; ++i)
-		{
-			int cellIndex = j * gridSize_ + i; //CHANGED
-			gpuCellsArray[i][j].N = all_Cells[cellIndex]->N_;
-			gpuCellsArray[i][j].P = all_Cells[cellIndex]->P_;
-			gpuCellsArray[i][j].B = all_Cells[cellIndex]->B_;
-			gpuCellsArray[i][j].phi = all_Cells[cellIndex]->potential;
-			gpuCellsArray[i][j].isCandidate = 0;
-
-		}
+		gpuCellsArray[cellIndex].N = all_Cells[cellIndex]->N_;
+		gpuCellsArray[cellIndex].P = all_Cells[cellIndex]->P_;
+		gpuCellsArray[cellIndex].B = all_Cells[cellIndex]->B_;
+		gpuCellsArray[cellIndex].phi = all_Cells[cellIndex]->potential;
+		gpuCellsArray[cellIndex].isCandidate = 0;
 	}
+	//for(int j = 0; j < gridSize_; ++j)
+	//{
+	//	for(int i = 0; i < gridSize_; ++i)
+	//	{
+	//		int cellIndex = j * gridSize_ + i; //CHANGED
+	//		
+
+	//	}
+	//}
 
 
 	// calculate electric potential (Phi) for only candidate cells
@@ -508,12 +512,13 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 			//----------------------------------
 			//Update cell info in gpu cells struct
 			int cx = current_Cell->x;
-			int cy = current_Cell->y; 
-			gpuCellsArray[cx][cy].N = N;
-			gpuCellsArray[cx][cy].P = P;
-			gpuCellsArray[cx][cy].B = B;
-			gpuCellsArray[cx][cy].isCandidate = true; 
-			gpuCellsArray[cx][cy].phi = current_Cell->potential;
+			int cy = current_Cell->y;
+			int idx = cx + cy * 128;
+			gpuCellsArray[idx].N = N;
+			gpuCellsArray[idx].P = P;
+			gpuCellsArray[idx].B = B;
+			gpuCellsArray[idx].isCandidate = true;
+			gpuCellsArray[idx].phi = current_Cell->potential;
 
 
 		}
@@ -522,7 +527,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 	//Use compute shader
 			//Write candidate cell data to structured buffer
-	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, &gpuCellsArray[0][0], &cellBuffer);
+	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0]), gridSize_ * gridSize_, &gpuCellsArray[0], &cellBuffer);
 	compute_shader->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
 	//Write that structured buffer data to an srv buffer
 	//compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
@@ -542,34 +547,48 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 	memcpy(copyData, ptr_, gridSize_ * gridSize_ * sizeof(DataBufferType));
 	deviceContext->Unmap(cpuBuf, 0);
 
-
-	for (int j = 0; j < gridSize_; ++j)
+	for(int indx = 0; indx < 128*128; indx++)
 	{
-		for (int i = 0; i < gridSize_; ++i)
+		if (gpuCellsArray[indx].isCandidate)
 		{
-			int cellIndex = i + gridSize_ * j;//CHANGED
-			int mapIndex = i + gridSize_ * j; 
-			if(gpuCellsArray[i][j].isCandidate)
-			{
-				gpuCellsArray[i][j].phi = ptr_[cellIndex].phi_;
-				gpuCellsArray[i][j].N = ptr_[cellIndex].N_;
+			gpuCellsArray[indx].phi = ptr_[indx].phi_;
+			gpuCellsArray[indx].N = ptr_[indx].N_;
 
-				/*if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
-				{
-					candidateMap_DS[mapIndex]->potential = max(ptr_->phi_, 0.00001f);
-					candidateMap_DS[mapIndex]->N_ = max(ptr_->N_, 0.00001f);
-				}
-				else
-				{*/
-				candidateMap_DS[mapIndex]->N_ = ptr_[cellIndex].N_;
-				candidateMap_DS[mapIndex]->potential = ptr_[cellIndex].phi_;
-				//}
-				candidateMap_DS[mapIndex]->B_ = gpuCellsArray[i][j].B;
-				candidateMap_DS[mapIndex]->P_ = gpuCellsArray[i][j].P;
-				
-			}
+			candidateMap_DS[indx]->N_ = ptr_[indx].N_;
+			candidateMap_DS[indx]->potential = ptr_[indx].phi_;
+			//}
+			candidateMap_DS[indx]->B_ = gpuCellsArray[indx].B;
+			candidateMap_DS[indx]->P_ = gpuCellsArray[indx].P;
+
 		}
 	}
+	//for (int j = 0; j < gridSize_; ++j)
+	//{
+	//	for (int i = 0; i < gridSize_; ++i)
+	//	{
+	//		int cellIndex = i + gridSize_ * j;//CHANGED
+	//		int mapIndex = i + gridSize_ * j; 
+	//		if(gpuCellsArray[i][j].isCandidate)
+	//		{
+	//			gpuCellsArray[i][j].phi = ptr_[cellIndex].phi_;
+	//			gpuCellsArray[i][j].N = ptr_[cellIndex].N_;
+
+	//			/*if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
+	//			{
+	//				candidateMap_DS[mapIndex]->potential = max(ptr_->phi_, 0.00001f);
+	//				candidateMap_DS[mapIndex]->N_ = max(ptr_->N_, 0.00001f);
+	//			}
+	//			else
+	//			{*/
+	//			candidateMap_DS[mapIndex]->N_ = ptr_[cellIndex].N_;
+	//			candidateMap_DS[mapIndex]->potential = ptr_[cellIndex].phi_;
+	//			//}
+	//			candidateMap_DS[mapIndex]->B_ = gpuCellsArray[i][j].B;
+	//			candidateMap_DS[mapIndex]->P_ = gpuCellsArray[i][j].P;
+	//			
+	//		}
+	//	}
+	//}
 
 	//auto it = candidateMap_DS.begin();
 	//while (it != candidateMap_DS.end())
@@ -611,19 +630,19 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 		//----------------------------------
 		//Update cell info in gpu cells struct
 		
-		gpuCellsArray[cx][cy].N = N;
-		gpuCellsArray[cx][cy].P = P;
-		gpuCellsArray[cx][cy].B = B;
-		gpuCellsArray[cx][cy].isCandidate = true; 
-		gpuCellsArray[cx][cy].isCluster = true; 
-		gpuCellsArray[cx][cy].phi = candidate_cell->potential;
+		gpuCellsArray[iKey].N = N;
+		gpuCellsArray[iKey].P = P;
+		gpuCellsArray[iKey].B = B;
+		gpuCellsArray[iKey].isCandidate = true;
+		gpuCellsArray[iKey].isCluster = true;
+		gpuCellsArray[iKey].phi = candidate_cell->potential;
 	}
 	else
 		return;
 
 	//Use compute shader
 			//Write candidate cell data to structured buffer
-	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0][0]), gridSize_ * gridSize_, &gpuCellsArray[0][0], &cellBuffer);
+	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0]), gridSize_ * gridSize_, &gpuCellsArray[0], &cellBuffer);
 	compute_shader->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
 	//Write that structured buffer data to an srv buffer
 	compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
@@ -642,8 +661,8 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 
 	candidate_cell->N_ = ptr_[cellIndex].N_;
 	candidate_cell->potential = ptr_[cellIndex].phi_;
-	candidate_cell->B_ = gpuCellsArray[cx][cy].B;
-	candidate_cell->P_ = gpuCellsArray[cx][cy].P;
+	candidate_cell->B_ = gpuCellsArray[cellIndex].B;
+	candidate_cell->P_ = gpuCellsArray[cellIndex].P;
 
 }
 

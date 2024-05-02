@@ -75,10 +75,18 @@ void main( uint3 DTid : SV_DispatchThreadID,
     int globalYOffset = Gid.y * 16;
 
     //Subtract 2 from DTid to get the (0, 0) of the given 20x20 group in the greater grid (128x128)
-    globalXOffset = globalXOffset - 2 < 0 ? 0 : (globalXOffset - 2);
-    globalYOffset = globalYOffset - 2 < 0 ? 0 : (globalYOffset - 2);
+    
+    //if(Gid.x * 16 >= 255)
+    //{
+    //    globalXOffset = globalXOffset == 255 ? 255 : 256;
+    //}
+    //if (Gid.y * 16 >= 255)
+    //{
+    //    globalYOffset = globalYOffset == 255 ? 255 : 256;
+    //}
+    globalXOffset = globalXOffset - 2 /*< 0 ? 0 : (globalXOffset - 2)*/;
+    globalYOffset = globalYOffset - 2 /*< 0 ? 0 : (globalYOffset - 2)*/;
     int2 groupStartIndex = int2(globalXOffset, globalYOffset); //Offset between the groups, PURPLE area
-    //^^^^ This is not flattened
 
     //Flattened group shared memory index
     int gsmIndex = GTid.y * 16 + GTid.x; //For max value 256
@@ -90,7 +98,9 @@ void main( uint3 DTid : SV_DispatchThreadID,
     int gsmy = gsmIndex / 20;
     
     int x_GridIndex = groupStartIndex.x + gsmx; //Index of the cell we want to sample in the global grid
-    int y_GridIndex = groupStartIndex.y + gsmy;
+    int y_GridIndex = abs(groupStartIndex.y + gsmy);
+    //y_GridIndex = y_GridIndex < 0 ? 0 : y_GridIndex; 
+    //x_GridIndex = x_GridIndex < 0 ? 0 : x_GridIndex; 
 
     int globalIndex = y_GridIndex * gridSizeXY + x_GridIndex;
 
@@ -131,26 +141,22 @@ void main( uint3 DTid : SV_DispatchThreadID,
     float phi = GSM_Cells[localIndex].phi;
     
     int2 minIndex = int2(gx - 4, gy - 4);
-    int2 maxIndex = int2(gx + 4, gy + 4);
+    int2 maxIndex = int2(gx + 6, gy + 6);
 
-    if (GSM_Cells[localIndex].isCandidate)
+    if (GSM_Cells[localIndex].isCandidate/*Cells[cellIndex].isCandidate*/)
     {
         for (int yi = minIndex.y; yi < maxIndex.y; ++yi)
         {
             for (int xi = minIndex.x; xi < maxIndex.x; ++xi)
             {
-                int tempx = xi > 17 ? 17 : xi;
-                int tempy = yi > 17 ? 17 : yi;
-                tempx = tempx < 2 ? 2 : tempx;
-                tempy = tempy < 2 ? 2 : tempy;
+                int tempx = xi >= 17 ? 17 : xi;
+                int tempy = yi >= 17 ? 17 : yi;
+                tempx = tempx <= 2 ? 2 : tempx;
+                tempy = tempy <= 2 ? 2 : tempy;
                 r = CalcDistance(tempx, tempy,
 									 gx, gy);
                 r = pow(r, pow_rho);
-                if (r == 0)
-                {
-                    N += 0;
-                }
-                else
+                if (!r == 0)
                 {
                     N += 1.0f / r;
                     phi = (1.0f / B) * (1.0f / N) * P;
