@@ -4,6 +4,7 @@
 #include <ostream>
 #include <random>
 #include <sstream>
+#include <timer.h>
 
 #define ETA 3 //Eta (H or squiggly n) parameter
 #define POW_OF_RHO 2 //Rho is P, or long p parameter. 
@@ -194,7 +195,7 @@ bool PARALLELIZED_RATIONAL::InitializeGrid(const std::string& path) //Load()
 
 #pragma region PRECOMPUTATION FUNCTIONS
 //-----------------------------------------------------------PRECOMPUTATION---------------------------------------------
-void PARALLELIZED_RATIONAL::CreateBoundaryCells() //I'm assuming this method creates the boundary grid, akin to the green channel
+void PARALLELIZED_RATIONAL::CreateBoundaryCells() //This method creates the boundary grid, akin to the green channel
 //in the .ppm files in Kims method. These should be positive in charge. 
 { //I think this is the equivalent to the quad_dbm_2D's drawQuadTree() 
 	boundary_Cells.clear();
@@ -487,7 +488,7 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		std::cout << "There is no candidate cells to compute electric potential !!" << std::endl;
 
 	}
-
+	
 	//Now, go through candidate cells
 	auto mapItr = candidateMap_DS.begin();
 	while (mapItr != candidateMap_DS.end())

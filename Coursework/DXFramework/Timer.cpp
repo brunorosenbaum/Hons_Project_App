@@ -1,5 +1,8 @@
 // Timer object.
 // Calculate delta/frame time and FPS.
+#include <fstream>
+#include <string>
+
 #include "timer.h"
 
 // Initialise timer. Check for high performance timers.
@@ -54,6 +57,7 @@ void Timer::frame()
 }
 
 
+
 float Timer::getTime()
 {
 	return frameTime;
@@ -62,4 +66,14 @@ float Timer::getTime()
 float Timer::getFPS()
 {
 	return fps;
+}
+
+void Timer::outputCSV(float start, float end)
+{
+	float elapsed = end - start;
+	std::ofstream csvFile("measurements.csv");
+	//csvFile.open("measurements.csv");
+	csvFile << std::to_string(elapsed) /*<< "," << getFPS()*/; //1st column 1st row for time, 2nd column for fps
+	//csvFile.close(); 
+
 }

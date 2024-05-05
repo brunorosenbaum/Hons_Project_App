@@ -7,6 +7,7 @@
 #include "Lightning_JY_SM.h"
 #include "LinearSM.h"
 
+
 class LightningAppJY : public BaseApplication
 {
 public:
@@ -37,7 +38,9 @@ private:
 	PARALLELIZED_RATIONAL* parallelized_lightning_Generator; 
 	float sceneSize, sceneHalf;
 
-	std::vector<LIGHTNING_TREE_NODE*> tree_nodes; 
+	std::vector<LIGHTNING_TREE_NODE*> tree_nodes;
+	float endTime_ = 0;
+	float startTime_ = 0; 
 
 };
 

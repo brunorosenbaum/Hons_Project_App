@@ -22,7 +22,7 @@ const float SCREEN_NEAR = 0.1f;		//0.1f
 #include "input.h"
 #include "d3d.h"
 #include "FPCamera.h"
-#include "timer.h"
+#include "Timer.h"
 #include "imGUI/imgui.h"
 #include "imGUI/imgui_impl_dx11.h"
 #include "imGUI/imgui_impl_win32.h"

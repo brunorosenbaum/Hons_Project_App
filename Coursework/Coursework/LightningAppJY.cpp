@@ -31,13 +31,12 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 
 	//lightning_Generator = new RATIONAL_SOLVER();
 	//lightning_Generator->InitializeGrid("res/lightning_128.map");
-
 	parallelized_lightning_Generator = new PARALLELIZED_RATIONAL(renderer->getDevice(), renderer->getDeviceContext(), hwnd);
 	parallelized_lightning_Generator->InitializeGrid("res/lightning_128.map");
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
 	initLightning();
-
+	startTime_ = 0;
 	
 
 }
@@ -45,6 +44,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 void LightningAppJY::initLightning()
 {
 	
+
 	//lightning_Generator->ProcessLightning();
 	parallelized_lightning_Generator->ProcessLightning();
 	//float fDiff = -fSceneSize / g_lightningGenerator.GetGridSize();
@@ -194,7 +194,8 @@ bool LightningAppJY::render()
 
 	//initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
 	drawLightning(worldMatrix, viewMatrix, projectionMatrix);
-
+	endTime_ = timer->getTime();
+	timer->outputCSV(startTime_, endTime_); 
 	// Render GUI
 	gui();
 
