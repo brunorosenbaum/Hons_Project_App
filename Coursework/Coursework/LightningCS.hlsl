@@ -28,7 +28,6 @@ struct Cell
     float phi;
     float N, P, B;
     int isCandidate;
-    int isCluster; 
 };
 
 struct OutputDataType //This one is for read & write data that we need to pass around

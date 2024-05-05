@@ -96,7 +96,8 @@ private: //------------- Grid and potential vars
 private: //---------Lightning tree and cs
 	LIGHTNING_TREE lightning_tree_;
 
-	CSBuffer* compute_shader;
+	CSBuffer* cs_rational;
+	CSBuffer* cs_positive; 
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
 
@@ -107,14 +108,11 @@ private: //---------Lightning tree and cs
 	ID3D11Buffer* bufferResult = nullptr;
 	ID3D11ShaderResourceView* srvBuffer0 = nullptr;
 	ID3D11ShaderResourceView* srvBuffer1 = nullptr;
-	/*ID3D11ShaderResourceView* srvBuffer1 = nullptr;*/
 	ID3D11UnorderedAccessView* resultUAV = nullptr;
 
+	ID3D11Buffer* posCellBuffer = nullptr; 
+	ID3D11Buffer* posCellResult = nullptr; 
 
-	//struct DataBufferType
-	//{
-	//	float r_[128*128], N_[128*128], phi_[128*128];
-	//};
 	struct DataBufferType
 	{
 		float r_, N_, phi_;
@@ -126,7 +124,6 @@ private: //---------Lightning tree and cs
 		float phi = 0.5;
 		float N, P, B;
 		int isCandidate = false;
-		int isCluster = true; 
 	};
 	struct GPUClusterData
 	{
@@ -135,7 +132,13 @@ private: //---------Lightning tree and cs
 		int xAvg, yAvg;
 		GPUCellData clusterCells[16];
 	};
+	struct PosData
+	{
+		int x, y; 
+	};
+	
 	
 	GPUCellData gpuCellsArray[128 * 128];
+	PosData posiCell; 
 };
 

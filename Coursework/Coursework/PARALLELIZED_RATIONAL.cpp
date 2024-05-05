@@ -1,7 +1,7 @@
 #include "PARALLELIZED_RATIONAL.h"
 
 #include <iostream>
-#include <ostream>
+
 #include <random>
 #include <sstream>
 #include <timer.h>
@@ -31,7 +31,8 @@ PARALLELIZED_RATIONAL::PARALLELIZED_RATIONAL(ID3D11Device* device_, ID3D11Device
 	rng_.seed(rd());
 	srand(static_cast<unsigned>(time(0)));
 	//Init compute shader
-	compute_shader = new CSBuffer(device_, hwnd);
+	cs_rational = new CSBuffer(device_, hwnd);
+	cs_positive = new CSBuffer(device_, hwnd, L"PositiveCellCS.cso");
 	device = device_;
 	deviceContext = deviceContext_; 
 
@@ -295,43 +296,32 @@ void PARALLELIZED_RATIONAL::CalcPositivePotential()
 	//	electric potentials based on those types separately as **P**, N, and B.
 
 	positivePotentials_.clear();
-	positivePotentials_.assign(gridSize_ * gridSize_, 0.0f); //Assign value 0 to all positive elec potential cells
-	CELL_R* current_Cell;
 	float positivePhi = 0;
-	float r;
-	int iIndex = 0;
+	posiCell.x = positive_Cells[0].x;
+	posiCell.y = positive_Cells[0].y; 
+	//Use compute shader
+	//Write candidate cell data to structured buffer
+	cs_positive->createStructuredBuffer(device, sizeof(posiCell), 1, &posiCell, &posCellBuffer);
+	cs_positive->createStructuredBuffer(device, sizeof(positivePhi), gridSize_ * gridSize_, nullptr, &posCellResult);
+	//Write that structured buffer data to an srv buffer
+	cs_positive->createBufferSRV(device, posCellBuffer, &srvBuffer0);
+	cs_positive->createBufferUAV(device, posCellResult, &resultUAV);
+	cs_positive->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
 
+	ID3D11Buffer* cpuBuf = cs_positive->createCPUReadBuffer(device, deviceContext, posCellResult,
+		sizeof(positivePhi), gridSize_ * gridSize_);
+	D3D11_MAPPED_SUBRESOURCE MappedResource;
+	float* ptr_;
+	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
+	ptr_ = (float*)MappedResource.pData;
+	float copyData[128 * 128];
+	memcpy(copyData, ptr_, gridSize_ * gridSize_ * sizeof(positivePhi));
 
-	for (int i = 0; i < gridSize_; ++i)
-	{
-		for (int j = 0; j < gridSize_; ++j)
-		{
-			current_Cell = all_Cells[iIndex];
-			positivePhi = 0;
-
-			if (current_Cell && current_Cell->type_ != POSITIVE_R) //Go through cells until they reach end cell
-			{
-				std::vector< CELL_R >::const_iterator pItr = positive_Cells.begin();
-				while (pItr != positive_Cells.end())
-				{
-					r = CalcDistance(pItr->x, pItr->y, current_Cell->x, current_Cell->y);
-					if (power_of_Rho_ > 1)
-					{
-						r = pow(r, power_of_Rho_);
-					}
-					//Set their potential to 1
-					positivePhi += 1.0f / r;
-
-					++pItr;
-				}
-			}
-			positivePotentials_[iIndex] = positivePhi;
-			iIndex++;
-		}
-
-
-
-	}
+	copy(copyData, copyData + (gridSize_ * gridSize_), back_inserter(positivePotentials_)); 
+	deviceContext->Unmap(cpuBuf, 0);
+	srvBuffer0 = nullptr;
+	resultUAV = nullptr;
+	CPUReadBuffer = nullptr;
 }
 #pragma endregion
 
@@ -460,15 +450,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		gpuCellsArray[cellIndex].phi = all_Cells[cellIndex]->potential;
 		gpuCellsArray[cellIndex].isCandidate = 0;
 	}
-	//for(int j = 0; j < gridSize_; ++j)
-	//{
-	//	for(int i = 0; i < gridSize_; ++i)
-	//	{
-	//		int cellIndex = j * gridSize_ + i; //CHANGED
-	//		
-
-	//	}
-	//}
 
 
 	// calculate electric potential (Phi) for only candidate cells
@@ -528,16 +509,16 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 	//Use compute shader
 			//Write candidate cell data to structured buffer
-	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0]), gridSize_ * gridSize_, &gpuCellsArray[0], &cellBuffer);
-	compute_shader->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
+	cs_rational->createStructuredBuffer(device, sizeof(gpuCellsArray[0]), gridSize_ * gridSize_, &gpuCellsArray[0], &cellBuffer);
+	cs_rational->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
 	//Write that structured buffer data to an srv buffer
-	//compute_shader->createBufferSRV(device, clusterBuffer, &srvBuffer0);
-	compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
-	compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
+	//cs_rational->createBufferSRV(device, clusterBuffer, &srvBuffer0);
+	cs_rational->createBufferSRV(device, cellBuffer, &srvBuffer0);
+	cs_rational->createBufferUAV(device, bufferResult, &resultUAV);
 	//ID3D11ShaderResourceView* srvs[2]{ srvBuffer0, srvBuffer1 }; 
-	compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
+	cs_rational->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
 
-	ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult, 
+	ID3D11Buffer* cpuBuf = cs_rational->createCPUReadBuffer(device, deviceContext, bufferResult, 
 		sizeof(DataBufferType), gridSize_ * gridSize_);
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
 	DataBufferType* ptr_;
@@ -563,48 +544,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 
 		}
 	}
-	//for (int j = 0; j < gridSize_; ++j)
-	//{
-	//	for (int i = 0; i < gridSize_; ++i)
-	//	{
-	//		int cellIndex = i + gridSize_ * j;//CHANGED
-	//		int mapIndex = i + gridSize_ * j; 
-	//		if(gpuCellsArray[i][j].isCandidate)
-	//		{
-	//			gpuCellsArray[i][j].phi = ptr_[cellIndex].phi_;
-	//			gpuCellsArray[i][j].N = ptr_[cellIndex].N_;
-
-	//			/*if (ptr_->phi_ == 0 || ptr_->phi_ == NAN)
-	//			{
-	//				candidateMap_DS[mapIndex]->potential = max(ptr_->phi_, 0.00001f);
-	//				candidateMap_DS[mapIndex]->N_ = max(ptr_->N_, 0.00001f);
-	//			}
-	//			else
-	//			{*/
-	//			candidateMap_DS[mapIndex]->N_ = ptr_[cellIndex].N_;
-	//			candidateMap_DS[mapIndex]->potential = ptr_[cellIndex].phi_;
-	//			//}
-	//			candidateMap_DS[mapIndex]->B_ = gpuCellsArray[i][j].B;
-	//			candidateMap_DS[mapIndex]->P_ = gpuCellsArray[i][j].P;
-	//			
-	//		}
-	//	}
-	//}
-
-	//auto it = candidateMap_DS.begin();
-	//while (it != candidateMap_DS.end())
-	//{
-	//	//Assign to map values
-	//	mapKey = it->first;
-	//	current_Cell = it->second;
-	//	//Because we divide positive potentials with those of negative ones,
-	//		////we can generate stronger negative potentials among nearby negative charges.
-	//	current_Cell->N_ = N;
-	//	current_Cell->P_ = P;
-	//	current_Cell->B_ = B;
-	//	current_Cell->potential = phi;
-	//	++it; 
-	//}
 
 }
 
@@ -635,7 +574,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 		gpuCellsArray[iKey].P = P;
 		gpuCellsArray[iKey].B = B;
 		gpuCellsArray[iKey].isCandidate = true;
-		gpuCellsArray[iKey].isCluster = true;
 		gpuCellsArray[iKey].phi = candidate_cell->potential;
 	}
 	else
@@ -643,15 +581,15 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 
 	//Use compute shader
 			//Write candidate cell data to structured buffer
-	compute_shader->createStructuredBuffer(device, sizeof(gpuCellsArray[0]), gridSize_ * gridSize_, &gpuCellsArray[0], &cellBuffer);
-	compute_shader->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
+	cs_rational->createStructuredBuffer(device, sizeof(gpuCellsArray[0]), gridSize_ * gridSize_, &gpuCellsArray[0], &cellBuffer);
+	cs_rational->createStructuredBuffer(device, sizeof(DataBufferType), gridSize_ * gridSize_, nullptr, &bufferResult);
 	//Write that structured buffer data to an srv buffer
-	compute_shader->createBufferSRV(device, cellBuffer, &srvBuffer0);
-	compute_shader->createBufferUAV(device, bufferResult, &resultUAV);
+	cs_rational->createBufferSRV(device, cellBuffer, &srvBuffer0);
+	cs_rational->createBufferUAV(device, bufferResult, &resultUAV);
 
-	compute_shader->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
+	cs_rational->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
 
-	ID3D11Buffer* cpuBuf = compute_shader->createCPUReadBuffer(device, deviceContext, bufferResult,
+	ID3D11Buffer* cpuBuf = cs_rational->createCPUReadBuffer(device, deviceContext, bufferResult,
 		sizeof(DataBufferType), gridSize_ * gridSize_);
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
 	DataBufferType* ptr_;

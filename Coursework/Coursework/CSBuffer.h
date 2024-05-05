@@ -6,11 +6,9 @@ public BaseShader
 {
 public: 
 	CSBuffer(ID3D11Device* device, HWND hwnd);
-	~CSBuffer();
+	CSBuffer(ID3D11Device* device, HWND hwnd, const wchar_t* cs);
 
-	void runComputeShader(ID3D11DeviceContext* deviceContext,
-		ID3D11ShaderResourceView* srv, std::vector<CLUSTER> clusters);
-	void createClusterBuffer(ID3D11Device* device, std::vector<CLUSTER> clusters);
+	~CSBuffer();
 
 	
 	ID3D11ShaderResourceView* getSRV() { return srv; }

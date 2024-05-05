@@ -5,6 +5,11 @@ CSBuffer::CSBuffer(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 	initShader(L"LightningCS.cso", NULL);
 }
 
+CSBuffer::CSBuffer(ID3D11Device* device, HWND hwnd, const wchar_t* cs) : BaseShader(device, hwnd)
+{
+	loadComputeShader(cs);
+}
+
 
 CSBuffer::~CSBuffer()
 {
@@ -24,72 +29,6 @@ void CSBuffer::initShader(const wchar_t* cs, const wchar_t* blank)
 	loadComputeShader(cs);
 	
 }
-
-void CSBuffer::runComputeShader(ID3D11DeviceContext* deviceContext, ID3D11ShaderResourceView* srv, 
-	std::vector<CLUSTER> clusters)
-{
-	//deviceContext->CSSetShader(computeShader, nullptr, 0);
-	//deviceContext->CSSetShaderResources(0, 1, &srv);
-	//deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, 0);
-
-
-	//HRESULT result;
-	//D3D11_MAPPED_SUBRESOURCE mappedResource;
-	//result = deviceContext->Map(clusterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	//size_t byteSize = clusters.size();
-	//memcpy_s(mappedResource.pData, byteSize, clusters.data(), byteSize);
-	//deviceContext->Unmap(clusterBuffer, 0); 
-	//
-	////Dispatch is for sending the number of threads to the CS that are gonna do your algorithm
-	////So, 'sending the amount of minions' that are gonna go do the job.
-	////If we send (2, 3, 5) then the group we're gonna send is of size 2*3*5 = 30, but in undefined order
-	//deviceContext->Dispatch(16, 16, 1);
-
-	//deviceContext->CSSetShaderResources(0, 1, &srv);
-	//deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, 0);
-}
-
-//void CSBuffer::createClusterBuffer(ID3D11Device* device, std::vector<CLUSTER> clusters)
-//{
-//	HRESULT result; //Do I need this here? Isn't it just fine calling device->CreateBuffer?
-//
-//	//Create cluster buffer description - to output data from the compute shader
-//	D3D11_BUFFER_DESC clusterBufDesc;
-//	clusterBufDesc.ByteWidth = sizeof(clusters);
-//	clusterBufDesc.Usage = D3D11_USAGE_DYNAMIC;
-//	clusterBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //We write to it from the cpu?
-//	clusterBufDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS; //For uav
-//	clusterBufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-//	clusterBufDesc.StructureByteStride = clusters.size(); //Is this even ok? total size of the buffer in bytes
-//
-//	//Create subresource - INITIAL data getting passed into the buffer
-//	D3D11_SUBRESOURCE_DATA clusterSubrsc;
-//	clusterSubrsc.pSysMem = clusters.data(); 
-//	//clusterSubrsc.SysMemPitch = 0; //Idk what this is for rn
-//	//clusterSubrsc.SysMemSlicePitch = 0;
-//
-//	//Create buffer with cluster desc & subresource
-//	//The condition is tldr create resource if vector isnt empty
-//	result = device->CreateBuffer(&clusterBufDesc, clusters.data() ? & clusterSubrsc : nullptr, NULL);
-//
-//	//Create SRV - READ ONLY!!
-//	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-//	srvDesc.Format = DXGI_FORMAT_UNKNOWN; //0, unknown format since were passing in a custom struct
-//	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-//	//srvDesc.Buffer.FirstElement = 0; Do I need this?
-//	srvDesc.Buffer.NumElements = clusters.size();
-//
-//	result = device->CreateShaderResourceView(clusterBuffer, &srvDesc, &srv);
-//
-//	//Create UAV - READ & WRITE!!
-//	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-//	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-//	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER; //Views the resource as a buffer
-//	uavDesc.Buffer.NumElements = clusters.size();
-//	device->CreateUnorderedAccessView(CS_Output, &uavDesc, &uav); 
-//
-//}
-
 
 
 void CSBuffer::unbind(ID3D11DeviceContext* device)

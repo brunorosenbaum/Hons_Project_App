@@ -90,11 +90,11 @@
     <ClCompile Include="Lightning_JY_SM.cpp">
       <Filter>Source Files\Yuns_Method</Filter>
     </ClCompile>
-    <ClCompile Include="CSBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PARALLELIZED_RATIONAL.cpp">
       <Filter>Source Files\Yuns_Method</Filter>
+    </ClCompile>
+    <ClCompile Include="CSBuffer.cpp">
+      <Filter>Source Files\ShaderManagers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +176,9 @@
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="LightningCS.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="PositiveCellCS.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>
