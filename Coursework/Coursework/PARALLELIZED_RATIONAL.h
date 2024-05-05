@@ -97,7 +97,9 @@ private: //---------Lightning tree and cs
 	LIGHTNING_TREE lightning_tree_;
 
 	CSBuffer* cs_rational;
-	CSBuffer* cs_positive; 
+	CSBuffer* cs_positive;
+	CSBuffer* cs_boundary;
+
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
 
@@ -112,6 +114,7 @@ private: //---------Lightning tree and cs
 
 	ID3D11Buffer* posCellBuffer = nullptr; 
 	ID3D11Buffer* posCellResult = nullptr; 
+
 
 	struct DataBufferType
 	{
@@ -139,6 +142,6 @@ private: //---------Lightning tree and cs
 	
 	
 	GPUCellData gpuCellsArray[128 * 128];
-	PosData posiCell; 
+	PosData posiCell;
 };
 

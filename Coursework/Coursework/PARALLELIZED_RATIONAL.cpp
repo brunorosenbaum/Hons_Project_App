@@ -33,6 +33,8 @@ PARALLELIZED_RATIONAL::PARALLELIZED_RATIONAL(ID3D11Device* device_, ID3D11Device
 	//Init compute shader
 	cs_rational = new CSBuffer(device_, hwnd);
 	cs_positive = new CSBuffer(device_, hwnd, L"PositiveCellCS.cso");
+	cs_boundary = new CSBuffer(device_, hwnd, L"BoundaryCS.cso"); 
+
 	device = device_;
 	deviceContext = deviceContext_; 
 
@@ -239,53 +241,38 @@ void PARALLELIZED_RATIONAL::CreateBoundaryCells() //This method creates the boun
 
 void PARALLELIZED_RATIONAL::CalcBoundaryPotential()
 {
-	//Before we compute the potentials, we divide the charges
-	//	into three types : positive charges, negative charges along the
-	//	lightning path, and **boundary charges**.We then calculate the
-	//	electric potentials based on those types separately as P, N, and **B**.
-
-	/*m_vBoundaryPotential.clear();*/ //This was a vector of floats of the potentials,
-	//But since we're using whole cell ptrs here we don't need to clear as these potentials
-	//are all initialized to 0 upon creation
-	/*m_vBoundaryPotential.reserve(m_iGridSize * m_iGridSize);*/ //<- Shouldn't be an issue. This space is already reserved in prev function
-	boundaryPotentials_.reserve(gridSize_ * gridSize_);
-	int iIndex = 0;
-	CELL_R* current_Cell;
-	float boundaryPhi; // Called b in the other code and in the formula
-	float r; //distance
-
-	for (int i = 0; i < gridSize_; ++i)
+	float boundaryPhi = 0; // Called b in the other code and in the formula
+	boundaryPotentials_.clear();
+	PosData boundaryCells[516];
+	ID3D11Buffer* boundaryBuffer = nullptr; 
+	ID3D11Buffer* boundaryBufferResult = nullptr; 
+	for(int i = 0; i < boundary_Cells.size(); ++i) //Prepare to send for cs
 	{
-		for (int j = 0; j < gridSize_; ++j)
-		{
-			current_Cell = all_Cells[iIndex];
-			boundaryPhi = 0;
-
-			if (current_Cell)
-			{
-				std::vector< CELL_R >::const_iterator bItr = boundary_Cells.begin();
-				while (bItr != boundary_Cells.end()) //Iterate through boundary cells
-				{
-					//r = distance (scalar value) between all cells (i think) and boundary cells
-					r = CalcDistance(bItr->x, bItr->y, current_Cell->x, current_Cell->y);
-					if (power_of_Rho_ > 1) //RHO is the p parameter to prevent excessive branching TODO: REREAD THIS
-					{//This condition will always be true then bc it's initialized by a macro 
-						r = pow(r, power_of_Rho_); //Square the distance
-					}
-
-					boundaryPhi += 1.0f / r; //Add 1/squared distance between cells to B, which is the potential. 
-
-					++bItr;
-				}
-			}
-
-			//boundary_Cells[iIndex].potential = boundaryPhi; //B is the potential. Set it to that for each of the boundary cells
-			////TODO: THIS IS GONNA THROW ERRORS. I KNOW THIS IS WRONG.
-			////TODO: THIS IS NOT GOING TO GO THROUGH ALL THE BOUNDARY CELLS BC IT'S A NESTED LOOP. BE CAREFUL!! ASK!!
-			boundaryPotentials_.push_back(boundaryPhi);
-			++iIndex;
-		}
+		boundaryCells[i].x = boundary_Cells[i].x;
+		boundaryCells[i].y = boundary_Cells[i].y;
 	}
+	
+	cs_boundary->createStructuredBuffer(device, sizeof(boundaryCells[0]), boundary_Cells.size(), &boundaryCells[0], &boundaryBuffer);
+	cs_boundary->createStructuredBuffer(device, sizeof(boundaryPhi), gridSize_ * gridSize_, nullptr, &boundaryBufferResult);
+	//Write that structured buffer data to an srv buffer
+	cs_boundary->createBufferSRV(device, boundaryBuffer, &srvBuffer0);
+	cs_boundary->createBufferUAV(device, boundaryBufferResult, &resultUAV);
+	cs_boundary->runComputeShader(deviceContext, nullptr, 1, &srvBuffer0, resultUAV, 8, 8, 1);
+
+	ID3D11Buffer* cpuBuf = cs_boundary->createCPUReadBuffer(device, deviceContext, boundaryBufferResult,
+		sizeof(boundaryPhi), gridSize_ * gridSize_);
+	D3D11_MAPPED_SUBRESOURCE MappedResource;
+	float* ptr_;
+	deviceContext->Map(cpuBuf, 0, D3D11_MAP_READ, 0, &MappedResource);
+	ptr_ = (float*)MappedResource.pData;
+	float copyData[128 * 128];
+	memcpy(copyData, ptr_, gridSize_ * gridSize_ * sizeof(boundaryPhi));
+
+	copy(copyData, copyData + (gridSize_ * gridSize_), back_inserter(boundaryPotentials_));
+	deviceContext->Unmap(cpuBuf, 0);
+	srvBuffer0 = nullptr;
+	resultUAV = nullptr;
+	CPUReadBuffer = nullptr;
 }
 
 void PARALLELIZED_RATIONAL::CalcPositivePotential()
