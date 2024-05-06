@@ -1,12 +1,11 @@
 #pragma once
 
-// Includes
+// CG METHOD
 #include "DXF.h"
 #include "LinearSM.h"
 #include "LightningSM.h"
 #include "QUAD_DBM_2D.h"
 #include "ppm\ppm.hpp"
-
 
 class LightningAppTK : public BaseApplication
 {
@@ -22,7 +21,6 @@ public:
 	void addNodes(); 
 	void renderGlow(string filename, int scale);
 	void readLightningFile(); 
-
 
 protected:
 	bool render();

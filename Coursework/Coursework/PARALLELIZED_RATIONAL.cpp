@@ -185,9 +185,6 @@ bool PARALLELIZED_RATIONAL::InitializeGrid(const std::string& path) //Load()
 		CalcBoundaryPotential(); //Calc phi of all cells.
 		CalcPositivePotential();//Potential of cells depending on their distance to the endpoint
 
-		//Create clusters
-		CreateClusterMap(clusterSize_);
-
 		//Generate initial candidate map
 		CreateCandidateMap();
 		//And calculate phi for candidate cells (here's the rational method)
@@ -241,6 +238,7 @@ void PARALLELIZED_RATIONAL::CreateBoundaryCells() //This method creates the boun
 
 void PARALLELIZED_RATIONAL::CalcBoundaryPotential()
 {
+	
 	float boundaryPhi = 0; // Called b in the other code and in the formula
 	boundaryPotentials_.clear();
 	PosData boundaryCells[516];
@@ -309,55 +307,6 @@ void PARALLELIZED_RATIONAL::CalcPositivePotential()
 	srvBuffer0 = nullptr;
 	resultUAV = nullptr;
 	CPUReadBuffer = nullptr;
-}
-#pragma endregion
-
-#pragma region ORGANIZATION_FUNCTIONS
-void PARALLELIZED_RATIONAL::CreateClusterMap(int clusterSize)
-{
-
-	clusterSize_ = clusterSize; //size of multi scaled cluster grid map ( 8 x 8 ) = 16. Remember the grid is 64 x 64
-
-	int regionSize = gridSize_ / clusterSize_; //64x64/8x8 = 4096/16 = 256.
-	//Meaning there are 256 clusters in a 64x64 map
-
-	clusters_.clear();
-	clusters_.reserve(clusterSize_ * clusterSize_); //Make the cluster vector 16x16 = 256 (same as region size)
-
-	CLUSTER current_cluster;
-
-
-	//Initialize x and y of cell clusters in cluster vector
-	for (int i = 0; i < clusterSize_; ++i) //y 
-	{
-		for (int j = 0; j < clusterSize_; ++j) //x
-		{
-			current_cluster.c_x = j;
-			current_cluster.c_y = i;
-			clusters_.push_back(current_cluster);
-		}
-	}
-	int x, y;
-	int iIndex;
-
-	auto negItr = negative_Cells.begin();
-	while (negItr != negative_Cells.end())
-	{
-		x = negItr->x / regionSize; //x = x.pos/256
-		y = negItr->y / regionSize; //y = y.pos/256
-
-		iIndex = y * clusterSize_ + x;
-		clusters_[iIndex].cluster_Cells.push_back(*negItr); //Fill all the clusters with the negative cells
-
-		clusters_[iIndex].c_xSum += negItr->x; //Add the xy coords of negative cells to clusters
-		clusters_[iIndex].c_ySum += negItr->y; //This is to calc the average xy pos
-
-		//Calc avg xy pos of each cluster
-		clusters_[iIndex].c_xAvg = (float)clusters_[iIndex].c_xSum / clusters_[iIndex].cluster_Cells.size();
-		clusters_[iIndex].c_yAvg = (float)clusters_[iIndex].c_ySum / clusters_[iIndex].cluster_Cells.size();
-		++negItr;
-	}
-
 }
 #pragma endregion
 
@@ -592,16 +541,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational_SingleCell(CELL_R* candidate_
 
 }
 
-void PARALLELIZED_RATIONAL::Calc_Normalization()
-{
-	/*Once we have computed the electric potential between the
-	candidate cells and other charged cells, we use the normalization equation, Equation 2.*/
-	//I wonder if this is it?  If so, it calculates P(i), the probability of selection of each candidate cell
-
-	int iIndex;
-
-}
-
 bool PARALLELIZED_RATIONAL::SelectCandidate(CELL_R& outNextCell) //Choose next lightning cell among candidates
 { //Done by calculating P(i)
 	outNextCell.x = -1;
@@ -627,8 +566,6 @@ bool PARALLELIZED_RATIONAL::SelectCandidate(CELL_R& outNextCell) //Choose next l
 	iIndex = distribution(rng_); //iIndex is a random index from the distribution
 	int iErrorCount = 0;
 
-	//TODO: THE ERROR IS HERE, DISCRETE DISTRIBUTION GETS STUCK BECAUSE CANDIDATE CELLS.SIZE() == 0
-	//TODO: THERE SHOULD BE SOMETHING IN THE CODE (IN UPDATE CANDIDATE MAP OR UPDATE CANDIDATE) RESETTING
 	while (candidate_Cells.size() == iIndex) //So iIndex is the same size as candidate cells, right?
 	{//I think this has to do with.. candidates not being suitable
 		++iErrorCount;
@@ -649,23 +586,7 @@ bool PARALLELIZED_RATIONAL::SelectCandidate(CELL_R& outNextCell) //Choose next l
 
 #pragma region UPDATING FUNCTIONS
 //-------------------------------------------UPDATING FUNCTIONS----------------------------------------------------------
-void PARALLELIZED_RATIONAL::AllCellsToCandidates() //Turns all cells into candidates. Will be called in main. 
-{
-	candidateMap_DS.clear();
-	int iIndex;
 
-	for (int i = 0; i < gridSize_; ++i) //Columns
-	{
-		for (int j = 0; j < gridSize_; ++j) //Rows
-		{
-			iIndex = i + gridSize_ * j;
-			if (all_Cells[iIndex] && all_Cells[iIndex]->type_ == EMPTY_R) //If cells exist and theyre empty
-			{//Map all cells to candidate map
-				candidateMap_DS.insert(std::map<int, CELL_R*>::value_type(iIndex, all_Cells[iIndex]));
-			}
-		}
-	}
-}
 
 void PARALLELIZED_RATIONAL::UpdateCandidates()
 {
@@ -678,7 +599,8 @@ void PARALLELIZED_RATIONAL::UpdateCandidates()
 
 	auto itr = negative_Cells.begin();
 	while (itr != negative_Cells.end())
-	{
+	{ //I've chosen not to parallelize this part because the number of negative cells increases dynamically
+		//And the overhead for just checking 8 going from cpu to gpu is not worth it
 		p_x = itr->x;
 		p_y = itr->y;
 		iIndex = p_y * gridSize_ + p_x;
@@ -756,6 +678,11 @@ void PARALLELIZED_RATIONAL::UpdateCandidateMap(const CELL_R& next_Cell)
 	float r;
 	CELL_R* candidate_Cell;
 
+	//Not sending this sectionn to the gpu as it'd require sending differently sized arrays
+	//of cells: candidate cells grow over time, but arrays are fixed size, and they
+	//are the way structured buffers get sent to the gpu.
+	//Since candidate sizes are relatively small (theres 8 per lightning cell),
+	//I have my reservations about sending this to the gpu. 
 	auto itr = candidateMap_DS.begin();
 	while (itr != candidateMap_DS.end()) //Go through mapped candidates
 	{
@@ -806,23 +733,6 @@ void PARALLELIZED_RATIONAL::UpdateCandidateMap(const CELL_R& next_Cell)
 		}
 	}
 
-}
-
-void PARALLELIZED_RATIONAL::UpdateClusterMap(const CELL_R& next_Cell)
-{
-	int iIndex;
-	int x, y;
-	int iRegionSize = gridSize_ / clusterSize_;
-
-	x = next_Cell.x / iRegionSize;
-	y = next_Cell.y / iRegionSize;
-	iIndex = y * clusterSize_ + x;
-
-	clusters_[iIndex].cluster_Cells.push_back(next_Cell);
-	clusters_[iIndex].c_xSum += next_Cell.x;
-	clusters_[iIndex].c_ySum += next_Cell.y;
-	clusters_[iIndex].c_xAvg = (float)clusters_[iIndex].c_xSum / clusters_[iIndex].cluster_Cells.size();
-	clusters_[iIndex].c_yAvg = (float)clusters_[iIndex].c_ySum / clusters_[iIndex].cluster_Cells.size();
 }
 
 #pragma endregion

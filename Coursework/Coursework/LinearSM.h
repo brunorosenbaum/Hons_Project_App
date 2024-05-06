@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseShader.h"
-
+//Debug purposes, just to output a color
 class LinearSM : public BaseShader
 {
 public:

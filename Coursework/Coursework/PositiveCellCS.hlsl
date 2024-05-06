@@ -38,15 +38,11 @@ void main(uint3 DTid : SV_DispatchThreadID,
 
     GroupMemoryBarrierWithGroupSync();
 
-   
-    if(DTid.y != PosiCell[0].y && DTid.x != PosiCell[0].x)
-    {
-        r = CalcDistance(DTid.x, DTid.y, PosiCell[0].x, PosiCell[0].y);
-        r = pow(r, pow_rho);
-        positivePhi += 1.0f / r;
-        CS_OutputBuffer[cellIndex].positivePhi_ = positivePhi;
+    r = CalcDistance(DTid.x, DTid.y, PosiCell[0].x, PosiCell[0].y);
+    r = pow(r, pow_rho);
+    positivePhi += 1.0f / r;
+    CS_OutputBuffer[cellIndex].positivePhi_ = positivePhi;
 
-    }
 
 	GroupMemoryBarrierWithGroupSync();
 

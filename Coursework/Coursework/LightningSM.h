@@ -13,14 +13,9 @@ protected:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
 private:
 	ID3D11Buffer* matrixBuffer;
-	//ID3D11Buffer* translationBuffer;
 	ID3D11Buffer* dynVertxBuffer;
 protected:
-	//struct TranslationBufferType
-	//{
-	//	XMMATRIX start;
-	//	XMMATRIX end;
-	//};
+	
 	struct DynamicVertexBufferType
 	{
 		XMFLOAT2 start;

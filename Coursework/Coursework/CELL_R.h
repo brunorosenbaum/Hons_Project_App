@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 
-//#include "CELL.h"
+
 //########################################################  CELL  #####################################################
 enum CELL_TYPE_R
 {
@@ -10,23 +10,18 @@ enum CELL_TYPE_R
     POSITIVE_R
 };
 
-class CELL_R /*:
-    public CELL*/
-//Real talk how do I polymorphism here. Cause lots of functionality from CELL class is the same
-////and that way I wouldn't repeat code - AS OF 12/3/2024: I GIVE UP THIS OVERCOMPLICATES EVERYTHING
+//Not deriving CELL_R from CELL because there's functionality that cannot be overridden
+ //Note: Y's m_iX & m_iY xy coord values are not the same as K's, bc K calculates the center
+    //Quoting Y's paper: 'The issue arises mainly because
+    /*we compute potentials by assuming that each charged point is
+    in the center of a cell.As a result, the 1/r term cannot create
+    extremely small values between even neighboring cells.'*/
+    //^^^^ Using this as basis of why I shouldnt inherit from K's cell class
+class CELL_R
 {
 public:
-    //As of 12/3/24 im changing the whole cell_derv class so it has its own functionality and doesnt have to inherit
-    //Im getting exceptions thrown bc of not being able to access the parent data in the first ones bc 
 
-    //CELL_R(float north, //Same constructor to call base class
-    //    float east, //TODO: ASK IF THIS IS CORRECT?
-    //    float south,
-    //    float west,
-    //    CELL* parent = nullptr,
-    //    int depth = 0);
     CELL_R(); 
-    //CELL_R(int x, int y); 
     CELL_R(int x, int y, CELL_TYPE_R type, float phi); 
     ~CELL_R();
 
@@ -36,17 +31,7 @@ public:
     static const int NEIGHBORS_X_DIFFERENCE[8];
     static const int NEIGHBORS_Y_DIFFERENCE[8];
 
-
-    
-
-    //Note: I don't know if Y's m_iX & m_iY xy coord values are the same as K's, bc K calculates the center
-    //Quoting Y's paper: 'The issue arises mainly because
-    /*we compute potentials by assuming that each charged point is
-    in the center of a cell.As a result, the 1/r term cannot create
-    extremely small values between even neighboring cells.'*/
-    //^^^^ Using this as basis of why i shouldnt inherit from k's cell class
-
-    int x, y; //XY coords on grid
+	int x, y; //XY coords on grid
     int parentX, parentY;
     float potential; //Phi
     float selectionProb; //Probability of being selected. P(i) in formula. b in K's code.

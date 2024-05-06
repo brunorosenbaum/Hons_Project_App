@@ -59,7 +59,6 @@ public:
 private:
 	LIGHTNING_TREE_NODE* root_; //Root of lightning tree
 	std::vector<LIGHTNING_TREE_NODE*> nodes_; //Vector of child nodes
-
 	
 };
 

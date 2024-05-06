@@ -7,7 +7,7 @@
 #include "Lightning_JY_SM.h"
 #include "LinearSM.h"
 
-
+////Uncomment commented parts to get unparallelized version of the rational method
 class LightningAppJY : public BaseApplication
 {
 public:

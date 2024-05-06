@@ -121,15 +121,6 @@ private:
     //! delete ghost cells
     void deleteGhosts(CELL* currentCell = NULL);
 
-    //! Blue noise function
-    //BLUE_NOISE* _noiseFunc;
-
-    //! Blue noise sample locations
-   // bool* _noise;
-
-    //! check if a cell hits a noise node
-    //void setNoise(CELL* cell);
-
     //D3D11 SHADER CONVERSION
     CellMesh* cellMesh;
     CellBoundsMesh* cellBoundsMesh; 

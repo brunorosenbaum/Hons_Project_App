@@ -123,7 +123,7 @@ public:
     float potential;    ///< current electric potential (phi)
     float b;            ///< right hand side of the linear system (laplaces eq)
     float residual;     ///< residual in the linear solver
-    int index;          ///< lexicographic index for the solver (alphabetic order? ask)
+    int index;          ///< lexicographic index for the solver (alphabetic order)
     ////////////////////////////////////////////////////////////////
   // neighbor lookups
   ////////////////////////////////////////////////////////////////

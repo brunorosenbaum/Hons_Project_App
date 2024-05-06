@@ -1,6 +1,7 @@
+//Class for sending resources to the cs
 #pragma once
 #include "BaseShader.h"
-#include "RATIONAL_SOLVER.h"
+
 class CSBuffer :
 public BaseShader
 {
@@ -13,7 +14,7 @@ public:
 	
 	ID3D11ShaderResourceView* getSRV() { return srv; }
 
-	//Methods that can be inherited - for polymorphism purposes ----------------------------------------------------------------
+	//Methods built using Walbourn's sample tutorial ----------------------------------------------------------------
 
 	//Creates buffers that will be sent to the CS - INPUT RESOURCE
 	HRESULT createStructuredBuffer(ID3D11Device* device, UINT elementSize, UINT elementCount, void* initData, ID3D11Buffer** bufferOutPtr);
@@ -43,11 +44,6 @@ protected:
 
 private:
 	ID3D11Buffer* clusterBuffer;
-
-	/*struct DataBufferType
-	{
-		UINT x, y, z; 
-	};*/
 
 	ID3D11ShaderResourceView* srv; //WRITE ONLY
 	ID3D11UnorderedAccessView* uav; //READ&WRITE

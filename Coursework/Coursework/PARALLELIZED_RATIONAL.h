@@ -29,18 +29,15 @@ public:
 	//Hear me out: we do NOT need to initialize negative potentials for the negative cells
 	//Bc both base constructors initialize potential value to 0. 
 
-	//Organizing into clusters-------------------------------------------------------
-	void CreateClusterMap(int clusterSize); //Organize negative cells into clusters and calculate their avg xy pos
 
 	//Computation funcs------------------------------------------------------------------
 	void CreateCandidateMap();
 	void CalcPotential_Rational();
 	void CalcPotential_Rational_SingleCell(CELL_R* candidate_cell);
-	void Calc_Normalization();
+	
 	bool SelectCandidate(CELL_R& outNextCell);
 
 	//Updating funcs---------------------------------------------------------------------
-	void AllCellsToCandidates();
 	void UpdateCandidates();
 	void UpdateCandidateMap(const CELL_R& next_Cell);
 	void UpdateClusterMap(const CELL_R& next_Cell);

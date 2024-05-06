@@ -8,7 +8,6 @@ public:
 	LightningMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext, float xPosStart, float yPosStart, float xPosEnd, float yPosEnd);
 	~LightningMesh();
 
-	//void sendData(ID3D11DeviceContext*);
 	void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 protected:

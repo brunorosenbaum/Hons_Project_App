@@ -46,7 +46,7 @@ void main(uint3 DTid : SV_DispatchThreadID,
 
         
     }
-CS_OutputBuffer[cellIndex].boundaryPhi_ = boundaryPhi;
+	CS_OutputBuffer[cellIndex].boundaryPhi_ = boundaryPhi;
     GroupMemoryBarrierWithGroupSync();
     
 

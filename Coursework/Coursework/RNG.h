@@ -1,4 +1,5 @@
 #pragma once
+//RNG Class since this code was made before mt19937 
 class RNG {
 private:
 	/* Period parameters */

@@ -14,8 +14,6 @@ public:
     CellMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext/*, CELL* cell*/);
     ~CellMesh();
     void initBuffers(ID3D11Device* device);
-
-   // void initBuffers(ID3D11Device* device/*, CELL* cell*/);
     void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP) override;
 };
 
@@ -26,7 +24,6 @@ public:
     ~CellBoundsMesh();
     void initBuffers(ID3D11Device* device);
 
-    //void initBuffers(ID3D11Device* device/*, CELL* cell*/);
     void sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLOGY top = D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP) override;
 
 };

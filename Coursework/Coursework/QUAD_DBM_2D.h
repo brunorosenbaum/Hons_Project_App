@@ -40,12 +40,8 @@ public:
     //! draw the DAG to OpenGL - This is the lightning! 
     void drawSegments(ID3D11Device* device, ID3D11DeviceContext* deviceContext, LightningSM* shader,
         XMMATRIX world, XMMATRIX view, XMMATRIX projection) {
-        /*glLineWidth(1.0f);
-        glPushMatrix();
-        glTranslatef(-0.5f, -0.5f, 0.0f);*/
         world *= XMMatrixTranslation(-0.5f, -0.5f, 0.0f);
         _dag->draw(device, deviceContext, shader, world, view, projection);
-        /*glPopMatrix();*/
     };
 
     ////////////////////////////////////////////////////////////////

@@ -17,14 +17,14 @@ public:
 
 	//Grid functions----------------------------------------------------------------------
 	bool LoadMap(const std::string& path);
-	bool InitializeGrid(const std::string& path); //This is Load() in the other code
+	bool InitializeGrid(const std::string& path);
 
 	//Pre-computation functions-----------------------------------------------------------
 	void CreateBoundaryCells(); //Create boundary grid cells (just position, coords)
 	// pre-computation of electric potential for each type of cells
 	void	CalcBoundaryPotential();
 	void	CalcPositivePotential();
-	//Hear me out: we do NOT need to initialize negative potentials for the negative cells
+	//We do NOT need to initialize negative potentials for the negative cells
 	//Bc both base constructors initialize potential value to 0. 
 
 	//Organizing into clusters-------------------------------------------------------
@@ -49,7 +49,7 @@ public:
 	void initLightningTree();
 	void ThinLightningTree(); 
 
-	//Getsetters
+	//Getsetters--------------------------------------------------------------------
 	LIGHTNING_TREE& GetLightningTree() { return lightning_tree_; }
 	int GetGridSize()const { return gridSize_; }
 
@@ -64,14 +64,13 @@ private:
 
 private: //------------- Grid and potential vars
 
-	//Should we make these cell_derv* instead? 
 	std::vector<CELL_R> boundary_Cells; //Serve as boundary condition. 'Borders' of simulation. 
 	std::vector<CELL_R> positive_Cells; //With >0 potential (phi > 0)
 	std::vector<CELL_R> negative_Cells; //With 0 potential (phi == 0)
 	std::vector<CELL_R> startpoint_Cells; //Initial negative charge
 	std::vector<CELL_R> endpoint_Cells; //Initial positive charge
 
-	//Vectors of potentials bc im so tired
+	//Vectors of potentials
 	std::vector<float> boundaryPotentials_;
 	std::vector<float> positivePotentials_; 
 
