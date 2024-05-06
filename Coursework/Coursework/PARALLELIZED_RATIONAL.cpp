@@ -197,7 +197,7 @@ bool PARALLELIZED_RATIONAL::InitializeGrid(const std::string& path) //Load()
 //-----------------------------------------------------------PRECOMPUTATION---------------------------------------------
 void PARALLELIZED_RATIONAL::CreateBoundaryCells() //This method creates the boundary grid, akin to the green channel
 //in the .ppm files in Kims method. These should be positive in charge. 
-{ //I think this is the equivalent to the quad_dbm_2D's drawQuadTree() 
+{ //This is the equivalent to the quad_dbm_2D's drawQuadTree() 
 	boundary_Cells.clear();
 	boundary_Cells.reserve(gridSize_ * 4 + 4); //32*4 + 4 = 132
 
@@ -376,8 +376,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		return;
 	}
 
-	//GPUCellData gpuCellsArray[gridSize_][gridSize_]; //2D array
-
 	for(int cellIndex = 0; cellIndex < 128*128; ++cellIndex)
 	{
 		gpuCellsArray[cellIndex].N = all_Cells[cellIndex]->N_;
@@ -386,7 +384,6 @@ void PARALLELIZED_RATIONAL::CalcPotential_Rational()
 		gpuCellsArray[cellIndex].phi = all_Cells[cellIndex]->potential;
 		gpuCellsArray[cellIndex].isCandidate = 0;
 	}
-
 
 	// calculate electric potential (Phi) for only candidate cells
 	float phi;
@@ -566,8 +563,8 @@ bool PARALLELIZED_RATIONAL::SelectCandidate(CELL_R& outNextCell) //Choose next l
 	iIndex = distribution(rng_); //iIndex is a random index from the distribution
 	int iErrorCount = 0;
 
-	while (candidate_Cells.size() == iIndex) //So iIndex is the same size as candidate cells, right?
-	{//I think this has to do with.. candidates not being suitable
+	while (candidate_Cells.size() == iIndex) 
+	{//candidates not being suitable
 		++iErrorCount;
 		std::cout << "Index error !!!!!" << std::endl;
 		if (iErrorCount >= 10)
@@ -790,7 +787,6 @@ bool PARALLELIZED_RATIONAL::ProcessLightning()
 			{
 
 				AddNewLightningPath(*&next_Cell);
-				//UpdateClusterMap(*&next_Cell);
 				UpdateCandidateMap(*&next_Cell);
 
 			}

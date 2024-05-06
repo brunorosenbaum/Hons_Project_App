@@ -34,11 +34,9 @@ public:
 	void CreateCandidateMap();
 	void CalcPotential_Rational();
 	void CalcPotential_Rational_SingleCell(CELL_R* candidate_cell);
-	void Calc_Normalization();
 	bool SelectCandidate(CELL_R& outNextCell); 
 
 	//Updating funcs---------------------------------------------------------------------
-	void AllCellsToCandidates();
 	void UpdateCandidates();
 	void UpdateCandidateMap(const CELL_R& next_Cell);
 	void UpdateClusterMap(const CELL_R& next_Cell);

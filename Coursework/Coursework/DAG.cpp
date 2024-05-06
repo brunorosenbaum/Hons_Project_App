@@ -163,15 +163,6 @@ void DAG::drawNode(NODE* root,
         end[1] = endIndex / _xRes;
         end[0] = endIndex - end[1] * _xRes;
 
-        //This is for the intensity of the lightning color, so the parent is more intense than the children
-        //TODO: Make a shader and pass these rgba color values in a buffer so they are rendered in the pixel shader
-        /*if (_bottomHit != -1)
-            glColor4f(endNode->intensity,
-                endNode->intensity,
-                endNode->intensity, 1.0f);
-        else
-            glColor4f(0.0f, 1.0f, 0.0f, 1.0f);*/
-
         //This is not the whole mesh. Each lightning_mesh_ represents a LINE, a SEGMENT!!
         float xStart = begin[0] * dWidth + dWidth * 0.5f;
         float yStart = 1.0f - begin[1] * dHeight + dHeight * 0.5f;
@@ -180,22 +171,9 @@ void DAG::drawNode(NODE* root,
 
         XMFLOAT2 start_ = XMFLOAT2(xStart, yStart);
         XMFLOAT2 end_ = XMFLOAT2(xEnd, yEnd);
-       // XMMATRIX mScale = XMMatrixScaling(dWidth, dHeight, 1.0f);
-
-       // XMMATRIX startTransl = XMMatrixTranslation(xStart, yStart, -0.25f); 
-       //// XMMATRIX startScale = XMMatrixScaling(xStart, yStart, 0.1f); 
-       // XMMATRIX endTransl = XMMatrixTranslation(xEnd, yEnd, -0.25f);
-       //
-       // XMMATRIX sTemp = mScale /** XMMatrixRotationZ(dHeight)*/ * startTransl;
-       // /*XMMatrixMultiply*/
-       // XMMATRIX eTemp = mScale /** XMMatrixRotationZ(dHeight)*/ * endTransl;
         lightning_mesh_->sendData(deviceContext, D3D_PRIMITIVE_TOPOLOGY_LINELIST);
         shader->setShaderParameters(deviceContext, world, view, projection, start_, end_);
         shader->render(deviceContext, lightning_mesh_->getIndexCount()); 
-        /*glBegin(GL_LINES);
-        glVertex3f(begin[0] * dWidth + dWidth * 0.5f, 1.0f - begin[1] * dHeight + dHeight * 0.5f, 0.1f);
-        glVertex3f(end[0] * dWidth + dWidth * 0.5f, 1.0f - end[1] * dHeight + dHeight * 0.5f, 0.1f);
-        glEnd();*/
 
         // call recursively
         if (endNode->neighbors.size() > 0)

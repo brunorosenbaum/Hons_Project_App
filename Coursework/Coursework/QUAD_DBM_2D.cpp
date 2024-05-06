@@ -274,8 +274,6 @@ bool QUAD_DBM_2D::hitGround(CELL* cell)
 void QUAD_DBM_2D::drawQuadtreeCells(ID3D11Device* device,
     ID3D11DeviceContext* deviceContext,
     LinearSM* shader, XMMATRIX world, XMMATRIX view, XMMATRIX projection) {
-  /*  glPushMatrix();
-    glTranslatef(-0.5, -0.5, 0);*/
 
     std::list<CELL*> leaves;
     std::list<CELL*>::iterator cellIterator = leaves.begin();
@@ -295,7 +293,6 @@ void QUAD_DBM_2D::drawQuadtreeCells(ID3D11Device* device,
     }
     _quadPoisson->draw(device, deviceContext, NULL, shader, world, view, projection); //TODO: THIS MIGHT THROW ERRORS
 
-   /* glPopMatrix();*/
 }
 
 ////////////////////////////////////////////////////////////////////

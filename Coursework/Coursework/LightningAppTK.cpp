@@ -5,8 +5,6 @@ LightningAppTK::LightningAppTK()
 	plane_mesh_ = nullptr;
 	cube_mesh_ = nullptr;
 	line_mesh_ = nullptr;
-
-
 }
 
 void LightningAppTK::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC,
@@ -19,7 +17,8 @@ void LightningAppTK::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	linearSM = new LinearSM(renderer->getDevice(), hwnd);
 	lightningSM = new LightningSM(renderer->getDevice(), hwnd); 
 	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), 256, 256, iterations);
-
+	start_Time = 0;
+	camera->setPosition(0, 0, -1.25); 
 }
 
 LightningAppTK::~LightningAppTK()
@@ -51,7 +50,7 @@ bool LightningAppTK::frame()
 
 bool LightningAppTK::render()
 {
-	renderer->beginScene(0.19f, 0.03f, 0.36f, 1.0f);
+	renderer->beginScene(0.0f, 0.0f, 0.0f, 1.0f);
 	camera->update();
 	// Get the world, view, projection, and ortho matrices from the camera and Direct3D objects.
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
@@ -59,7 +58,7 @@ bool LightningAppTK::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	// read in the *.ppm input file
-	string inputFile = "examples/spine.ppm"; 
+	string inputFile = "examples/cglightning1.ppm"; 
 	if (!loadImages(inputFile))
 	{
 		cout << " ERROR: " << inputFile.c_str() << " is not a valid PPM file." << endl;
@@ -75,11 +74,10 @@ bool LightningAppTK::render()
 	//This is 'idle'
 	addNodes();
 	//See if input is a .lightning file
-	readLightningFile(); 
-
+	//readLightningFile(); 
 	// Render GUI
 	gui();
-
+	
 	// Present the rendered scene to the screen.
 	renderer->endScene();
 
@@ -141,25 +139,19 @@ bool LightningAppTK::loadImages(string inputFile)
 	return success;
 }
 
-void LightningAppTK::addNodes() //CALLED IDLE() IN SRC CODE
+void LightningAppTK::addNodes() 
 {
 	
 		for (int x = 0; x < 100; x++)
 		{
-			bool success = aggregate->addParticle();
-
-			if (!success)
-			{
-				cout << " No nodes left to add! Is your terminator reachable?" << endl;
-				//exit(1);
-				return;
-			}
-
 			if (aggregate->hitGround())
 			{
+				end_Time = timer->getTime();
+				timer->outputCSV(start_Time, end_Time, cgMeasurement, cgFPS);
 				/*glutPostRedisplay();
 				cout << endl << endl;*/
-
+				
+				return;
 				// write out the DAG file
 				string lightningFile = inputFile.substr(0, inputFile.size() - 3) + string("lightning");
 				cout << " Intermediate file " << lightningFile << " written." << endl;
@@ -170,6 +162,17 @@ void LightningAppTK::addNodes() //CALLED IDLE() IN SRC CODE
 				//delete aggregate;
 				//exit(0);
 			}
+
+			bool success = aggregate->addParticle();
+
+			if (!success)
+			{
+				cout << " No nodes left to add! Is your terminator reachable?" << endl;
+				//exit(1);
+				return;
+			}
+
+			
 		}
 	
 }

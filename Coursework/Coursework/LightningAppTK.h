@@ -36,7 +36,7 @@ private:
 	LightningSM* lightningSM; 
 
 	QUAD_DBM_2D* aggregate;
-	int iterations = 10;
+	int iterations = 5;
 
 	// input image info
 	int inputWidth = -1;
@@ -45,6 +45,12 @@ private:
 	// input params
 	string inputFile;
 	string outputFile;
+
+	//Timer
+	float start_Time = 0;
+	float end_Time = 0;
+	string cgMeasurement = "cgMeasurement.csv";
+	string cgFPS = "CGFps.csv"; 
 
 };
 

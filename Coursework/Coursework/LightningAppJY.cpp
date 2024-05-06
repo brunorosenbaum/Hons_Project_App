@@ -195,7 +195,11 @@ bool LightningAppJY::render()
 	//initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
 	drawLightning(worldMatrix, viewMatrix, projectionMatrix);
 	endTime_ = timer->getTime();
-	timer->outputCSV(startTime_, endTime_); 
+	//For non-parallelized version time measurements
+	//timer->outputCSV(startTime_, endTime_, rMeasure, rFPS);
+
+	//For parallelized time measurements
+	timer->outputCSV(startTime_, endTime_, pMeasure, pFPS); 
 	// Render GUI
 	gui();
 

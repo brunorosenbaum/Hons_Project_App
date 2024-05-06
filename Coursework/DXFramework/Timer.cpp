@@ -68,12 +68,13 @@ float Timer::getFPS()
 	return fps;
 }
 
-void Timer::outputCSV(float start, float end)
+void Timer::outputCSV(float start, float end, std::string& timeFile, std::string& fpsFile)
 {
 	float elapsed = end - start;
-	std::ofstream csvFile("measurements.csv");
-	//csvFile.open("measurements.csv");
+	std::ofstream csvFile(timeFile);
+	std::ofstream csvFPSFile(fpsFile); 
+	
 	csvFile << std::to_string(elapsed) /*<< "," << getFPS()*/; //1st column 1st row for time, 2nd column for fps
-	//csvFile.close(); 
+	csvFPSFile << std::to_string(getFPS()); 
 
 }

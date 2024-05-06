@@ -1,7 +1,7 @@
 #include "CellMesh.h"
 ///////////////////////////////////////// CELLS MESH //////////////////////////////////////////////////////
 
-CellMesh::CellMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext/*, CELL* cell*/)
+CellMesh::CellMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext)
 {
 	initBuffers(device);
 
@@ -14,7 +14,7 @@ CellMesh::~CellMesh()
 }
 
 
-void CellMesh::initBuffers(ID3D11Device* device/*, CELL* cell*/)
+void CellMesh::initBuffers(ID3D11Device* device)
 {
     VertexType* vertices;
     unsigned long* indices;
@@ -34,8 +34,6 @@ void CellMesh::initBuffers(ID3D11Device* device/*, CELL* cell*/)
     vertices[4].position = XMFLOAT3(0, 0, 0.0f);
     vertices[5].position = XMFLOAT3(1, 1, 0.0f);
 
-
-    //vertices[4].position = XMFLOAT3(cell->bounds[0], 1.0f - cell->bounds[1], 0.0f);
 
     // Load the index array with data.
     for (int i = 0; i < vertexCount; i++)
@@ -94,7 +92,7 @@ void CellMesh::sendData(ID3D11DeviceContext* deviceContext, D3D_PRIMITIVE_TOPOLO
 
 ///////////////////////////////////////// CELLS BOUND MESH //////////////////////////////////////////////////////
 
-CellBoundsMesh::CellBoundsMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext/*, CELL* cell*/)
+CellBoundsMesh::CellBoundsMesh(ID3D11Device* device, ID3D11DeviceContext* deviceContext)
 {
     initBuffers(device);
 
@@ -107,7 +105,7 @@ CellBoundsMesh::~CellBoundsMesh()
 }
 
 
-void CellBoundsMesh::initBuffers(ID3D11Device* device /*CELL* cell*/)
+void CellBoundsMesh::initBuffers(ID3D11Device* device)
 {
     VertexType* vertices;
     unsigned long* indices;

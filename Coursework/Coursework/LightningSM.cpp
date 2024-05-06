@@ -34,19 +34,6 @@ void LightningSM::initShader(const wchar_t* vs, const wchar_t* ps)
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
 
-	//D3D11_BUFFER_DESC boolBufferDesc;
-	//loadVertexShader(vs);
-	//loadPixelShader(ps);
-
-	//// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
-	//boolBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	//boolBufferDesc.ByteWidth = sizeof(TranslationBufferType);
-	//boolBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	//boolBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	//boolBufferDesc.MiscFlags = 0;
-	//boolBufferDesc.StructureByteStride = 0;
-	//renderer->CreateBuffer(&boolBufferDesc, NULL, &translationBuffer);
-
 	D3D11_BUFFER_DESC dynvertxBuffer;
 	loadVertexShader(vs);
 	loadPixelShader(ps);
@@ -67,7 +54,6 @@ void LightningSM::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	MatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
-	//Step 2 of Erins rsrc goes here 
 	// Transpose the matrices to prepare them for the shader.
 	tworld = XMMatrixTranspose(world);
 	tview = XMMatrixTranspose(view);
@@ -81,18 +67,6 @@ void LightningSM::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	deviceContext->Unmap(matrixBuffer, 0);
 
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
-
-	//TranslationBufferType* translPtr;
-	//deviceContext->Map(translationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	//translPtr = (TranslationBufferType*)mappedResource.pData;
-	////Transpose
-	//XMMATRIX tStart, tEnd;
-	//tStart = XMMatrixTranspose(start_); 
-	//tEnd = XMMatrixTranspose(end_); 
-	//translPtr->start = tStart; 
-	//translPtr->end = tEnd; 
-	//deviceContext->Unmap(translationBuffer, 0);
-	//deviceContext->VSSetConstantBuffers(1, 1, &translationBuffer);
 
 	D3D11_MAPPED_SUBRESOURCE VXmappedResource; //Initialize variable to 0,
 	ZeroMemory(&VXmappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));//as you'll use it to change the resource

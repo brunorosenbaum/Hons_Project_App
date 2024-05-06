@@ -41,6 +41,10 @@ private:
 	std::vector<LIGHTNING_TREE_NODE*> tree_nodes;
 	float endTime_ = 0;
 	float startTime_ = 0; 
+	string rMeasure = "rationalMeasurements.csv";
+	string pMeasure = "parallelMeasurements.csv";
+	string rFPS = "rFPS.csv";
+	string pFPS = "pFPS.csv";
 
 };
 

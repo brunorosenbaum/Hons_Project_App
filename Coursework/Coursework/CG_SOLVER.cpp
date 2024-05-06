@@ -80,13 +80,13 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
     _listSize = cells.size();
     reallocate();
 
-    // compute a new lexicographical order - ask what this does tbh, does it 'put in order' the cells from the list to the iterator?
+    // compute a new lexicographical order - orders the cells from the list to the iterator
     cellIterator = cells.begin();
     for (x = 0; x < _listSize; x++, cellIterator++)
         (*cellIterator)->index = x;
 
     // r = b - Ax
-    calcResidual(cells); //Method to calculate the residual of the Poisson eq!!!
+    calcResidual(cells); //Method to calculate the residual of the Poisson eq
 
     // copy residual into easy array
     // d = r
@@ -115,7 +115,7 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
         // and A is a known, square, symmetric, positive-definite matrix.
 
         //Therefore, q = vector where the lightning will grow (unknown)
-        //A must be the transformation matrix for rendering each segment's position?
+        //A is be the transformation matrix for rendering each segment's position
         //And d has to be calculated depending on the weights of the neighbors and their elec potential (phi) values
 
 		//First, Go through the cells
@@ -171,7 +171,7 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
             deltaNew += _residual[x] * _residual[x];
 
         // beta = deltaNew / deltaOld - And now beta is the quotient of starting point delta + delta after solving cg
-        //I think this is equation 12, which chooses a growth site. Beta would be p(i) in the paper
+        //This is equation 12, which chooses a growth site. Beta would be p(i) in the paper
         float beta = deltaNew / deltaOld;
 
         // d = r + beta * d - Direction is updated by adding the residual to beta * previous direction
@@ -242,7 +242,7 @@ void CG_SOLVER::calcStencils(std::list<CELL*> cells)
 
         // sum over faces TODO: HUH? Look up symmetric discretization on the paper
         float deltaSum = 0.0f; //Sum of all stencils?
-        float bSum = 0.0f; //Boundary sum?
+        float bSum = 0.0f; //sum of rhs term
 
         for (int x = 0; x < 4; x++) //Stencil weight is calculated 4 times - once per stencil member
         {
@@ -288,6 +288,6 @@ void CG_SOLVER::calcStencils(std::list<CELL*> cells)
 
         currentCell->stencil[8] = deltaSum; //Central stencil weight = sum of the neighbors depending on size
         //LAPLACE'S EQUATION: Laplacian^2 * phi = 0
-        currentCell->b = bSum; //Here, we set that 0 to the boundary sum. 
+        currentCell->b = bSum; //Here, we set that 0 to the rhs sum. 
     }
 }

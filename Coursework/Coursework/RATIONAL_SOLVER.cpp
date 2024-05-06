@@ -241,7 +241,7 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 	/*m_vBoundaryPotential.clear();*/ //This was a vector of floats of the potentials,
 	//But since we're using whole cell ptrs here we don't need to clear as these potentials
 	//are all initialized to 0 upon creation
-	/*m_vBoundaryPotential.reserve(m_iGridSize * m_iGridSize);*/ //<- Shouldn't be an issue. This space is already reserved in prev function
+	
 	boundaryPotentials_.reserve(gridSize_ * gridSize_);
 	int iIndex = 0;
 	CELL_R* current_Cell;
@@ -273,9 +273,6 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 				}
 			}
 
-			//boundary_Cells[iIndex].potential = boundaryPhi; //B is the potential. Set it to that for each of the boundary cells
-			////TODO: THIS IS GONNA THROW ERRORS. I KNOW THIS IS WRONG.
-			////TODO: THIS IS NOT GOING TO GO THROUGH ALL THE BOUNDARY CELLS BC IT'S A NESTED LOOP. BE CAREFUL!! ASK!!
 			boundaryPotentials_.push_back(boundaryPhi); 
 			++iIndex;
 		}
@@ -637,15 +634,7 @@ void RATIONAL_SOLVER::CalcPotential_Rational_SingleCell(CELL_R* candidate_cell)
 
 }
 
-void RATIONAL_SOLVER::Calc_Normalization()
-{
-	/*Once we have computed the electric potential between the
-	candidate cells and other charged cells, we use the normalization equation, Equation 2.*/
-	//I wonder if this is it?  If so, it calculates P(i), the probability of selection of each candidate cell
 
-	int iIndex;
-
-}
 
 bool RATIONAL_SOLVER::SelectCandidate(CELL_R& outNextCell) //Choose next lightning cell among candidates
 { //Done by calculating P(i)
@@ -694,23 +683,7 @@ bool RATIONAL_SOLVER::SelectCandidate(CELL_R& outNextCell) //Choose next lightni
 
 #pragma region UPDATING FUNCTIONS
 //-------------------------------------------UPDATING FUNCTIONS----------------------------------------------------------
-void RATIONAL_SOLVER::AllCellsToCandidates() //Turns all cells into candidates. Will be called in main. 
-{
-	candidateMap_DS.clear();
-	int iIndex;
 
-	for(int i = 0; i < gridSize_; ++i) //Columns
-	{
-		for (int j = 0; j < gridSize_; ++j) //Rows
-		{
-			iIndex = i * gridSize_ + j;
-			if(all_Cells[iIndex] && all_Cells[iIndex]->type_ == EMPTY_R) //If cells exist and theyre empty
-			{//Map all cells to candidate map
-				candidateMap_DS.insert(std::map<int, CELL_R*>::value_type(iIndex, all_Cells[iIndex]));
-			}
-		}
-	}
-}
 
 void RATIONAL_SOLVER::UpdateCandidates()
 {

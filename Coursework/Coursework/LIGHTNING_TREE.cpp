@@ -58,7 +58,7 @@ void LIGHTNING_TREE::ClearNodes() //Safely deletes nodes
 }
 
 void LIGHTNING_TREE::SetTreeThickness()
-{ //I THINK this method is for culling the smaller branches
+{ //This method is for culling the smaller branches
 	if (nodes_.size() > 1 && root_) //If there are nodes and theres a root
 	{
 		root_->isMainChannel = true; //Set root as main channel

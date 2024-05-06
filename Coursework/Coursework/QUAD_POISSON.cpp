@@ -24,13 +24,6 @@ QUAD_POISSON::QUAD_POISSON(int xRes, int yRes,  ID3D11Device* device, ID3D11Devi
     _maxRes = pow(2.0f, (float)max);
     _maxDepth = max;
 
-    //// create the blue noise
-    //_noiseFunc = new BLUE_NOISE(5.0f / (float)_maxRes);
-    //_noise = new bool[_maxRes * _maxRes];
-    //_noiseFunc->complete();
-    //_noiseFunc->maximize();
-    //_noiseFunc->writeToBool(_noise, _maxRes);
-
     _solver = new CG_SOLVER(_maxDepth, iterations);
     cellBoundsMesh = nullptr;
     cellMesh = new CellMesh(device, deviceContext);
@@ -44,8 +37,6 @@ QUAD_POISSON::~QUAD_POISSON()
     deleteGhosts();
     delete _root;
     delete _solver;
-    //delete _noiseFunc;
-    //delete[] _noise;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -70,16 +61,11 @@ void QUAD_POISSON::draw(ID3D11Device* device, ID3D11DeviceContext* deviceContext
     shader->setShaderParameters(deviceContext, cellMatrix, view, projection, false);
     shader->render(deviceContext, cellBoundsMesh->getIndexCount());
 
-    
-
     // draw the children
     for (int x = 0; x < 4; x++)
         if (cell->children[x] != NULL)
             draw(device, deviceContext, cell->children[x], shader, world, view, projection);
 }
-
-
-
 
 
 //////////////////////////////////////////////////////////////////////
@@ -96,8 +82,7 @@ void QUAD_POISSON::drawCell(ID3D11Device* device, ID3D11DeviceContext* deviceCon
     XMMATRIX cellMatrix = XMMatrixScaling(cell->bounds[3] - cell->bounds[1], cell->bounds[0] - cell->bounds[2], 0.0f);
     cellMatrix *= XMMatrixTranslation(cell->bounds[1], 1.0f - cell->bounds[0], 0.f);
 
-    //cellMatrix *= XMMatrixScaling(1 - cell->bounds[0], 1 - cell->bounds[0], 0.0f);
-	cellMesh->sendData(deviceContext/*, D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP*/);
+	cellMesh->sendData(deviceContext);
 	shader->setShaderParameters(deviceContext, cellMatrix, view, projection, false);
 	shader->render(deviceContext, cellMesh->getIndexCount());
 }
@@ -116,7 +101,7 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
     bool existed = true;
 
     while (currentDepth < _maxDepth) { //While we still havent hit bottom of the quadtree depth
-        // find quadrant of current point - ask for help
+        // find quadrant of current point
         float diff[2];
         diff[0] = xPos - currentCell->center[0];
         diff[1] = yPos - currentCell->center[1];
@@ -147,7 +132,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(currentCell->parent->children[i]);
-            //setNoise(currentCell->parent->children[i]);
         }
 
     ///////////////////////////////////////////////////////////////////
@@ -171,7 +155,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(north->parent->children[i]);
-            //setNoise(north->parent->children[i]);
         }
     }
     CELL* south = currentCell->southNeighbor();
@@ -183,7 +166,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(south->parent->children[i]);
-            //setNoise(south->parent->children[i]);
         }
     }
     CELL* west = currentCell->westNeighbor();
@@ -195,7 +177,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(west->parent->children[i]);
-            //setNoise(west->parent->children[i]);
         }
     }
     CELL* east = currentCell->eastNeighbor();
@@ -207,7 +188,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
         for (int i = 0; i < 4; i++)
         {
             _smallestLeaves.push_back(east->parent->children[i]);
-            //setNoise(east->parent->children[i]);
         }
     }
 
@@ -227,7 +207,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(northwest->parent->children[i]);
-                //setNoise(northwest->parent->children[i]);
             }
         }
         CELL* northeast = north->eastNeighbor();
@@ -239,7 +218,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(northeast->parent->children[i]);
-                //setNoise(northeast->parent->children[i]);
             }
         }
     }
@@ -253,7 +231,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(southwest->parent->children[i]);
-                //setNoise(southwest->parent->children[i]);
             }
         }
         CELL* southeast = south->eastNeighbor();
@@ -265,7 +242,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
             for (int i = 0; i < 4; i++)
             {
                 _smallestLeaves.push_back(southeast->parent->children[i]);
-                //setNoise(southeast->parent->children[i]);
             }
         }
     }
@@ -273,25 +249,6 @@ CELL* QUAD_POISSON::insert(float xPos, float yPos)
     return currentCell;
 }
 
-//////////////////////////////////////////////////////////////////////
-// check if a cell hits a noise node
-//////////////////////////////////////////////////////////////////////
-//void QUAD_POISSON::setNoise(CELL* cell)
-//{
-//    if (!(cell->state == EMPTY))
-//        return;
-//
-//    int x = cell->center[0] * _maxRes;
-//    int y = cell->center[1] * _maxRes;
-//
-//    if (_noise[x + y * _maxRes])
-//    {
-//        cell->boundary = true;
-//        cell->state = ATTRACTOR;
-//        cell->potential = 0.5f;
-//        cell->candidate = true;
-//    }
-//}
 
 //////////////////////////////////////////////////////////////////////
 // insert all leaves into a list
