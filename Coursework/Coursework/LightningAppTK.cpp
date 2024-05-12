@@ -17,8 +17,9 @@ void LightningAppTK::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	linearSM = new LinearSM(renderer->getDevice(), hwnd);
 	lightningSM = new LightningSM(renderer->getDevice(), hwnd); 
 	aggregate = new QUAD_DBM_2D(renderer->getDevice(), renderer->getDeviceContext(), 256, 256, iterations);
-	start_Time = 0;
-	camera->setPosition(0, 0, -1.25); 
+	startTime_ = std::chrono::steady_clock::now();
+
+	camera->setPosition(-0.25, 0.25, -0.75); 
 }
 
 LightningAppTK::~LightningAppTK()
@@ -58,7 +59,7 @@ bool LightningAppTK::render()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
 	// read in the *.ppm input file
-	string inputFile = "examples/cglightning1.ppm"; 
+	string inputFile = "examples/csLightning_1.ppm"; 
 	if (!loadImages(inputFile))
 	{
 		cout << " ERROR: " << inputFile.c_str() << " is not a valid PPM file." << endl;
@@ -146,8 +147,10 @@ void LightningAppTK::addNodes()
 		{
 			if (aggregate->hitGround())
 			{
-				end_Time = timer->getTime();
-				timer->outputCSV(start_Time, end_Time, cgMeasurement, cgFPS);
+				endTime_ = std::chrono::steady_clock::now();;
+				//For non-parallelized version time measurements
+				float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime_ - startTime_).count();
+				timer->outputCSV(elapsedTime, cgMeasurement, cgFPS); 
 				/*glutPostRedisplay();
 				cout << endl << endl;*/
 				
@@ -209,18 +212,7 @@ void LightningAppTK::renderGlow(string filename, int scale)
 			cropped[croppedIndex] = source[uncroppedIndex];
 		}
 
-	//// create the filter
-	//apsf.generateKernelFast();
-
-	//// convolve with FFT
-	//bool success = FFT::convolve(cropped, apsf.kernel(), wCropped, hCropped, apsf.res(), apsf.res());
-
-	//if (success) {
-	//	EXR::writeEXR(filename.c_str(), cropped, wCropped, hCropped);
-	//	cout << " " << filename << " written." << endl;
-	//}
-	//else
-	//	cout << " Final image generation failed." << endl;
+	
 
 	delete[] cropped;
 }

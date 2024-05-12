@@ -15,7 +15,7 @@ QUAD_DBM_2D::QUAD_DBM_2D(ID3D11Device* device,
     _quadPoisson(NULL),
     _dag(NULL),
     _skips(10),
-    _twister(123456)
+    _twister(time(NULL))
 {
     allocate(device, deviceContext);
     _dag = new DAG(_xRes, _yRes, device, deviceContext);
@@ -152,8 +152,8 @@ bool QUAD_DBM_2D::addParticle()
     else
     {
         // add a neighbor
-        float random = _twister.getDoubleLR();
-        float invTotalPotential = 1.0f / totalPotential;
+        float random = _twister.getDoubleLR(); //random number
+        float invTotalPotential = 1.0f / totalPotential; 
         float potentialSeen = probabilities[0] * invTotalPotential;
         while ((potentialSeen < random) && (toAddIndex < _candidates.size()))
         {

@@ -24,7 +24,7 @@ public:
 
 	float getTime();	///< Get delta time
 	float getFPS();		///< Get FPS (for display)
-	void outputCSV(float start_Time, float end_Time, std::string& filename, std::string& fpsFile); //Writes time measurement into a csv file, as well as fps
+	void outputCSV(float elapsed, std::string& filename, std::string& fpsFile); //Writes time measurement into a csv file, as well as fps
 private:
 	INT64 frequency;
 	float ticksPerS;

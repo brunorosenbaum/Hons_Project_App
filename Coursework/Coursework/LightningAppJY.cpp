@@ -36,7 +36,7 @@ void LightningAppJY::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int s
 	sceneSize = screenWidth; sceneHalf = sceneSize * 0.5f;
 
 	initLightning();
-	startTime_ = 0;
+	startTime_ = std::chrono::high_resolution_clock::now();
 	
 
 }
@@ -160,26 +160,13 @@ void LightningAppJY::drawLightning(XMMATRIX world, XMMATRIX view, XMMATRIX proje
 			}
 			
 		}
-		//else //If it IS root
-		//{
-		//	startX = -difference_ + center_;
-		//	startY = difference_ + center_;
-		//	endX = -difference_ * nodePtr->x_;
-		//	endY = -difference_ * nodePtr->y_;
-		//	XMFLOAT2 s = XMFLOAT2(startX, startY);
-		//	XMFLOAT2 e = XMFLOAT2(endX, endY);
-		//	float xDiff = endX - startX;
-		//	float yDiff = endY - startY;
-		//	float fThetaInRadians = atan2f(yDiff, xDiff);
-		//	if (0 == yDiff && xDiff < 0) fThetaInRadians = 0.0f;
-		//	XMFLOAT2 vCorner = XMFLOAT2(sinf(fThetaInRadians), cosf(fThetaInRadians));
-		//	lightning_mesh_->sendData(renderer->getDeviceContext(), D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
-		//	lightning_SM->setShaderParameters(renderer->getDeviceContext(), world, view, projection, s, e, vCorner);
-		//	lightning_SM->render(renderer->getDeviceContext(), lightning_mesh_->getIndexCount());
-		//}
 
 		++itr; ++i; 
 	}
+	endTime_ = std::chrono::high_resolution_clock::now();;
+	//For non-parallelized version time measurements
+	float elapsedTime = chrono::duration_cast<chrono::milliseconds>(endTime_ - startTime_).count(); 
+	timer->outputCSV(elapsedTime, rMeasure, rFPS);
 
 }
 
@@ -194,12 +181,10 @@ bool LightningAppJY::render()
 
 	//initQuadGrid(worldMatrix, viewMatrix, projectionMatrix); 
 	drawLightning(worldMatrix, viewMatrix, projectionMatrix);
-	endTime_ = timer->getTime();
-	//For non-parallelized version time measurements
-	//timer->outputCSV(startTime_, endTime_, rMeasure, rFPS);
+	
 
 	//For parallelized time measurements
-	timer->outputCSV(startTime_, endTime_, pMeasure, pFPS); 
+	//timer->outputCSV(startTime_, endTime_, pMeasure, pFPS); 
 	// Render GUI
 	gui();
 

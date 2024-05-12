@@ -68,7 +68,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //-------------------------------------------------------------------------------------------------------------
 
     //Boolean for using GSM vs not using GSM
-    bool isGSM = false; 
+    bool isGSM = true; 
 
 
     int cellIndex = DTid.y * gridSizeXY + DTid.x;
@@ -195,41 +195,41 @@ void main( uint3 DTid : SV_DispatchThreadID,
 
     }
 
-    else //NO GSM
-    {
-        int2 minIndex = int2(GTid.x - 2, GTid.y - 2);
-        int2 maxIndex = int2(GTid.x + 2, GTid.y + 2);
+ //   else //NO GSM
+ //   {
+ //       int2 minIndex = int2(GTid.x - 2, GTid.y - 2);
+ //       int2 maxIndex = int2(GTid.x + 2, GTid.y + 2);
 
-        //minIndex.x = minIndex.x < 0 ? 0 : minIndex.x;
-        //minIndex.y = minIndex.y < 0 ? 0 : minIndex.y;
+ //       //minIndex.x = minIndex.x < 0 ? 0 : minIndex.x;
+ //       //minIndex.y = minIndex.y < 0 ? 0 : minIndex.y;
 
-        //maxIndex.x = maxIndex.x >= 15 ? 15 : maxIndex.x; 
-        //maxIndex.y = maxIndex.y >= 15 ? 15 : maxIndex.y; 
+ //       //maxIndex.x = maxIndex.x >= 15 ? 15 : maxIndex.x; 
+ //       //maxIndex.y = maxIndex.y >= 15 ? 15 : maxIndex.y; 
 
-        if (Cells[cellIndex].isCandidate)
-        {
-            for (int yi = minIndex.y; yi < maxIndex.y; ++yi)
-            {
-                for (int xi = minIndex.x; xi < maxIndex.x; ++xi)
-                {
+ //       if (Cells[cellIndex].isCandidate)
+ //       {
+ //           for (int yi = minIndex.y; yi < maxIndex.y; ++yi)
+ //           {
+ //               for (int xi = minIndex.x; xi < maxIndex.x; ++xi)
+ //               {
 
-                    r = CalcDistance(xi, yi,
-									 GTid.x, GTid.y);
-                    r = pow(r, pow_rho);
-                    if (!r == 0)
-                    {
-                        N += 1.0f / r;
-                        phi = (1.0f / B) * (1.0f / N) * P;
-                    }
+ //                   r = CalcDistance(xi, yi,
+	//								 GTid.x, GTid.y);
+ //                   r = pow(r, pow_rho);
+ //                   if (!r == 0)
+ //                   {
+ //                       N += 1.0f / r;
+ //                       phi = (1.0f / B) * (1.0f / N) * P;
+ //                   }
 
-                }
-            }
-            CS_OutputBuffer[cellIndex].N = N;
-            CS_OutputBuffer[cellIndex].r = r;
-            CS_OutputBuffer[cellIndex].phi = phi;
-        }
-    }
-	GroupMemoryBarrierWithGroupSync();
+ //               }
+ //           }
+ //           CS_OutputBuffer[cellIndex].N = N;
+ //           CS_OutputBuffer[cellIndex].r = r;
+ //           CS_OutputBuffer[cellIndex].phi = phi;
+ //       }
+ //   }
+	//GroupMemoryBarrierWithGroupSync();
     
 }
 

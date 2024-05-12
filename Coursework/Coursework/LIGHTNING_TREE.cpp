@@ -22,7 +22,7 @@ void LIGHTNING_TREE::AddChild(int iParent_x, int iParent_y, int iChild_x, int iC
 			if(parentPtr && parentPtr->x_ == iParent_x && parentPtr->y_ == iParent_y)
 			{
 				//Add child node
-				LIGHTNING_TREE_NODE* childPtr = new LIGHTNING_TREE_NODE(); //TODO: CAUSING MEMORY LEAK
+				LIGHTNING_TREE_NODE* childPtr = new LIGHTNING_TREE_NODE(); 
 				//TODO: IS THIS RECURSING TO INFINITY?
 				if(childPtr)
 				{
@@ -31,7 +31,7 @@ void LIGHTNING_TREE::AddChild(int iParent_x, int iParent_y, int iChild_x, int iC
 					childPtr->parent_ = parentPtr; //And its parent as the prev node
 					childPtr->isTarget_ = isTarget;
 
-					parentPtr->AddChild(childPtr); //It's recursive btw
+					parentPtr->AddChild(childPtr); //It's recursive
 					nodes_.push_back(childPtr);
 					break; 
 				}
@@ -74,7 +74,7 @@ void LIGHTNING_TREE::SetTreeThickness()
 				endNode->isMainChannel = true;
 				endNode->thickness = THICKNESS;
 				endNode->attenuation = 1.0f; //Its attenuation value will always be 1 if on main channel
-				endNode = endNode->parent_; //Redefine ptr?
+				endNode = endNode->parent_; //Redefine ptr
 			}
 			AttenuateThickness(root_); 
 		}

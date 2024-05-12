@@ -119,10 +119,6 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //Reads a .map file
 							case NEGATIVE_R: //If number read from .map == 1
 							{
 								cellPtr->SetCellType(NEGATIVE_R);
-								//Here's where I find out that start point cells and negative cells are initialized in the same.
-								//Startpoint cells can be one cell ptr, no need for a vector. TODO: EDIT LATER
-								//So these are cells with the value type == 1.
-									//Upon initialization, both these vectors will be of size 1. 
 								startpoint_Cells.push_back(*cellPtr);
 								negative_Cells.push_back(*cellPtr);
 								
@@ -138,9 +134,8 @@ bool RATIONAL_SOLVER::LoadMap(const std::string& path) //Reads a .map file
 							}
 							break;
 							
-							//Why do we break here and not inside? I have to ask that.
-							//Why do we not have default for type == 0 (empty) cells?
-								//Because the purpose of this method is to read where the start and endpoint are in the GRID. 
+							
+								//the purpose of this method is to read where the start and endpoint are in the GRID. 
 						}
 						++iCellIndex;
 					}
@@ -192,9 +187,9 @@ bool RATIONAL_SOLVER::InitializeGrid(const std::string& path) //Load()
 //-----------------------------------------------------------PRECOMPUTATION---------------------------------------------
 void RATIONAL_SOLVER::CreateBoundaryCells() //I'm assuming this method creates the boundary grid, akin to the green channel
 //in the .ppm files in Kims method. These should be positive in charge. 
-{ //I think this is the equivalent to the quad_dbm_2D's drawQuadTree() 
+{ //this is the equivalent to the quad_dbm_2D's drawQuadTree() 
 	boundary_Cells.clear();
-	boundary_Cells.reserve(gridSize_ * 4 + 4); //32*4 + 4 = 132
+	boundary_Cells.reserve(gridSize_ * 4 + 4); 
 
 	CELL_R current_cell; 
 	//Add boundary charges
@@ -238,9 +233,6 @@ void RATIONAL_SOLVER::CalcBoundaryPotential()
 	//	lightning path, and **boundary charges**.We then calculate the
 	//	electric potentials based on those types separately as P, N, and **B**.
 
-	/*m_vBoundaryPotential.clear();*/ //This was a vector of floats of the potentials,
-	//But since we're using whole cell ptrs here we don't need to clear as these potentials
-	//are all initialized to 0 upon creation
 	
 	boundaryPotentials_.reserve(gridSize_ * gridSize_);
 	int iIndex = 0;
@@ -331,13 +323,13 @@ void RATIONAL_SOLVER::CalcPositivePotential()
 void RATIONAL_SOLVER::CreateClusterMap(int clusterSize)
 {
 
-	clusterSize_ = clusterSize; //size of multi scaled cluster grid map ( 8 x 8 ) = 16. Remember the grid is 64 x 64
+	clusterSize_ = clusterSize; //size of multi scaled cluster grid map ( 4x4 ) = 16. Remember the grid is 128 x 128
 
-	int regionSize = gridSize_ / clusterSize_; //64x64/8x8 = 4096/16 = 256.
-	//Meaning there are 256 clusters in a 64x64 map
+	int regionSize = gridSize_ / clusterSize_; 
+	//Meaning there are 1024 clusters in a 128*128 grid
 
 	clusters_.clear();
-	clusters_.reserve(clusterSize_ * clusterSize_); //Make the cluster vector 16x16 = 256 (same as region size)
+	clusters_.reserve(clusterSize_ * clusterSize_); //Make the cluster vector 1024 (same as region size)
 
 	CLUSTER current_cluster;
 	
@@ -661,10 +653,9 @@ bool RATIONAL_SOLVER::SelectCandidate(CELL_R& outNextCell) //Choose next lightni
 	iIndex = distribution(rng_); //iIndex is a random index from the distribution
 	int iErrorCount = 0;
 
-	//TODO: THE ERROR IS HERE, DISCRETE DISTRIBUTION GETS STUCK BECAUSE CANDIDATE CELLS.SIZE() == 0
-	//TODO: THERE SHOULD BE SOMETHING IN THE CODE (IN UPDATE CANDIDATE MAP OR UPDATE CANDIDATE) RESETTING
+	
 	while(candidate_Cells.size() == iIndex) //So iIndex is the same size as candidate cells, right?
-	{//I think this has to do with.. candidates not being suitable
+	{//candidates not being suitable
 		++iErrorCount;
 		std::cout << "Index error !!!!!" << std::endl;
 		if(iErrorCount >= 10)

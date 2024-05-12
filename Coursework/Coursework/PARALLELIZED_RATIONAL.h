@@ -8,7 +8,7 @@
 #include "CELL_R.h"
 #include "LIGHTNING_TREE.h"
 #include "CSBuffer.h"
-
+  
 
 class PARALLELIZED_RATIONAL
 {
@@ -26,7 +26,7 @@ public:
 	// pre-computation of electric potential for each type of cells
 	void	CalcBoundaryPotential();
 	void	CalcPositivePotential();
-	//Hear me out: we do NOT need to initialize negative potentials for the negative cells
+	// do NOT need to initialize negative potentials for the negative cells
 	//Bc both base constructors initialize potential value to 0. 
 
 
@@ -63,7 +63,7 @@ private:
 
 private: //------------- Grid and potential vars
 
-	//Should we make these cell_derv* instead? 
+
 	std::vector<CELL_R> boundary_Cells; //Serve as boundary condition. 'Borders' of simulation. 
 	std::vector<CELL_R> positive_Cells; //With >0 potential (phi > 0)
 	std::vector<CELL_R> negative_Cells; //With 0 potential (phi == 0)
@@ -100,7 +100,7 @@ private: //---------Lightning tree and cs
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
 
-	//TEST - WILL USE WITH RATIONAL METHOD
+	
 	ID3D11Buffer* clusterBuffer = nullptr; //These are the buffers we're gonna write our cell info to 
 	ID3D11Buffer* cellBuffer = nullptr; 
 	ID3D11Buffer* CPUReadBuffer = nullptr;

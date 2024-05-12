@@ -1,6 +1,8 @@
 #pragma once
 
 // CG METHOD
+#include <chrono>
+
 #include "DXF.h"
 #include "LinearSM.h"
 #include "LightningSM.h"
@@ -36,7 +38,7 @@ private:
 	LightningSM* lightningSM; 
 
 	QUAD_DBM_2D* aggregate;
-	int iterations = 5;
+	int iterations = 10;
 
 	// input image info
 	int inputWidth = -1;
@@ -47,8 +49,8 @@ private:
 	string outputFile;
 
 	//Timer
-	float start_Time = 0;
-	float end_Time = 0;
+	std::chrono::steady_clock::time_point startTime_;
+	std::chrono::steady_clock::time_point endTime_;
 	string cgMeasurement = "cgMeasurement.csv";
 	string cgFPS = "CGFps.csv"; 
 

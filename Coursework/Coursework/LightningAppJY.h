@@ -2,10 +2,11 @@
 #include "CellMesh.h"
 #include "DXF.h"
 #include "LightningMesh_JY.h"
-//#include "RATIONAL_SOLVER.h"
+#include "RATIONAL_SOLVER.h"
 #include "PARALLELIZED_RATIONAL.h"
 #include "Lightning_JY_SM.h"
 #include "LinearSM.h"
+#include <chrono>
 
 ////Uncomment commented parts to get unparallelized version of the rational method
 class LightningAppJY : public BaseApplication
@@ -39,12 +40,13 @@ private:
 	float sceneSize, sceneHalf;
 
 	std::vector<LIGHTNING_TREE_NODE*> tree_nodes;
-	float endTime_ = 0;
-	float startTime_ = 0; 
+
 	string rMeasure = "rationalMeasurements.csv";
 	string pMeasure = "parallelMeasurements.csv";
 	string rFPS = "rFPS.csv";
 	string pFPS = "pFPS.csv";
-
+	
+	std::chrono::high_resolution_clock::time_point startTime_;
+	std::chrono::high_resolution_clock::time_point endTime_;
 };
 

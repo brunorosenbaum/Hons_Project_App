@@ -59,7 +59,7 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
 {
     //This method takes in a list of CELL ptrs, and then creates an iterator to go through them.
 
-    // counters - TODO: MAKE SENSE OF THIS
+    // counters
     int x, y, index;
 
     //Cell* type list iterator for our list. This goes through the grid, one cell at a time. 
@@ -241,7 +241,7 @@ void CG_SOLVER::calcStencils(std::list<CELL*> cells)
         //In the paper Dx == DELTAx
 
         // sum over faces TODO: HUH? Look up symmetric discretization on the paper
-        float deltaSum = 0.0f; //Sum of all stencils?
+        float deltaSum = 0.0f; //Sum of all stencils
         float bSum = 0.0f; //sum of rhs term
 
         for (int x = 0; x < 4; x++) //Stencil weight is calculated 4 times - once per stencil member

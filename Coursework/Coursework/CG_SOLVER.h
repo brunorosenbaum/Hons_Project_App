@@ -25,7 +25,7 @@ class CG_SOLVER
 {
 public:
 	//! constructor
-	CG_SOLVER(int maxDepth, int iterations = 10, int digits = 8); 
+	CG_SOLVER(int maxDepth, int iterations = 10, int digits = 4); 
 	//! destructor
 	virtual ~CG_SOLVER();
 
