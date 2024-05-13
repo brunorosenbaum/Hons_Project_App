@@ -105,7 +105,7 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
     float eps = pow(10.0f, (float)-_digits);
     //Max R = 0.00000002
     float maxR = 2.0f * eps;
-    //TODO: FIGURE OUT WHY WE USE MAXR > EPS AS A CONDITION WHEN IT SHOULD ALWAYS BE TRUE?
+    
     while ((i < _iterations) && (maxR > eps)) //While we haven't reached the max number of iterations 
     {
         // q = Ad <-- Conjugate gradient equation.
@@ -143,7 +143,7 @@ int CG_SOLVER::solve(std::list<CELL*> cells)
             _q[y] = -neighborSum + _direction[y] * currentCell->stencil[8];
         }
         // alpha = deltaNew / (transpose(d) * q)
-        float alpha = 0.0f; //TODO: WHAT THE FUCK IS ALPHA, the probability of each growth site?
+        float alpha = 0.0f; 
         for (x = 0; x < _listSize; x++)
             alpha += _direction[x] * _q[x];
         if (fabs(alpha) > 0.0f)
