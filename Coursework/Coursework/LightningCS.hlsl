@@ -68,7 +68,7 @@ void main( uint3 DTid : SV_DispatchThreadID,
     //-------------------------------------------------------------------------------------------------------------
 
     //Boolean for using GSM vs not using GSM
-    bool isGSM = true; 
+    bool isGSM = false; 
 
 
     int cellIndex = DTid.y * gridSizeXY + DTid.x;
